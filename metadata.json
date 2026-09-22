@@ -1,0 +1,6 @@
+{
+  "name": "Holy Quran",
+  "description": "A modern, high-performance, offline-first Holy Quran application with Uthmani script, Surahs, Juz, Bookmarks, Daily Verses, Prayer Times, Qibla compass, Tafsir, Hadith, and customizable settings.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

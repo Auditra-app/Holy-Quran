@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_widget_container"
+    android:layoutDirection="rtl"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Header: App Logo, Title & Current Category Badge -->
+    <LinearLayout
+        android:id="@+id/widget_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <ImageView
+            android:id="@+id/widget_app_logo"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:src="@mipmap/ic_launcher_round"
+            android:contentDescription="App Logo" />
+
+        <TextView
+            android:id="@+id/widget_app_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="الأذكار والأدعية"
+            android:textColor="#FFD700"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_azkar_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_widget_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="☀️ أذكار الصباح"
+            android:textColor="#FFFAF0"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Category Tabs Bar (Interactive within the Widget) -->
+    <LinearLayout
+        android:id="@+id/widget_tabs_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/widget_btn_morning"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="3dp"
+            android:background="@drawable/bg_widget_time_pill_active"
+            android:gravity="center"
+            android:paddingVertical="7dp"
+            android:text="☀️ الصباح"
+            android:textColor="#0B2A22"
+            android:textSize="14.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_btn_evening"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginHorizontal="2dp"
+            android:background="@drawable/bg_widget_time_pill"
+            android:gravity="center"
+            android:paddingVertical="7dp"
+            android:text="🌙 المساء"
+            android:textColor="#E0E0E0"
+            android:textSize="14.5sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/widget_btn_tasbih"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1.15"
+            android:layout_marginStart="3dp"
+            android:background="@drawable/bg_widget_time_pill"
+            android:gravity="center"
+            android:paddingVertical="7dp"
+            android:text="📿 تسبيح وأدعية"
+            android:textColor="#E0E0E0"
+            android:textSize="14.5sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Scrollable ListView containing all Azkar for selected category -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="4dp">
+
+        <ListView
+            android:id="@+id/widget_azkar_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="@null"
+            android:dividerHeight="0dp"
+            android:fadingEdge="vertical"
+            android:fadingEdgeLength="8dp"
+            android:requiresFadingEdge="vertical"
+            android:scrollbars="vertical" />
+
+        <TextView
+            android:id="@+id/widget_empty_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="جاري تحميل الأذكار..."
+            android:textColor="#C0E0D0"
+            android:textSize="15.5sp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+</LinearLayout>

@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">Holy Quran</string>
+    <string name="widget_prayer_times_description">مواقيت الصلاة والعد التنازلي للأذان القادم</string>
+    <string name="widget_daily_verse_description">آية اليوم وتفسيرها القرآني</string>
+    <string name="widget_reading_stats_description">إحصائيات القراءة والورد اليومي والسلسلة</string>
+    <string name="widget_azkar_description">أذكار الصباح والمساء وأدعية متجددة مع إمكانية القراءة السريعة</string>
+    <string name="widget_prayer_tracker_description">متابع الصلوات اليومية وتسجيل الصلوات بنقرة واحدة</string>
+</resources>

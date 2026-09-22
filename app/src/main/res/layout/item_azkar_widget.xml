@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_azkar_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginHorizontal="2dp"
+    android:layout_marginVertical="3dp"
+    android:background="@drawable/bg_widget_card"
+    android:layoutDirection="rtl"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <!-- Top Row: Zikr Number, Title & Clickable Counter Button -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/item_zikr_number"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_widget_badge"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:text="١"
+            android:textColor="#FFD700"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/item_zikr_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="سيد الاستغفار"
+            android:textColor="#FFFAF0"
+            android:textSize="17.5sp"
+            android:textStyle="bold" />
+
+        <!-- Interactive Clickable Counter Button -->
+        <LinearLayout
+            android:id="@+id/item_zikr_counter_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_widget_counter_btn"
+            android:clickable="true"
+            android:focusable="true"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp">
+
+            <TextView
+                android:id="@+id/item_zikr_repeat"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="📿 عدّ: 0 / 3"
+                android:textColor="#FFD700"
+                android:textSize="14.5sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Zikr Full Arabic Text (Larger & Clearer) -->
+    <TextView
+        android:id="@+id/item_zikr_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:lineSpacingExtra="6dp"
+        android:text="اللَّهُمَّ أَنْتَ رَبِّي لَا إِلَهَ إِلَّا أَنْتَ، خَلَقْتَنِي وَأَنَا عَبْدُكَ..."
+        android:textColor="#FFFFF5"
+        android:textSize="20sp"
+        android:textStyle="bold" />
+
+    <!-- Virtue & Fadl Text -->
+    <TextView
+        android:id="@+id/item_zikr_virtue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:lineSpacingExtra="3dp"
+        android:text="من قالها موقناً بها دخل الجنة"
+        android:textColor="#E5C158"
+        android:textSize="14.5sp" />
+
+    <!-- Reference / Source -->
+    <TextView
+        android:id="@+id/item_zikr_reference"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="صحيح البخاري (6306)"
+        android:textColor="#A7D5C4"
+        android:textSize="13sp" />
+</LinearLayout>

@@ -1,0 +1,82 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="280dp"
+    android:height="280dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outer Golden Circular Radiant Glow Ring -->
+    <path
+        android:pathData="M 100,6 A 94,94 0 1,0 100,194 A 94,94 0 1,0 100,6 Z"
+        android:strokeWidth="1.5"
+        android:strokeColor="#E6C687"
+        android:strokeAlpha="0.6"/>
+
+    <!-- Dotted Outer Astrological Ring -->
+    <path
+        android:pathData="M 100,12 A 88,88 0 1,0 100,188 A 88,88 0 1,0 100,12 Z"
+        android:strokeWidth="1"
+        android:strokeColor="#FFD700"
+        android:strokeAlpha="0.4"/>
+
+    <!-- Rub el Hizb (8-Pointed Star Outer Square 1: 0 deg) -->
+    <path
+        android:pathData="M 30,30 L 170,30 L 170,170 L 30,170 Z"
+        android:strokeWidth="2"
+        android:strokeColor="#DAA520"
+        android:fillColor="#00000000"/>
+
+    <!-- Rub el Hizb (8-Pointed Star Outer Square 2: 45 deg) -->
+    <path
+        android:pathData="M 100,1 C 103,1 199,97 199,100 C 199,103 103,199 100,199 C 97,199 1,103 1,100 C 1,97 97,1 100,1 Z"
+        android:strokeWidth="2.5"
+        android:strokeColor="#FFD700"
+        android:fillColor="#00000000"/>
+
+    <!-- Inner Golden Arch Motif Frame -->
+    <path
+        android:pathData="M 100,24 C 60,24 35,50 35,90 L 35,160 L 165,160 L 165,90 C 165,50 140,24 100,24 Z"
+        android:strokeWidth="2"
+        android:strokeColor="#F5D061"
+        android:fillColor="#150F05"
+        android:fillAlpha="0.25"/>
+
+    <!-- Double Inner Gold Border -->
+    <path
+        android:pathData="M 100,30 C 65,30 42,54 42,92 L 42,154 L 158,154 L 158,92 C 158,54 135,30 100,30 Z"
+        android:strokeWidth="1"
+        android:strokeColor="#FFD700"/>
+
+    <!-- Top Crescent & Star Emblem -->
+    <path
+        android:pathData="M 100,14 C 104,14 107,17 107,21 C 107,25 104,28 100,28 C 96,28 93,25 93,21 C 93,17 96,14 100,14 Z"
+        android:fillColor="#FFD700"/>
+
+    <path
+        android:pathData="M 100,8 L 102,12 L 106,12 L 103,15 L 104,19 L 100,16 L 96,19 L 97,15 L 94,12 L 98,12 Z"
+        android:fillColor="#FFF8DC"/>
+
+    <!-- Corner Arabesque Florets -->
+    <path
+        android:pathData="M 20,20 C 35,20 20,35 35,35"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFD700"/>
+    <path
+        android:pathData="M 180,20 C 165,20 180,35 165,35"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFD700"/>
+    <path
+        android:pathData="M 20,180 C 35,180 20,165 35,165"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFD700"/>
+    <path
+        android:pathData="M 180,180 C 165,180 180,165 165,165"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFD700"/>
+
+    <!-- Bottom Decorative Flourish Scroll -->
+    <path
+        android:pathData="M 70,172 C 85,178 115,178 130,172 M 85,178 C 95,183 105,183 115,178"
+        android:strokeWidth="1.5"
+        android:strokeColor="#FFD700"/>
+
+</vector>

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_widget_container"
+    android:layoutDirection="rtl"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <!-- Header Banner: Prominent App Logo, App Title & Daily Verse Badge -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <!-- Prominent App Logo -->
+        <ImageView
+            android:id="@+id/widget_app_logo"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@mipmap/ic_launcher_round"
+            android:contentDescription="App Logo" />
+
+        <!-- App Name Title -->
+        <TextView
+            android:id="@+id/widget_app_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="القرآن الكريم"
+            android:textColor="#FFD700"
+            android:textSize="17sp"
+            android:textStyle="bold" />
+
+        <!-- Daily Verse Badge Tag -->
+        <TextView
+            android:id="@+id/widget_badge_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_widget_badge"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="4dp"
+            android:text="📖 آية اليوم"
+            android:textColor="#FFFAF0"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Verse Main Content Card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_widget_card"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="10dp">
+
+        <!-- Quranic Verse Text (Readable, High Contrast, Centered) -->
+        <TextView
+            android:id="@+id/widget_verse_text"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:ellipsize="end"
+            android:maxLines="4"
+            android:text="﴿ اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ الْحَيُّ الْقَيُّومُ ﴾"
+            android:textColor="#FFFDD0"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:lineSpacingExtra="5dp" />
+
+        <!-- Surah Name & Verse Number Reference -->
+        <TextView
+            android:id="@+id/widget_verse_reference"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="سورة البقرة • الآية 255"
+            android:textColor="#E5C158"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>
