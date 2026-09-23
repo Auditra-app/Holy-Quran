@@ -97,12 +97,6 @@
         body {
             font-family: 'Tajawal', sans-serif;
             background-color: var(--bg-main);
-            background-image: linear-gradient(180deg, rgba(2, 18, 11, 0.72) 0%, rgba(2, 18, 11, 0.88) 100%),
-                              url('quran_hero.jpg');
-            background-size: cover;
-            background-position: center center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
             color: var(--text-main);
             min-height: 100vh;
             display: flex;
@@ -114,45 +108,71 @@
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
-        body.theme-light {
-            background-image: linear-gradient(180deg, rgba(244, 248, 245, 0.82) 0%, rgba(244, 248, 245, 0.93) 100%),
-                              url('quran_hero.jpg');
-        }
-
-        body.theme-sepia {
-            background-image: linear-gradient(180deg, rgba(249, 242, 231, 0.82) 0%, rgba(241, 228, 211, 0.93) 100%),
-                              url('quran_hero.jpg');
-        }
-
-        /* Ambient Fullscreen Background Image Layer fitting and filling entire viewport */
-        .bg-image-watermark {
+        /* Single Crisp Fullscreen Background Artwork Layer - Eliminates blur & double vision */
+        .bg-fixed-artwork {
             position: fixed;
             inset: 0;
             top: 0;
             left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: url('quran_hero.jpg') no-repeat center center;
-            background-size: cover;
+            width: 100%;
+            height: 100%;
+            height: 100dvh;
             pointer-events: none;
             user-select: none;
             z-index: 0;
-            transition: opacity 0.3s ease, filter 0.3s ease;
+            overflow: hidden;
         }
 
-        body.theme-dark .bg-image-watermark {
-            opacity: 0.22;
-            filter: brightness(0.95) contrast(1.15);
+        .bg-fixed-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center center;
+            display: block;
+            image-rendering: -webkit-optimize-contrast;
+            transition: opacity 0.3s ease;
         }
 
-        body.theme-light .bg-image-watermark {
+        .bg-fixed-overlay {
+            position: absolute;
+            inset: 0;
+            transition: background 0.3s ease;
+        }
+
+        body.theme-dark .bg-fixed-img {
+            opacity: 0.18;
+            filter: contrast(1.1) brightness(0.95);
+        }
+
+        body.theme-dark .bg-fixed-overlay {
+            background: radial-gradient(circle at 50% 30%, rgba(2, 18, 11, 0.45) 0%, rgba(2, 18, 11, 0.88) 100%);
+        }
+
+        body.theme-light .bg-fixed-img {
+            opacity: 0.10;
+            filter: contrast(1.05) brightness(1.05);
+        }
+
+        body.theme-light .bg-fixed-overlay {
+            background: radial-gradient(circle at 50% 30%, rgba(244, 248, 245, 0.55) 0%, rgba(244, 248, 245, 0.92) 100%);
+        }
+
+        body.theme-sepia .bg-fixed-img {
             opacity: 0.12;
-            filter: brightness(1.05) contrast(0.95);
+            filter: sepia(35%) contrast(1.05);
         }
 
-        body.theme-sepia .bg-image-watermark {
-            opacity: 0.15;
-            filter: sepia(45%) contrast(1.05);
+        body.theme-sepia .bg-fixed-overlay {
+            background: radial-gradient(circle at 50% 30%, rgba(249, 242, 231, 0.55) 0%, rgba(241, 228, 211, 0.92) 100%);
+        }
+
+        /* On mobile portrait screens: keep calligraphy centered and crisp without 400% zoom crop */
+        @media (max-width: 768px) {
+            .bg-fixed-img {
+                object-fit: contain;
+                object-position: center 30%;
+                transform: scale(1.15);
+            }
         }
 
         /* Grand Hero Artwork Presentation Card */
@@ -729,8 +749,11 @@
 </head>
 <body class="theme-dark">
 
-    <!-- Ambient Floating Background Image Watermark -->
-    <div class="bg-image-watermark"></div>
+    <!-- Single Crisp Fullscreen Ambient Background Layer -->
+    <div class="bg-fixed-artwork">
+        <img src="quran_hero.jpg" alt="" class="bg-fixed-img" />
+        <div class="bg-fixed-overlay"></div>
+    </div>
 
     <div class="container">
 
