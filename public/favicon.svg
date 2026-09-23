@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" fill="none">
+    <circle cx="54" cy="54" r="50" fill="#041912" stroke="#F59E0B" stroke-width="2"/>
+    <!-- Glowing Gold Islamic 8-Point Star (Rub El Hizb) -->
+    <path fill="#F59E0B" d="M54,16 L63,25 L75,21 L71,33 L83,37 L75,47 L83,57 L71,61 L75,73 L63,69 L54,78 L45,69 L33,73 L37,61 L25,57 L33,47 L25,37 L37,33 L33,21 L45,25 Z" />
+    <!-- Deep Emerald Inner Core -->
+    <path fill="#0D5C3A" d="M54,20 L61.5,27.5 L71.5,24.5 L68.5,34.5 L78.5,37.5 L71.5,47 L78.5,56.5 L68.5,59.5 L71.5,69.5 L61.5,66.5 L54,74 L46.5,66.5 L36.5,69.5 L39.5,59.5 L29.5,56.5 L36.5,47 L29.5,37.5 L39.5,34.5 L36.5,24.5 L46.5,27.5 Z" />
+    <!-- Parchment Open Quran Silhouette -->
+    <path fill="#FEF3C7" d="M34,40 C40,37 48,38 53,42 L53,60 C48,56 40,55 34,58 Z" />
+    <path fill="#FFFFFF" d="M74,40 C68,37 60,38 55,42 L55,60 C60,56 68,55 74,58 Z" />
+    <path fill="#F59E0B" d="M53,41 L55,41 L55,61 L53,61 Z" />
+    <path fill="#F59E0B" d="M54,30.5 C56.8,30.5 59.2,32.5 59.2,35.3 C56.4,34.5 54.8,32.5 54,30.5 Z" />
+</svg>

@@ -5,24 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تطبيق القرآن الكريم - Holy Quran App | تحميل مباشر للمصحف الشريف</title>
     
+    <!-- Favicon & Touch Icons -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/webp" href="app_logo.webp">
+    <link rel="apple-touch-icon" href="app_logo.webp">
+    <link rel="shortcut icon" href="favicon.svg">
+
     <!-- SEO & Social Meta Tags -->
     <meta name="description" content="تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة كاملة بالرسم العثماني، ختمات جماعية مباشرة، مواقيت الصلاة والأذان، الأذكار والتفاسير. صدقة جارية وبدون إعلانات.">
     <meta name="keywords" content="قرآن كريم, مصحف, مواقيت الصلاة, أذكار, ختمة جماعية, تطبيق أندرويد, Holy Quran App, APK">
-    <meta name="theme-color" content="#f4f8f5" id="metaThemeColor">
-    <link rel="icon" type="image/webp" href="app_logo.webp">
-    <link rel="apple-touch-icon" href="app_logo.webp">
+    <meta name="theme-color" content="#02120b" id="metaThemeColor">
 
-    <!-- Open Graph / Facebook / WhatsApp -->
+    <!-- Open Graph / WhatsApp / Facebook / Telegram -->
     <meta property="og:type" content="website">
+    <meta property="og:site_name" content="تطبيق القرآن الكريم">
     <meta property="og:title" content="تطبيق القرآن الكريم - Holy Quran App">
     <meta property="og:description" content="المصحف الشريف الكامل بالرسم العثماني، الختمات الجماعية، مواقيت الصلاة، والتفسير. صدقة جارية وبدون إعلانات نهائياً.">
-    <meta property="og:image" content="quran_hero.jpg">
+    <meta property="og:url" content="https://holy-quran-app-live.web.app/">
+    <meta property="og:image" content="https://holy-quran-app-live.web.app/app_logo.webp">
+    <meta property="og:image:secure_url" content="https://holy-quran-app-live.web.app/app_logo.webp">
+    <meta property="og:image:type" content="image/webp">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:image:alt" content="شعار تطبيق القرآن الكريم">
 
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="تطبيق القرآن الكريم - Holy Quran App">
     <meta name="twitter:description" content="تحميل مباشر للنسخة الرسمية من تطبيق القرآن الكريم الشامل لنظام أندرويد.">
-    <meta name="twitter:image" content="quran_hero.jpg">
+    <meta name="twitter:image" content="https://holy-quran-app-live.web.app/app_logo.webp">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -831,7 +842,7 @@
             <div class="live-counter-badge" id="liveCounterBadge">
                 <span class="live-pulse-dot"></span>
                 <span>إجمالي مرات التحميل المباشر:</span>
-                <span class="live-counter-number" id="liveCounterNumber">1,280 +</span>
+                <span class="live-counter-number" id="liveCounterNumber">0</span>
             </div>
 
             <h2 style="color: var(--gold-primary); font-size: 22px; margin-bottom: 8px;">تطبيق القرآن الكريم الشامل</h2>
@@ -1080,7 +1091,7 @@
         let db = null;
         let analytics = null;
         let counterDoc = null;
-        let currentDownloadCount = 1280;
+        let currentDownloadCount = 0;
 
         try {
             if (typeof firebase !== 'undefined') {
@@ -1093,15 +1104,24 @@
                 // Real-Time Live Download Counter Listener
                 counterDoc.onSnapshot((snapshot) => {
                     if (snapshot.exists && snapshot.data() && typeof snapshot.data().count === 'number') {
-                        currentDownloadCount = snapshot.data().count;
+                        let val = snapshot.data().count;
+                        if (val === 1280) {
+                            // Reset legacy dummy placeholder to 0
+                            val = 0;
+                            counterDoc.set({
+                                count: 0,
+                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+                            }, { merge: true }).catch(() => {});
+                        }
+                        currentDownloadCount = val;
                         renderCounterUI(currentDownloadCount);
                     } else {
-                        // First-time doc initialization with authentic baseline
+                        // First-time doc initialization with authentic zero baseline
                         counterDoc.set({
-                            count: 1280,
+                            count: 0,
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                         }, { merge: true }).catch(() => {});
-                        renderCounterUI(1280);
+                        renderCounterUI(0);
                     }
                 }, (err) => {
                     console.warn("Firestore snapshot error (using offline fallback):", err);
@@ -1121,7 +1141,8 @@
         function renderCounterUI(val) {
             const counterEl = document.getElementById('liveCounterNumber');
             if (counterEl) {
-                counterEl.innerText = Number(val).toLocaleString('ar-EG') + ' +';
+                const num = Number(val) || 0;
+                counterEl.innerText = num > 0 ? (num.toLocaleString('ar-EG') + ' +') : '0';
             }
         }
 
