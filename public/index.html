@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق القرآن الكريم - Holy Quran App | تحميل مباشر للمصحف الشريف</title>
+    
+    <!-- SEO & Social Meta Tags -->
+    <meta name="description" content="تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة كاملة بالرسم العثماني، ختمات جماعية مباشرة، مواقيت الصلاة والأذان، الأذكار والتفاسير. صدقة جارية وبدون إعلانات.">
+    <meta name="keywords" content="قرآن كريم, مصحف, مواقيت الصلاة, أذكار, ختمة جماعية, تطبيق أندرويد, Holy Quran App, APK">
+    <meta name="theme-color" content="#f4f8f5" id="metaThemeColor">
+    <link rel="icon" type="image/webp" href="app_logo.webp">
+    <link rel="apple-touch-icon" href="app_logo.webp">
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="تطبيق القرآن الكريم - Holy Quran App">
+    <meta property="og:description" content="المصحف الشريف الكامل بالرسم العثماني، الختمات الجماعية، مواقيت الصلاة، والتفسير. صدقة جارية وبدون إعلانات نهائياً.">
+    <meta property="og:image" content="quran_hero.jpg">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="تطبيق القرآن الكريم - Holy Quran App">
+    <meta name="twitter:description" content="تحميل مباشر للنسخة الرسمية من تطبيق القرآن الكريم الشامل لنظام أندرويد.">
+    <meta name="twitter:image" content="quran_hero.jpg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&family=Aref+Ruqaa:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        /* Base Dark Emerald Theme */
+        :root {
+            --bg-main: #02120b;
+            --bg-card: rgba(10, 46, 36, 0.82);
+            --bg-card-hover: rgba(15, 61, 48, 0.95);
+            --gold-primary: #ffd700;
+            --gold-light: #ffdf7a;
+            --gold-dark: #b8860b;
+            --emerald-glow: #00ff87;
+            --text-main: #ffffff;
+            --text-muted: #c2e2d7;
+            --border-gold: rgba(255, 215, 0, 0.35);
+            --border-glow: rgba(0, 255, 135, 0.25);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --btn-bg: linear-gradient(135deg, #ffd700, #daa520);
+            --btn-text: #02120b;
+            --calligraphy-shadow: rgba(0, 0, 0, 0.6);
+            --watermark-opacity: 0.07;
+        }
+
+        /* Light Theme Overrides */
+        body.theme-light {
+            --bg-main: #f4f8f5;
+            --bg-card: #ffffff;
+            --bg-card-hover: #eaf3ee;
+            --gold-primary: #0a4032;
+            --gold-light: #125e4b;
+            --gold-dark: #052920;
+            --emerald-glow: #00874e;
+            --text-main: #0f241d;
+            --text-muted: #2e5246;
+            --border-gold: rgba(10, 64, 50, 0.3);
+            --border-glow: rgba(10, 64, 50, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.08);
+            --btn-bg: linear-gradient(135deg, #0d4a3b, #072e24);
+            --btn-text: #ffffff;
+            --calligraphy-shadow: rgba(0, 0, 0, 0.15);
+            --watermark-opacity: 0.05;
+        }
+
+        /* Sepia Theme Overrides */
+        body.theme-sepia {
+            --bg-main: #f9f2e7;
+            --bg-card: #f1e4d3;
+            --bg-card-hover: #e7d5be;
+            --gold-primary: #7a4813;
+            --gold-light: #9e6224;
+            --gold-dark: #4a2d08;
+            --emerald-glow: #7a4813;
+            --text-main: #2b1a09;
+            --text-muted: #573f27;
+            --border-gold: rgba(122, 72, 19, 0.35);
+            --border-glow: rgba(122, 72, 19, 0.2);
+            --shadow-color: rgba(45, 30, 10, 0.12);
+            --btn-bg: linear-gradient(135deg, #7a4813, #57320b);
+            --btn-text: #fbf4e9;
+            --calligraphy-shadow: rgba(60, 35, 10, 0.15);
+            --watermark-opacity: 0.06;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: var(--bg-main);
+            background-image: radial-gradient(circle at 50% 20%, rgba(13, 92, 58, 0.28) 0%, rgba(2, 18, 11, 0.92) 80%),
+                              linear-gradient(to bottom, rgba(2, 18, 11, 0.85), rgba(2, 18, 11, 0.96)),
+                              url('quran_hero.jpg');
+            background-size: cover;
+            background-position: center top;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0;
+            overflow-x: hidden;
+            position: relative;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        body.theme-light {
+            background-image: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.7) 0%, rgba(244, 248, 245, 0.94) 80%),
+                              linear-gradient(to bottom, rgba(244, 248, 245, 0.88), rgba(244, 248, 245, 0.98)),
+                              url('quran_hero.jpg');
+        }
+
+        body.theme-sepia {
+            background-image: radial-gradient(circle at 50% 20%, rgba(249, 242, 231, 0.65) 0%, rgba(241, 228, 211, 0.94) 80%),
+                              linear-gradient(to bottom, rgba(249, 242, 231, 0.88), rgba(241, 228, 211, 0.97)),
+                              url('quran_hero.jpg');
+        }
+
+        /* Ambient Floating Image Watermark replacing text wording */
+        .bg-image-watermark {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: min(850px, 92vw);
+            max-width: 850px;
+            aspect-ratio: 16 / 9;
+            background: url('quran_hero.jpg') no-repeat center center;
+            background-size: contain;
+            opacity: var(--watermark-opacity);
+            pointer-events: none;
+            user-select: none;
+            z-index: 0;
+            filter: blur(0.5px);
+            mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 1) 35%, transparent 75%);
+            -webkit-mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 1) 35%, transparent 75%);
+            transition: opacity 0.3s ease;
+        }
+
+        body.theme-dark .bg-image-watermark {
+            opacity: 0.13;
+            filter: drop-shadow(0 0 45px rgba(0, 255, 135, 0.18));
+        }
+
+        body.theme-light .bg-image-watermark {
+            opacity: 0.08;
+            filter: grayscale(25%);
+        }
+
+        body.theme-sepia .bg-image-watermark {
+            opacity: 0.11;
+            filter: sepia(45%);
+        }
+
+        /* Grand Hero Artwork Presentation Card */
+        .hero-artwork-card {
+            width: 100%;
+            max-width: 680px;
+            margin: 10px auto 16px auto;
+            position: relative;
+            border-radius: 26px;
+            overflow: hidden;
+            box-shadow: 0 16px 45px var(--shadow-color), 0 0 35px var(--border-glow);
+            border: 1.5px solid var(--border-gold);
+            background: var(--bg-card);
+            backdrop-filter: blur(12px);
+            transition: transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+        }
+
+        .hero-artwork-card:hover {
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 22px 55px var(--shadow-color), 0 0 45px var(--border-gold);
+            border-color: var(--gold-primary);
+        }
+
+        .hero-artwork-img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: cover;
+            aspect-ratio: 16 / 9;
+        }
+
+        .hero-artwork-gloss {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(255, 215, 0, 0.06) 0%, transparent 40%, rgba(2, 18, 11, 0.45) 100%);
+            pointer-events: none;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 980px;
+            padding: 20px 18px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Theme Switcher Bar */
+        .theme-switcher-bar {
+            display: flex;
+            gap: 8px;
+            background: var(--bg-card);
+            padding: 6px;
+            border-radius: 30px;
+            border: 1px solid var(--border-gold);
+            margin-top: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px var(--shadow-color);
+            backdrop-filter: blur(8px);
+        }
+
+        .theme-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn.active {
+            background: var(--gold-primary);
+            color: var(--btn-text);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* High-Res Vector App Logo Emblem */
+        .app-logo-vector-box {
+            position: relative;
+            width: 130px;
+            height: 130px;
+            margin: 15px auto 18px auto;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%);
+            animation: logoPulse 4s infinite alternate ease-in-out;
+        }
+
+        @keyframes logoPulse {
+            0% { filter: drop-shadow(0 0 15px var(--border-gold)); }
+            100% { filter: drop-shadow(0 0 30px var(--border-glow)); }
+        }
+
+        .app-logo-svg {
+            width: 110px;
+            height: 110px;
+        }
+
+        /* Header & Calligraphy Banner */
+        .calligraphy-banner {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            width: 100%;
+        }
+
+        .quran-calligraphy-title {
+            font-family: 'Amiri Quran', 'Aref Ruqaa', 'Amiri', serif;
+            font-size: clamp(48px, 9vw, 76px);
+            font-weight: 700;
+            color: var(--gold-primary);
+            text-shadow: 0 4px 18px var(--calligraphy-shadow), 0 0 20px rgba(255, 215, 0, 0.35);
+            line-height: 1.25;
+            margin-bottom: 6px;
+            letter-spacing: 0.5px;
+        }
+
+        .app-sub-title {
+            font-size: 16px;
+            color: var(--text-muted);
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+
+        .app-version-badge {
+            display: inline-block;
+            background: rgba(255, 215, 0, 0.12);
+            border: 1px solid var(--border-gold);
+            color: var(--gold-primary);
+            padding: 6px 20px;
+            border-radius: 20px;
+            font-size: 13.5px;
+            font-weight: 700;
+            margin-top: 10px;
+            margin-bottom: 20px;
+        }
+
+        /* Action Cards */
+        .action-card {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-gold);
+            border-radius: 24px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 680px;
+            box-shadow: 0 15px 35px var(--shadow-color);
+            text-align: center;
+            margin-bottom: 30px;
+            backdrop-filter: blur(12px);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .download-btn-main {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            font-weight: 800;
+            padding: 18px 36px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-size: 19px;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.25);
+            transition: all 0.25s ease;
+            cursor: pointer;
+            border: none;
+            width: 100%;
+            max-width: 440px;
+            margin-top: 12px;
+        }
+
+        .download-btn-main:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .download-btn-main:active {
+            transform: translateY(1px) scale(0.97);
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .download-btn-main.downloading {
+            background: linear-gradient(135deg, #10b981, #047857) !important;
+            color: #ffffff !important;
+            animation: pulse-download 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-download {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .spinner-icon {
+            display: inline-block;
+            animation: spin-anim 1s linear infinite;
+        }
+
+        @keyframes spin-anim {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Secondary Action Buttons Row */
+        .secondary-actions-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 16px;
+            width: 100%;
+        }
+
+        .btn-secondary-action {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 215, 0, 0.08);
+            color: var(--gold-primary);
+            border: 1px solid var(--border-gold);
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-size: 13.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            font-family: 'Tajawal', sans-serif;
+            backdrop-filter: blur(6px);
+        }
+
+        .btn-secondary-action:hover {
+            background: rgba(255, 215, 0, 0.18);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px var(--shadow-color);
+            border-color: var(--gold-primary);
+        }
+
+        /* Trust Badges Grid */
+        .trust-badges-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 10px;
+            width: 100%;
+            margin-top: 22px;
+            padding-top: 18px;
+            border-top: 1px dashed var(--border-gold);
+        }
+
+        .trust-badge-item {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 8px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 215, 0, 0.15);
+        }
+
+        /* Modals (Installation Guide & QR Code) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.78);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1.5px solid var(--border-gold);
+            border-radius: 26px;
+            width: 100%;
+            max-width: 540px;
+            padding: 28px 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            position: relative;
+            transform: translateY(20px);
+            transition: transform 0.3s ease;
+            backdrop-filter: blur(16px);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal-box {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border-gold);
+        }
+
+        .modal-title {
+            color: var(--gold-primary);
+            font-size: 19px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .modal-close-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close-btn:hover {
+            background: rgba(255, 215, 0, 0.15);
+            color: var(--gold-primary);
+        }
+
+        /* Installation Guide Steps */
+        .guide-steps-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            text-align: right;
+        }
+
+        .guide-step {
+            display: flex;
+            gap: 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-gold);
+            border-radius: 16px;
+            padding: 14px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 16px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .step-content h4 {
+            color: var(--gold-primary);
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            color: var(--text-muted);
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .step-note-badge {
+            display: inline-block;
+            margin-top: 6px;
+            background: rgba(255, 215, 0, 0.12);
+            color: var(--gold-primary);
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        /* QR Code Modal Box */
+        .qr-card-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .qr-code-frame {
+            background: #ffffff;
+            padding: 14px;
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--gold-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-code-img {
+            width: 200px;
+            height: 200px;
+            display: block;
+        }
+
+        /* Toast feedback */
+        .toast-notification {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--gold-primary);
+            color: var(--btn-text);
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 14px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            z-index: 2000;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+
+        .toast-notification.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        /* Shared Khatma Dynamic Section */
+        .khatma-invitation-card {
+            display: none;
+            background: rgba(255, 215, 0, 0.08);
+            border: 2px dashed var(--gold-primary);
+            border-radius: 20px;
+            padding: 22px;
+            margin-bottom: 25px;
+            text-align: center;
+            width: 100%;
+            max-width: 680px;
+            backdrop-filter: blur(8px);
+        }
+
+        .khatma-invitation-card.active {
+            display: block;
+        }
+
+        .code-display-box {
+            background: var(--bg-main);
+            border: 1px solid var(--border-glow);
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 13.5px;
+            color: var(--gold-primary);
+            font-family: monospace;
+            word-break: break-all;
+            margin: 12px 0;
+            direction: ltr;
+        }
+
+        /* Full Features Grid */
+        .section-header {
+            color: var(--gold-primary);
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 22px;
+            text-align: center;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 18px;
+            width: 100%;
+            max-width: 940px;
+            margin-bottom: 40px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-gold);
+            border-radius: 20px;
+            padding: 22px;
+            text-align: right;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(8px);
+        }
+
+        .feature-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-3px);
+            border-color: var(--gold-primary);
+        }
+
+        .feature-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .feature-icon-badge {
+            font-size: 28px;
+            background: rgba(255, 215, 0, 0.1);
+            width: 50px;
+            height: 50px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border-gold);
+            flex-shrink: 0;
+        }
+
+        .feature-title {
+            color: var(--gold-primary);
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+        .feature-desc {
+            color: var(--text-muted);
+            font-size: 13.5px;
+            line-height: 1.6;
+        }
+
+        footer {
+            text-align: center;
+            padding: 25px 20px;
+            color: var(--text-muted);
+            font-size: 13.5px;
+            border-top: 1px solid var(--border-gold);
+            width: 100%;
+            margin-top: auto;
+            position: relative;
+            z-index: 1;
+            background: var(--bg-main);
+        }
+    </style>
+</head>
+<body class="theme-dark">
+
+    <!-- Ambient Floating Background Image Watermark -->
+    <div class="bg-image-watermark"></div>
+
+    <div class="container">
+
+        <!-- Theme Switcher Selector -->
+        <div class="theme-switcher-bar">
+            <button class="theme-btn active" id="btnThemeDark" onclick="setTheme('dark')">🌙 ليلي (Emerald)</button>
+            <button class="theme-btn" id="btnThemeLight" onclick="setTheme('light')">☀️ فاتح (Light)</button>
+            <button class="theme-btn" id="btnThemeSepia" onclick="setTheme('sepia')">📜 ورقي (Sepia)</button>
+        </div>
+
+        <!-- Grand Hero Artwork Showcase (Replaces old emblem & plain text banner) -->
+        <div class="hero-artwork-card">
+            <img src="quran_hero.jpg" alt="القرآن الكريم - The Holy Quran • Guidance for Humanity" class="hero-artwork-img" />
+            <div class="hero-artwork-gloss"></div>
+        </div>
+
+        <div class="app-version-badge">✨ الإصدار الحالي: v1.0.0 (Build 1) • صدقة جارية</div>
+
+        <!-- Dynamic Shared Khatma Invitation Card -->
+        <div class="khatma-invitation-card" id="khatmaCard">
+            <h3 style="color: var(--gold-primary); font-size: 20px; margin-bottom: 6px;">📖 دعوة ختمة قرآنية جماعية</h3>
+            <p style="color: var(--text-muted); font-size: 14px;">تمت دعوتك للمشاركة في قراءة القرآن وحجز الأجزاء مع التزامن المباشر.</p>
+            <div class="code-display-box" id="codeDisplay">جاري جلب كود الختمة...</div>
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button class="download-btn-main" style="font-size: 15px; padding: 12px 24px; max-width: 260px; margin-top: 8px;" onclick="openDeepLink()">فتح الختمة في التطبيق 📲</button>
+                <button class="btn-secondary-action" style="margin-top: 8px;" onclick="copyKhatmaCode()">نسخ كود الختمة 📋</button>
+            </div>
+        </div>
+
+        <!-- Main Direct APK Download Card -->
+        <div class="action-card">
+            <h2 style="color: var(--gold-primary); font-size: 22px; margin-bottom: 8px;">تطبيق القرآن الكريم الشامل</h2>
+            <p style="color: var(--text-muted); font-size: 14.5px; margin-bottom: 18px; line-height: 1.6;">
+                تحميل مباشر لأحدث نسخة رسمية من التطبيق بالرسم العثماني كامل، الختمات الجماعية، التفسير والأحاديث، ومواقيت الصلاة.
+            </p>
+            <a href="HolyQuran_v1.0.0.zip" download="HolyQuran_v1.0.0.zip" class="download-btn-main" id="mainDownloadBtn" onclick="handleDownloadClick(event, this)">
+                <span>تحميل التطبيق المباشر (APK / ZIP) v1.0.0</span>
+                <span>📲</span>
+            </a>
+
+            <!-- Secondary Actions: QR Scan & Install Guide -->
+            <div class="secondary-actions-row">
+                <button type="button" class="btn-secondary-action" onclick="openModal('qrModal')">
+                    <span>📱</span>
+                    <span>مسح كود QR للتحميل على الجوال</span>
+                </button>
+                <button type="button" class="btn-secondary-action" onclick="openModal('installModal')">
+                    <span>📋</span>
+                    <span>طريقة التثبيت على الهاتف</span>
+                </button>
+            </div>
+
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 14px;">
+                حجم الملف: 25.4 MB • الإصدار: v1.0.0 • يدعم أجهزة أندرويد (Android 7.0+)
+            </p>
+
+            <!-- Trust and Security Badges -->
+            <div class="trust-badges-container">
+                <div class="trust-badge-item">
+                    <span>🛡️</span>
+                    <span>آمن 100% ومفحوص</span>
+                </div>
+                <div class="trust-badge-item">
+                    <span>🚫</span>
+                    <span>بدون أي إعلانات نهائياً</span>
+                </div>
+                <div class="trust-badge-item">
+                    <span>⚡</span>
+                    <span>يعمل بالكامل بدون إنترنت</span>
+                </div>
+                <div class="trust-badge-item">
+                    <span>❤️</span>
+                    <span>صدقة جارية ومجاني</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comprehensive 12 Features Grid Header -->
+        <div class="section-header">جميع مميزات وإمكانيات التطبيق الشاملة</div>
+
+        <!-- Comprehensive 12 Features Grid -->
+        <div class="features-grid">
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">📖</div>
+                    <div class="feature-title">المصحف الشريف الكامل</div>
+                </div>
+                <div class="feature-desc">قراءة واضحة برواية حفص عن عاصم لجميع الصفحات الـ 604، مع تقسيم الأجزاء والسور والأحزاب والبحث الشامل الفوري.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">👥</div>
+                    <div class="feature-title">الختمة الجماعية المباشرة</div>
+                </div>
+                <div class="feature-desc">إنشاء ومشاركة الختمات وحجز الأجزاء مع الأصدقاء والتزامن السحابي المباشر عبر Firestore مع دعم العمل بدون إنترنت.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">🕌</div>
+                    <div class="feature-title">مواقيت الصلاة والأذان</div>
+                </div>
+                <div class="feature-desc">حساب دقيق لمواقيت الصلاة حسب الموقع الجغرافي أو التحديد اليدوي، اختيار أصوات الأذان وكتمه بأزرار الصوت.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">📊</div>
+                    <div class="feature-title">تتبع الصلاة والقراءة</div>
+                </div>
+                <div class="feature-desc">جدول يومي لتسجيل الصلوات الخمس ومتابعة نسبة الالتزام اليومية والأسبوعية والشهرية مع إحصائيات القراءة.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">📿</div>
+                    <div class="feature-title">الأذكار وحصن المسلم</div>
+                </div>
+                <div class="feature-desc">أذكار الصباح والمساء، أذكار الصلاة والنوم مع التنبيهات التلقائية المخصصة لحفظ الوراد اليومي.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">✨</div>
+                    <div class="feature-title">المسابحة الإلكترونية الذكية</div>
+                </div>
+                <div class="feature-desc">مسابحة تفاعلية بالأصوات والاهتزاز وحفظ مجموع التسبيحات مع تحديد أهداف الذكر اليومية.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">📚</div>
+                    <div class="feature-title">التفسير وأسباب النزول</div>
+                </div>
+                <div class="feature-desc">تفسير السعدي والتفسير الميسر وأسباب النزول لكل آية، بالإضافة للترجمة الإنجليزية المقارنة.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">📜</div>
+                    <div class="feature-title">موسوعة الأحاديث النبوية</div>
+                </div>
+                <div class="feature-desc">500 حديث شريف صحيح مصنفة ومبوبة في 25 موضوعاً وباباً علمياً للتعلم والمشاركة.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">🧭</div>
+                    <div class="feature-title">بوصلة اتجاه القبلة</div>
+                </div>
+                <div class="feature-desc">تحديد دقيق لاتجاه الكعبة المشرفة وموقع القبلة ببوصلة تفاعلية دقيقة من أي مكان في العالم.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">🎧</div>
+                    <div class="feature-title">الاستماع لكبار القراء</div>
+                </div>
+                <div class="feature-desc">استماع صوتي نقي لأشهر القراء (العفاسي، الحصري، عبد الباسط، الشريم، العجمي) مع التحكم بالسرعة والتكرار.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">📱</div>
+                    <div class="feature-title">ودجت الشاشة الرئيسية</div>
+                </div>
+                <div class="feature-desc">عناصر ودجت تفاعلية لمواقيت الصلاة التالية، تتبع الصلوات، والآية اليومية مباشرة على الشاشة الرئيسية.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">💾</div>
+                    <div class="feature-title">النسخ والاسترجاع الاحتياطي</div>
+                </div>
+                <div class="feature-desc">تصدير واستيراد جميع البيانات والعلامات المرجعية والإعدادات بسهولة للنسخ الاحتياطي بأي وقت.</div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Installation Guide Modal -->
+    <div class="modal-overlay" id="installModal" onclick="handleBackdropClick(event, 'installModal')">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📋</span>
+                    <span>طريقة تثبيت التطبيق على هاتفك</span>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal('installModal')" aria-label="إغلاق">&times;</button>
+            </div>
+            <div class="guide-steps-list">
+                <div class="guide-step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>تنزيل ملف الـ APK</h4>
+                        <p>اضغط على زر التحميل المباشر. قد يُظهر متصفحك تنبيهاً روتينياً مثل <em>"قد يكون هذا الملف ضاراً"</em> لأن التنزيل يتم من خارج متجر Play.</p>
+                        <span class="step-note-badge">👈 اضغط: "تنزيل على أي حال" (Download anyway)</span>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>السماح بتثبيت التطبيقات</h4>
+                        <p>عند فتح الملف بعد اكتمال التحميل، إذا ظهر لك تنبيه أمني من أندرويد يطلب إذناً لتثبيت التطبيقات غير المعروفة من المتصفح:</p>
+                        <span class="step-note-badge">👈 اضغط: "الإعدادات" ثم فعّل "السماح من هذا المصدر"</span>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>التثبيت والبدء</h4>
+                        <p>اضغط على زر <strong>"تثبيت" (Install)</strong>، وسيتم تثبيت التطبيق فوراً ليصبح جاهزاً للعمل بدون إنترنت وبدون أي إعلانات.</p>
+                        <span class="step-note-badge">✨ مبارك عليك المصحف الشريف كاملاً</span>
+                    </div>
+                </div>
+            </div>
+            <button class="download-btn-main" style="width: 100%; margin-top: 20px; font-size: 16px; padding: 14px;" onclick="closeModal('installModal'); document.getElementById('mainDownloadBtn').click();">
+                بدء التنزيل الآن 📥
+            </button>
+        </div>
+    </div>
+
+    <!-- QR Code Scan Modal -->
+    <div class="modal-overlay" id="qrModal" onclick="handleBackdropClick(event, 'qrModal')">
+        <div class="modal-box" style="max-width: 420px;">
+            <div class="modal-header">
+                <div class="modal-title">
+                    <span>📱</span>
+                    <span>مسح الكود للتحميل على الجوال</span>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal('qrModal')" aria-label="إغلاق">&times;</button>
+            </div>
+            <div class="qr-card-content">
+                <p style="color: var(--text-muted); font-size: 13.5px; line-height: 1.5;">
+                    وجّه كاميرا هاتفك نحو الرمز أدناه للتحميل المباشر للتطبيق على هاتفك فوراً:
+                </p>
+                <div class="qr-code-frame">
+                    <img id="qrCodeImage" class="qr-code-img" src="" alt="QR Code for App Download" />
+                </div>
+                <div style="width: 100%; display: flex; flex-direction: column; gap: 8px;">
+                    <button class="btn-secondary-action" style="width: 100%; justify-content: center;" onclick="copyPageLink()">
+                        <span>🔗</span>
+                        <span>نسخ رابط الصفحة للمشاركة</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Toast Notification -->
+    <div class="toast-notification" id="toastMessage">تم النسخ بنجاح!</div>
+
+    <footer>
+        تطبيق القرآن الكريم • نسألكم الدعاء لي ولوالدي وأهل بيتي ❤️
+    </footer>
+
+    <script>
+        // Dynamic Theme Switcher Handler
+        function setTheme(themeName) {
+            document.body.className = '';
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            const metaTheme = document.getElementById('metaThemeColor');
+
+            if (themeName === 'light') {
+                document.body.classList.add('theme-light');
+                document.getElementById('btnThemeLight').classList.add('active');
+                if (metaTheme) metaTheme.setAttribute('content', '#f4f8f5');
+            } else if (themeName === 'sepia') {
+                document.body.classList.add('theme-sepia');
+                document.getElementById('btnThemeSepia').classList.add('active');
+                if (metaTheme) metaTheme.setAttribute('content', '#f9f2e7');
+            } else {
+                document.body.classList.add('theme-dark');
+                document.getElementById('btnThemeDark').classList.add('active');
+                if (metaTheme) metaTheme.setAttribute('content', '#02120b');
+            }
+        }
+
+        // Modal Controls
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                if (modalId === 'qrModal') {
+                    renderQrCode();
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function handleBackdropClick(event, modalId) {
+            if (event.target.id === modalId) {
+                closeModal(modalId);
+            }
+        }
+
+        // Close on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal('installModal');
+                closeModal('qrModal');
+            }
+        });
+
+        // Toast Feedback System
+        function showToast(message) {
+            const toast = document.getElementById('toastMessage');
+            if (toast) {
+                toast.innerText = message;
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                }, 2800);
+            }
+        }
+
+        // QR Code Generation
+        function renderQrCode() {
+            const qrImg = document.getElementById('qrCodeImage');
+            if (qrImg) {
+                const targetUrl = window.location.href;
+                qrImg.src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(targetUrl);
+            }
+        }
+
+        function copyPageLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showToast("تم نسخ رابط التطبيق بنجاح! 📋");
+            }).catch(() => {
+                showToast("تعذر النسخ تلقائياً");
+            });
+        }
+
+        function handleDownloadClick(event, btn) {
+            if (!btn) return;
+            showToast("بدأ تنزيل التطبيق (APK) الآن! تفقد شريط التنزيلات بمتصفحك 📥");
+
+            btn.classList.add('downloading');
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-icon">⏳</span> <span>جاري بدء التنزيل...</span>';
+
+            setTimeout(() => {
+                btn.classList.remove('downloading');
+                btn.innerHTML = '<span>تم إرسال الملف! تفقد الإشعارات 📥</span> <span>✅</span>';
+                setTimeout(() => {
+                    btn.innerHTML = originalContent;
+                }, 4000);
+            }, 2000);
+        }
+
+        // Shared Khatma Link Handler
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeParam = urlParams.get('code') || urlParams.get('data') || '';
+
+        if (codeParam) {
+            document.getElementById('khatmaCard').classList.add('active');
+            document.getElementById('codeDisplay').innerText = codeParam;
+        }
+
+        function copyKhatmaCode() {
+            if (codeParam) {
+                navigator.clipboard.writeText(codeParam).then(() => {
+                    showToast("تم نسخ كود الختمة بنجاح! 📋");
+                }).catch(() => {
+                    showToast("تعذر نسخ الكود تلقائياً");
+                });
+            }
+        }
+
+        function openDeepLink() {
+            if (codeParam) {
+                copyKhatmaCode();
+                showToast("جاري فتح الختمة في التطبيق... 📲");
+
+                const cleanCode = encodeURIComponent(codeParam);
+                const intentUrl = "intent://holy-quran-app-live.web.app/?code=" + cleanCode + "#Intent;scheme=https;package=com.aistudio.holyquran.app;S.browser_fallback_url=" + encodeURIComponent(window.location.href) + ";end;";
+
+                const isAndroid = /Android/i.test(navigator.userAgent);
+                if (isAndroid) {
+                    window.location.href = intentUrl;
+                } else {
+                    showToast("للانضمام التلقائي، افتح الرابط على هاتف أندرويد 📲");
+                }
+            }
+        }
+    </script>
+</body>
+</html>
