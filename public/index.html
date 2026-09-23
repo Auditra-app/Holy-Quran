@@ -97,11 +97,10 @@
         body {
             font-family: 'Tajawal', sans-serif;
             background-color: var(--bg-main);
-            background-image: radial-gradient(circle at 50% 20%, rgba(13, 92, 58, 0.28) 0%, rgba(2, 18, 11, 0.92) 80%),
-                              linear-gradient(to bottom, rgba(2, 18, 11, 0.85), rgba(2, 18, 11, 0.96)),
+            background-image: linear-gradient(180deg, rgba(2, 18, 11, 0.72) 0%, rgba(2, 18, 11, 0.88) 100%),
                               url('quran_hero.jpg');
             background-size: cover;
-            background-position: center top;
+            background-position: center center;
             background-attachment: fixed;
             background-repeat: no-repeat;
             color: var(--text-main);
@@ -116,51 +115,44 @@
         }
 
         body.theme-light {
-            background-image: radial-gradient(circle at 50% 20%, rgba(255, 255, 255, 0.7) 0%, rgba(244, 248, 245, 0.94) 80%),
-                              linear-gradient(to bottom, rgba(244, 248, 245, 0.88), rgba(244, 248, 245, 0.98)),
+            background-image: linear-gradient(180deg, rgba(244, 248, 245, 0.82) 0%, rgba(244, 248, 245, 0.93) 100%),
                               url('quran_hero.jpg');
         }
 
         body.theme-sepia {
-            background-image: radial-gradient(circle at 50% 20%, rgba(249, 242, 231, 0.65) 0%, rgba(241, 228, 211, 0.94) 80%),
-                              linear-gradient(to bottom, rgba(249, 242, 231, 0.88), rgba(241, 228, 211, 0.97)),
+            background-image: linear-gradient(180deg, rgba(249, 242, 231, 0.82) 0%, rgba(241, 228, 211, 0.93) 100%),
                               url('quran_hero.jpg');
         }
 
-        /* Ambient Floating Image Watermark replacing text wording */
+        /* Ambient Fullscreen Background Image Layer fitting and filling entire viewport */
         .bg-image-watermark {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: min(850px, 92vw);
-            max-width: 850px;
-            aspect-ratio: 16 / 9;
+            inset: 0;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             background: url('quran_hero.jpg') no-repeat center center;
-            background-size: contain;
-            opacity: var(--watermark-opacity);
+            background-size: cover;
             pointer-events: none;
             user-select: none;
             z-index: 0;
-            filter: blur(0.5px);
-            mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 1) 35%, transparent 75%);
-            -webkit-mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 1) 35%, transparent 75%);
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, filter 0.3s ease;
         }
 
         body.theme-dark .bg-image-watermark {
-            opacity: 0.13;
-            filter: drop-shadow(0 0 45px rgba(0, 255, 135, 0.18));
+            opacity: 0.22;
+            filter: brightness(0.95) contrast(1.15);
         }
 
         body.theme-light .bg-image-watermark {
-            opacity: 0.08;
-            filter: grayscale(25%);
+            opacity: 0.12;
+            filter: brightness(1.05) contrast(0.95);
         }
 
         body.theme-sepia .bg-image-watermark {
-            opacity: 0.11;
-            filter: sepia(45%);
+            opacity: 0.15;
+            filter: sepia(45%) contrast(1.05);
         }
 
         /* Grand Hero Artwork Presentation Card */
