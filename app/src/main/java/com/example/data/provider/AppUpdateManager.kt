@@ -255,6 +255,7 @@ object AppUpdateManager {
                     setAllowedOverRoaming(true)
                 }
                 pendingDownloadId = downloadManager.enqueue(request)
+                incrementDownloadCount()
                 Toast.makeText(context, "بدأ تنزيل التحديث في الخلفية 📥 تفقد شريط الإشعارات", Toast.LENGTH_LONG).show()
                 return
             }
@@ -273,5 +274,48 @@ object AppUpdateManager {
             Log.e(TAG, "Failed to start browser download intent", e)
             Toast.makeText(context, "تعذر فتح رابط التنزيل المباشر", Toast.LENGTH_SHORT).show()
         }
+    }
+
+    private fun incrementDownloadCount() {
+        Thread {
+            try {
+                val url = java.net.URL("https://firestore.googleapis.com/v1/projects/holy-quran-app-live/databases/(default)/documents:commit?key=AIzaSyAkUKpq947M8UmFULf4qH6UUwBhH0BiDS0")
+                val connection = url.openConnection() as java.net.HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.connectTimeout = 4000
+                connection.readTimeout = 4000
+                connection.doOutput = true
+
+                val payload = """
+                    {
+                      "writes": [
+                        {
+                          "transform": {
+                            "document": "projects/holy-quran-app-live/databases/(default)/documents/stats/downloads",
+                            "fieldTransforms": [
+                              {
+                                "fieldPath": "count",
+                                "increment": { "integerValue": "1" }
+                              },
+                              {
+                                "fieldPath": "lastUpdated",
+                                "setToServerValue": "REQUEST_TIME"
+                              }
+                            ]
+                          }
+                        }
+                      ]
+                    }
+                """.trimIndent()
+
+                connection.outputStream.use { os ->
+                    os.write(payload.toByteArray(Charsets.UTF_8))
+                }
+                connection.responseCode
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to increment download counter", e)
+            }
+        }.start()
     }
 }

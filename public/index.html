@@ -823,7 +823,7 @@
             <div class="hero-artwork-gloss"></div>
         </div>
 
-        <div class="app-version-badge">✨ الإصدار الحالي: v1.0.1 (Build 2) • صدقة جارية</div>
+        <div class="app-version-badge">✨ الإصدار الحالي: v1.1.0 (Build 3) • صدقة جارية</div>
 
         <!-- Dynamic Shared Khatma Invitation Card -->
         <div class="khatma-invitation-card" id="khatmaCard">
@@ -849,8 +849,8 @@
             <p style="color: var(--text-muted); font-size: 14.5px; margin-bottom: 18px; line-height: 1.6;">
                 تحميل مباشر لأحدث نسخة رسمية من التطبيق بالرسم العثماني كامل، الختمات الجماعية، التفسير والأحاديث، ومواقيت الصلاة.
             </p>
-            <a href="HolyQuran_v1.0.1.data" download="HolyQuran_v1.0.1.apk" class="download-btn-main" id="mainDownloadBtn" onclick="handleDownloadClick(event, this)">
-                <span>تحميل التطبيق المباشر (APK) v1.0.1</span>
+            <a href="HolyQuran_v1.1.0.data" download="HolyQuran_v1.1.0.apk" class="download-btn-main" id="mainDownloadBtn" onclick="handleDownloadClick(event, this)">
+                <span>تحميل التطبيق المباشر (APK) v1.1.0</span>
                 <span>📲</span>
             </a>
 
@@ -867,7 +867,7 @@
             </div>
 
             <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 14px;">
-                حجم الملف: 63.0 MB • الإصدار: v1.0.1 • يدعم أجهزة أندرويد (Android 7.0+)
+                حجم الملف: 63.0 MB • الإصدار: v1.1.0 • يدعم أجهزة أندرويد (Android 7.0+)
             </p>
 
             <!-- Trust and Security Badges -->
@@ -1093,6 +1093,22 @@
         let counterDoc = null;
         let currentDownloadCount = 0;
 
+        function fetchLiveCountDirect() {
+            fetch("https://firestore.googleapis.com/v1/projects/holy-quran-app-live/databases/(default)/documents/stats/downloads?key=AIzaSyAkUKpq947M8UmFULf4qH6UUwBhH0BiDS0")
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.fields && data.fields.count) {
+                        const val = parseInt(data.fields.count.integerValue || data.fields.count.doubleValue || 0, 10);
+                        if (!isNaN(val) && val > 0) {
+                            currentDownloadCount = val;
+                            renderCounterUI(currentDownloadCount);
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+        fetchLiveCountDirect();
+
         try {
             if (typeof firebase !== 'undefined') {
                 if (!firebase.apps.length) {
@@ -1106,7 +1122,6 @@
                     if (snapshot.exists && snapshot.data() && typeof snapshot.data().count === 'number') {
                         let val = snapshot.data().count;
                         if (val === 1280) {
-                            // Reset legacy dummy placeholder to 0
                             val = 0;
                             counterDoc.set({
                                 count: 0,
@@ -1116,16 +1131,15 @@
                         currentDownloadCount = val;
                         renderCounterUI(currentDownloadCount);
                     } else {
-                        // First-time doc initialization with authentic zero baseline
                         counterDoc.set({
-                            count: 0,
+                            count: currentDownloadCount || 0,
                             lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
                         }, { merge: true }).catch(() => {});
-                        renderCounterUI(0);
+                        renderCounterUI(currentDownloadCount || 0);
                     }
                 }, (err) => {
-                    console.warn("Firestore snapshot error (using offline fallback):", err);
-                    renderCounterUI(currentDownloadCount);
+                    console.warn("Firestore snapshot notice:", err);
+                    fetchLiveCountDirect();
                 });
 
                 if (typeof firebase.analytics === 'function') {
@@ -1135,7 +1149,7 @@
             }
         } catch (e) {
             console.warn("Firebase initialization notice:", e);
-            renderCounterUI(currentDownloadCount);
+            fetchLiveCountDirect();
         }
 
         function renderCounterUI(val) {
@@ -1239,6 +1253,41 @@
             });
         }
 
+        function incrementViaRest() {
+            const payload = {
+                writes: [
+                    {
+                        transform: {
+                            document: "projects/holy-quran-app-live/databases/(default)/documents/stats/downloads",
+                            fieldTransforms: [
+                                {
+                                    fieldPath: "count",
+                                    increment: { integerValue: "1" }
+                                },
+                                {
+                                    fieldPath: "lastUpdated",
+                                    setToServerValue: "REQUEST_TIME"
+                                }
+                            ]
+                        }
+                    }
+                ]
+            };
+            fetch("https://firestore.googleapis.com/v1/projects/holy-quran-app-live/databases/(default)/documents:commit?key=AIzaSyAkUKpq947M8UmFULf4qH6UUwBhH0BiDS0", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            }).then(r => r.json()).then(data => {
+                if (data && data.writeResults && data.writeResults[0] && data.writeResults[0].transformResults) {
+                    const newCount = parseInt(data.writeResults[0].transformResults[0].integerValue, 10);
+                    if (!isNaN(newCount)) {
+                        currentDownloadCount = newCount;
+                        renderCounterUI(currentDownloadCount);
+                    }
+                }
+            }).catch(() => {});
+        }
+
         function handleDownloadClick(event, btn) {
             if (!btn) return;
             showToast("بدأ تنزيل التطبيق (APK) الآن! تفقد شريط التنزيلات بمتصفحك 📥");
@@ -1247,30 +1296,28 @@
             if (analytics) {
                 try {
                     analytics.logEvent('app_download', {
-                        file_name: 'HolyQuran_v1.0.1.apk',
-                        version: '1.0.1',
+                        file_name: 'HolyQuran_v1.1.0.apk',
+                        version: '1.2.0',
                         source: 'landing_page_direct_btn'
                     });
                 } catch (e) {}
             }
 
-            // 2. Real-time Firestore Atomic Increment (with per-session debounce guard)
-            const sessionKey = 'khatma_download_counted_v101';
-            if (!sessionStorage.getItem(sessionKey)) {
-                sessionStorage.setItem(sessionKey, 'true');
+            // 2. Real-time Firestore Atomic Increment
+            currentDownloadCount++;
+            renderCounterUI(currentDownloadCount);
+
+            try {
                 if (counterDoc) {
                     counterDoc.update({
                         count: firebase.firestore.FieldValue.increment(1),
                         lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                    }).catch(() => {
-                        counterDoc.set({
-                            count: firebase.firestore.FieldValue.increment(1),
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        }, { merge: true }).catch(() => {});
-                    });
+                    }).catch(() => incrementViaRest());
+                } else {
+                    incrementViaRest();
                 }
-                currentDownloadCount++;
-                renderCounterUI(currentDownloadCount);
+            } catch (e) {
+                incrementViaRest();
             }
 
             btn.classList.add('downloading');
@@ -1313,13 +1360,15 @@
                 if (analytics) try { analytics.logEvent('khatma_open_app'); } catch(e){}
 
                 const cleanCode = encodeURIComponent(codeParam);
-                const intentUrl = "intent://holy-quran-app-live.web.app/?code=" + cleanCode + "#Intent;scheme=https;package=com.aistudio.holyquran.app;S.browser_fallback_url=" + encodeURIComponent(window.location.href) + ";end;";
+                const apkDownloadUrl = "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data";
+                const intentUrl = "intent://holy-quran-app-live.web.app/?code=" + cleanCode + "#Intent;scheme=https;package=com.holyquran.app;S.browser_fallback_url=" + encodeURIComponent(apkDownloadUrl) + ";end;";
 
                 const isAndroid = /Android/i.test(navigator.userAgent);
                 if (isAndroid) {
                     window.location.href = intentUrl;
                 } else {
                     showToast("للانضمام التلقائي، افتح الرابط على هاتف أندرويد 📲");
+                    window.location.href = apkDownloadUrl;
                 }
             }
         }
