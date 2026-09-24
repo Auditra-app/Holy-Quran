@@ -14,6 +14,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -217,6 +218,14 @@ fun QuranReaderScreen(
     var isImmersiveReading by remember { mutableStateOf(true) }
     var mushafPageScale by rememberSaveable { mutableFloatStateOf(1.05f) }
 
+    androidx.activity.compose.BackHandler(enabled = true) {
+        if (!isImmersiveReading) {
+            isImmersiveReading = true
+        } else {
+            onBack()
+        }
+    }
+
     val pagerState = rememberPagerState(
         initialPage = (currentPage - 1).coerceIn(0, 603),
         pageCount = { 604 }
@@ -230,7 +239,17 @@ fun QuranReaderScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        com.example.util.AnalyticsHelper.logScreenView("QuranReaderScreen")
+    }
+
     LaunchedEffect(currentPage) {
+        val surahInfo = QuranDataProvider.getSurahByPage(currentPage)
+        com.example.util.AnalyticsHelper.logQuranReading(
+            surahNumber = surahInfo?.id ?: 1,
+            surahName = surahInfo?.nameArabic ?: "الفاتحة",
+            pageNumber = currentPage
+        )
         if (pagerState.currentPage != currentPage - 1) {
             val pageDiff = kotlin.math.abs(pagerState.currentPage - (currentPage - 1))
             if (pageDiff <= 1) {
@@ -3580,8 +3599,8 @@ fun GoldenMushafPageView(
     // Night font mode: "WHITE" (default for dark theme: crisp white font), "SEPIA" (warm golden sepia font), "ORIGINAL" (original paper)
     var nightFontColorMode by remember { mutableStateOf("WHITE") }
 
-    // Default zoomed view (1.05f) as requested: full width comfortable reading without manual zoom needed
-    val effectiveScale = 1.05f
+    // Enlarged comfortable reading scale (1.14f) for enhanced script visibility, clarity, and relaxing reading experience
+    val effectiveScale = 1.14f
 
     val imageUrl = remember(pageNum) { QuranPageFetcher.getPageImageUrl(pageNum) }
     val surahOnPage = remember(pageNum) { QuranDataProvider.getSurahByPage(pageNum) }
@@ -3613,8 +3632,7 @@ fun GoldenMushafPageView(
 
     val isDarkParchment = isDarkMode && nightFontColorMode != "ORIGINAL"
 
-    // Animated padding between standard mode and full screen mode for smooth visual transition
-    // A subtle right margin is explicitly preserved (5.dp) so that on physical devices the text and ornate border do not touch the screen edge.
+    // Original golden mushaf canvas padding
     val animatedStartPadding by androidx.compose.animation.core.animateDpAsState(
         targetValue = if (isImmersive) 2.dp else 4.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
@@ -3810,7 +3828,7 @@ fun GoldenMushafPageView(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .fillMaxWidth()
-                    .padding(top = 8.dp, start = 12.dp, end = 12.dp)
+                    .padding(top = 6.dp, start = 8.dp, end = 8.dp)
             ) {
                 Surface(
                     shape = RoundedCornerShape(22.dp),
@@ -3822,25 +3840,26 @@ fun GoldenMushafPageView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 10.dp, vertical = 6.dp),
+                            .padding(horizontal = 8.dp, vertical = 5.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Bookmark & Juz & Page Number Group
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            modifier = Modifier.weight(1f, fill = false)
                         ) {
                             // Interactive Bookmark Button
                             IconButton(
                                 onClick = onToggleBookmark,
-                                modifier = Modifier.size(32.dp)
+                                modifier = Modifier.size(30.dp)
                             ) {
                                 Icon(
                                     imageVector = if (isBookmarked) Icons.Filled.Bookmark else Icons.Outlined.BookmarkBorder,
                                     contentDescription = "Bookmark",
                                     tint = if (isBookmarked) IslamicGold else (if (isDarkMode) Color.LightGray else Color.Gray),
-                                    modifier = Modifier.size(20.dp)
+                                    modifier = Modifier.size(19.dp)
                                 )
                             }
 
@@ -3858,7 +3877,7 @@ fun GoldenMushafPageView(
                                         fontWeight = FontWeight.Bold
                                     ),
                                     color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF92400E),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                                 )
                             }
 
@@ -3873,14 +3892,14 @@ fun GoldenMushafPageView(
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp),
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.SwapHoriz,
                                         contentDescription = "Quick Jump",
                                         tint = if (isDarkMode) Color(0xFF34D399) else Color(0xFF065F46),
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(13.dp)
                                     )
                                     Text(
                                         text = if (isArabic) "صفحة ${toArabicDigits(pageNum)}" else "Page $pageNum",
@@ -3898,12 +3917,12 @@ fun GoldenMushafPageView(
                         // Surah Name, Dark Mode & Exit Fullscreen Button Group
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
-                            // Surah title
+                            // Surah title (Auto-compact on small screens)
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(10.dp))
                                     .clickable { onOpenSurahPicker() }
@@ -3913,16 +3932,19 @@ fun GoldenMushafPageView(
                                     text = if (isArabic) "سورة ${surahOnPage.nameArabic}" else surahOnPage.nameEnglish,
                                     style = TextStyle(
                                         fontFamily = TajawalFontFamily,
-                                        fontSize = 12.sp,
+                                        fontSize = 11.5.sp,
                                         fontWeight = FontWeight.Bold
                                     ),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.widthIn(max = 85.dp),
                                     color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF1B5E55)
                                 )
                                 Icon(
                                     imageVector = Icons.Default.ArrowDropDown,
                                     contentDescription = null,
                                     tint = IslamicGold,
-                                    modifier = Modifier.size(16.dp)
+                                    modifier = Modifier.size(15.dp)
                                 )
                             }
 
@@ -3932,7 +3954,7 @@ fun GoldenMushafPageView(
                                 color = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2D6C3).copy(alpha = 0.8f),
                                 border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.7f)),
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(30.dp)
                                     .clickable { onToggleDarkMode() }
                                     .testTag("fullscreen_dark_mode_btn")
                             ) {
@@ -3941,12 +3963,12 @@ fun GoldenMushafPageView(
                                         imageVector = if (isDarkMode) Icons.Default.LightMode else Icons.Default.DarkMode,
                                         contentDescription = if (isDarkMode) "Switch to Light Mode" else "Switch to Dark Mode",
                                         tint = if (isDarkMode) IslamicGold else Color(0xFF1B5E55),
-                                        modifier = Modifier.size(17.dp)
+                                        modifier = Modifier.size(16.dp)
                                     )
                                 }
                             }
 
-                            // Exit Fullscreen Button
+                            // Original Elegant Exit Fullscreen Button (Guaranteed Visible on All Screens)
                             Surface(
                                 shape = RoundedCornerShape(16.dp),
                                 color = if (isDarkMode) Color(0xFF334155) else Color(0xFFE2D6C3).copy(alpha = 0.8f),
@@ -3956,21 +3978,21 @@ fun GoldenMushafPageView(
                                     .testTag("fullscreen_exit_btn")
                             ) {
                                 Row(
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 5.dp),
+                                    modifier = Modifier.padding(horizontal = 7.dp, vertical = 4.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(3.dp)
                                 ) {
                                     Icon(
                                         imageVector = Icons.Default.FullscreenExit,
                                         contentDescription = "Exit Fullscreen",
                                         tint = if (isDarkMode) IslamicGold else Color(0xFF1B5E55),
-                                        modifier = Modifier.size(18.dp)
+                                        modifier = Modifier.size(17.dp)
                                     )
                                     Icon(
                                         imageVector = Icons.Default.Close,
                                         contentDescription = "Exit Fullscreen",
                                         tint = if (isDarkMode) Color.White else Color(0xFF1B5E55),
-                                        modifier = Modifier.size(14.dp)
+                                        modifier = Modifier.size(13.dp)
                                     )
                                 }
                             }

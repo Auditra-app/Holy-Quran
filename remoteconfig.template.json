@@ -2,13 +2,13 @@
   "parameters": {
     "latest_version_code": {
       "defaultValue": {
-        "value": "4"
+        "value": "5"
       },
       "description": "Latest published app version code"
     },
     "latest_version_name": {
       "defaultValue": {
-        "value": "1.2.0"
+        "value": "1.2.1"
       },
       "description": "Latest published version string"
     },
@@ -26,7 +26,7 @@
     },
     "update_notes": {
       "defaultValue": {
-        "value": "تحديث جديد v1.2.0: تحسينات متقدمة في سرعة التصفح، تحديث مباشر للأذكار ومواقيت الصلاة، وإصلاحات عامة في الأداء."
+        "value": "تحديث جديد v1.2.1: استعادة التصميم الأصلي الأنيق لصفحة المصحف وضمان ظهور زر إنهاء ملء الشاشة لجميع أحجام الشاشات بدقة عالية."
       },
       "description": "Release notes shown in update dialog"
     }
