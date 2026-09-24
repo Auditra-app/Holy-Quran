@@ -1,34 +1,34 @@
 {
-  "parameters": {
-    "latest_version_code": {
-      "defaultValue": {
-        "value": "8"
-      },
-      "description": "Latest published app version code"
-    },
-    "latest_version_name": {
-      "defaultValue": {
-        "value": "1.2.4"
-      },
-      "description": "Latest published version string"
-    },
-    "apk_download_url": {
-      "defaultValue": {
-        "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data"
-      },
-      "description": "Direct download link for APK update"
-    },
-    "force_update": {
-      "defaultValue": {
-        "value": "false"
-      },
-      "description": "Whether update is mandatory"
-    },
-    "update_notes": {
-      "defaultValue": {
-        "value": "ØªØ­Ø¯ÙŠØ« Ø¬Ø¯ÙŠØ¯ v1.2.4: ØªØ­Ø³ÙŠÙ† Ø´Ø§Ù…Ù„ Ù„Ù…Ø¹Ø§Ù†ÙŠ Ø§Ù„ÙƒÙ„Ù…Ø§Øª Ø¨Ø§Ù„Ù„ØºØ© Ø§Ù„Ø¹Ø±Ø¨ÙŠØ© Ù„ÙƒÙ„ ÙƒÙ„Ù…Ø© Ø¨Ø¯Ù‚Ø© ÙˆØªÙØµÙŠÙ„ ÙˆØªÙØ³ÙŠØ± Ù„ØºÙˆÙŠ Ø®Ø§Øµ."
-      },
-      "description": "Release notes shown in update dialog"
-    }
-  }
+    "parameters":  {
+                       "latest_version_code":  {
+                                                   "defaultValue":  {
+                                                                        "value":  "8"
+                                                                    },
+                                                   "description":  "Latest published app version code"
+                                               },
+                       "latest_version_name":  {
+                                                   "defaultValue":  {
+                                                                        "value":  "1.2.4"
+                                                                    },
+                                                   "description":  "Latest published version string"
+                                               },
+                       "apk_download_url":  {
+                                                "defaultValue":  {
+                                                                     "value":  "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data"
+                                                                 },
+                                                "description":  "Direct download link for APK update"
+                                            },
+                       "force_update":  {
+                                            "defaultValue":  {
+                                                                 "value":  "false"
+                                                             },
+                                            "description":  "Whether update is mandatory"
+                                        },
+                       "update_notes":  {
+                                            "defaultValue":  {
+                                                                 "value":  "ÊÍÏíË v1.2.4: ÊÍÓíä ÔÇãá áãÚÇäí ÇáßáãÇÊ ÈÇááÛÉ ÇáÚÑÈíÉ áßá ßáãÉ ÈÏŞÉ æÊİÕíá æÊİÓíÑ áÛæí ÎÇÕ."
+                                                             },
+                                            "description":  "Release notes shown in update dialog"
+                                        }
+                   }
 }
