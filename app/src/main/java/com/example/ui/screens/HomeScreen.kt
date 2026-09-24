@@ -75,7 +75,7 @@ fun HomeScreen(
     val userSettings by viewModel.userSettings.collectAsState()
     val readingProgress by viewModel.readingProgress.collectAsState()
     val readingHistory by viewModel.readingHistory.collectAsState()
-    val isArabic = userSettings.languageCode == "ar"
+    val isArabic = (userSettings.languageCode.ifBlank { "ar" }).startsWith("ar", ignoreCase = true)
 
     val todayPagesRead = remember(readingHistory) {
         val todayStart = java.util.Calendar.getInstance().apply {
@@ -1534,7 +1534,7 @@ fun HomeScreen(
                             color = MaterialTheme.colorScheme.primary
                         )
                         Text(
-                            text = updateInfo.updateNotes,
+                            text = updateInfo.getLocalizedNotes(isArabic),
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Text(

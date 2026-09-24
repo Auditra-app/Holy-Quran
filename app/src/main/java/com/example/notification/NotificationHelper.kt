@@ -85,7 +85,7 @@ object NotificationHelper {
             // 3. Daily Verse Channel
             val dailyVerseChannel = NotificationChannel(
                 CHANNEL_DAILY_VERSE,
-                "آية اليوم والتذكير اليومي (Daily Verse Alerts)",
+                "آية اليوم والتذكير اليومي المبارك",
                 NotificationManager.IMPORTANCE_HIGH
             ).apply {
                 description = "إشعارات يومية مباركة بآيات القرآن الكريم وتفسيرها"

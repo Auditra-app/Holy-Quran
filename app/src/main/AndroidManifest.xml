@@ -136,6 +136,7 @@
 
         <receiver
             android:name="com.example.widget.PrayerTimesWidgetProvider"
+            android:label="@string/widget_prayer_times_name"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -149,6 +150,7 @@
 
         <receiver
             android:name="com.example.widget.PrayerTrackerWidgetProvider"
+            android:label="@string/widget_prayer_tracker_name"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -163,6 +165,7 @@
 
         <receiver
             android:name="com.example.widget.DailyVerseWidgetProvider"
+            android:label="@string/widget_daily_verse_name"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -176,6 +179,7 @@
 
         <receiver
             android:name="com.example.widget.ReadingStatsWidgetProvider"
+            android:label="@string/widget_reading_stats_name"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -189,6 +193,7 @@
 
         <receiver
             android:name="com.example.widget.AzkarWidgetProvider"
+            android:label="@string/widget_azkar_name"
             android:enabled="true"
             android:exported="true">
             <intent-filter>

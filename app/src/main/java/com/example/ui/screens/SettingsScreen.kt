@@ -2018,7 +2018,7 @@ fun SettingsScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = info.updateNotes,
+                        text = info.getLocalizedNotes(isArabic),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(

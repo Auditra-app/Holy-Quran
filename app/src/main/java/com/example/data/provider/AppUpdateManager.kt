@@ -28,8 +28,18 @@ data class AppUpdateInfo(
     val apkDownloadUrl: String,
     val forceUpdate: Boolean,
     val updateNotes: String,
+    val updateNotesAr: String = updateNotes,
+    val updateNotesEn: String = updateNotes,
     val isUpdateAvailable: Boolean
-)
+) {
+    fun getLocalizedNotes(isArabic: Boolean): String {
+        return if (isArabic) {
+            updateNotesAr.ifBlank { updateNotes }
+        } else {
+            updateNotesEn.ifBlank { updateNotes }
+        }
+    }
+}
 
 object AppUpdateManager {
 
@@ -40,6 +50,8 @@ object AppUpdateManager {
     private const val KEY_APK_DOWNLOAD_URL = "apk_download_url"
     private const val KEY_FORCE_UPDATE = "force_update"
     private const val KEY_UPDATE_NOTES = "update_notes"
+    private const val KEY_UPDATE_NOTES_AR = "update_notes_ar"
+    private const val KEY_UPDATE_NOTES_EN = "update_notes_en"
 
     private const val STATIC_VERSION_JSON_URL = "https://holy-quran-app-live.web.app/version.json"
     private const val DEFAULT_APK_URL = "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data"
@@ -134,13 +146,15 @@ object AppUpdateManager {
                 connection.requestMethod = "GET"
 
                 if (connection.responseCode == 200) {
-                    val jsonText = connection.inputStream.bufferedReader().use { it.readText() }
+                    val jsonText = connection.inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
                     val json = JSONObject(jsonText)
                     val remoteCode = json.optLong("latest_version_code", 4L)
                     val remoteName = json.optString("latest_version_name", "1.2.0")
                     val downloadUrl = json.optString("apk_download_url", DEFAULT_APK_URL)
                     val isForce = json.optBoolean("force_update", false)
                     val notes = json.optString("update_notes", DEFAULT_UPDATE_NOTES)
+                    val notesAr = json.optString("update_notes_ar", "").ifBlank { notes }
+                    val notesEn = json.optString("update_notes_en", "").ifBlank { notes }
 
                     val currentCode = BuildConfig.VERSION_CODE.toLong()
                     val isAvailable = remoteCode > currentCode
@@ -151,6 +165,8 @@ object AppUpdateManager {
                         apkDownloadUrl = downloadUrl,
                         forceUpdate = isForce,
                         updateNotes = notes,
+                        updateNotesAr = notesAr,
+                        updateNotesEn = notesEn,
                         isUpdateAvailable = isAvailable
                     )
                     Handler(Looper.getMainLooper()).post { onResult(info) }
@@ -203,6 +219,8 @@ object AppUpdateManager {
                         val downloadUrl = config.getString(KEY_APK_DOWNLOAD_URL).ifBlank { config.getString("apkDownloadUrl") }
                         val isForce = config.getBoolean(KEY_FORCE_UPDATE) || config.getBoolean("forceUpdate")
                         val notes = config.getString(KEY_UPDATE_NOTES).ifBlank { config.getString("updateNotes") }
+                        val notesAr = config.getString(KEY_UPDATE_NOTES_AR).ifBlank { notes }
+                        val notesEn = config.getString(KEY_UPDATE_NOTES_EN).ifBlank { notes }
 
                         val isAvailable = remoteCode > currentVersionCode
                         val info = AppUpdateInfo(
@@ -211,6 +229,8 @@ object AppUpdateManager {
                             apkDownloadUrl = downloadUrl.ifBlank { DEFAULT_APK_URL },
                             forceUpdate = isForce,
                             updateNotes = notes.ifBlank { DEFAULT_UPDATE_NOTES },
+                            updateNotesAr = notesAr.ifBlank { DEFAULT_UPDATE_NOTES },
+                            updateNotesEn = notesEn.ifBlank { DEFAULT_UPDATE_NOTES },
                             isUpdateAvailable = isAvailable
                         )
                         respondOnce(info)

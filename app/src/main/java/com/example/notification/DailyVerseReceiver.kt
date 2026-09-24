@@ -30,7 +30,7 @@ class DailyVerseReceiver : BroadcastReceiver() {
                     val slotIndex = intent.getIntExtra("slot_index", 0)
                     val dailyVerse = QuranDataProvider.getNotificationVerseForSlot(slotIndex)
 
-                    val isArabic = settings?.languageCode == "ar"
+                    val isArabic = (settings?.languageCode ?: "ar").startsWith("ar", ignoreCase = true)
                     val referenceText = if (isArabic) {
                         "سورة ${dailyVerse.surahNameArabic} - آية ${dailyVerse.verseNumber}"
                     } else {

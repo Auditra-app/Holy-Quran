@@ -59,7 +59,7 @@ fun DailyVerseScreen(
     val context = LocalContext.current
     val dailyVerse = viewModel.dailyVerse
     val userSettings by viewModel.userSettings.collectAsState()
-    val isArabic = userSettings.languageCode == "ar"
+    val isArabic = (userSettings.languageCode.ifBlank { "ar" }).startsWith("ar", ignoreCase = true)
 
     // Recitation & Audio State
     val isPlayingAudio by viewModel.isPlayingAudio.collectAsState()
@@ -584,7 +584,7 @@ private fun HeroVerseCard(
                                 modifier = Modifier.size(16.dp)
                             )
                             Text(
-                                text = "سورة ${dailyVerse.surahNameArabic}",
+                                text = if (isArabic) "سورة ${dailyVerse.surahNameArabic}" else "Surah ${dailyVerse.surahNameEnglish.ifBlank { dailyVerse.surahNameArabic }}",
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.White

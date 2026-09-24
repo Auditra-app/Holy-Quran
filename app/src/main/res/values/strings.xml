@@ -1,5 +1,10 @@
 <resources>
     <string name="app_name">Holy Quran</string>
+    <string name="widget_daily_verse_name">آية اليوم</string>
+    <string name="widget_prayer_times_name">مواقيت الصلاة</string>
+    <string name="widget_prayer_tracker_name">متابع الصلوات</string>
+    <string name="widget_reading_stats_name">إحصائيات القراءة</string>
+    <string name="widget_azkar_name">أذكار وأدعية</string>
     <string name="widget_prayer_times_description">مواقيت الصلاة والعد التنازلي للأذان القادم</string>
     <string name="widget_daily_verse_description">آية اليوم وتفسيرها القرآني</string>
     <string name="widget_reading_stats_description">إحصائيات القراءة والورد اليومي والسلسلة</string>

@@ -47,27 +47,10 @@ $buildGradleUpdated = $buildGradle -replace 'versionCode\s*=\s*\d+', "versionCod
 $buildGradleUpdated = $buildGradleUpdated -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$VersionName`""
 Set-Content -Path "$rootDir\app\build.gradle.kts" -Value $buildGradleUpdated -NoNewline
 
-# 3. Synchronize public/version.json
-$versionJsonPath = "$rootDir\public\version.json"
-$versionJson = Get-Content $versionJsonPath -Raw | ConvertFrom-Json
-$versionJson.latest_version_code = $VersionCode
-$versionJson.latest_version_name = $VersionName
-if (-not [string]::IsNullOrWhiteSpace($UpdateNotes)) {
-    $versionJson.update_notes = $UpdateNotes
-}
-$versionJson | ConvertTo-Json -Depth 4 | Set-Content -Path $versionJsonPath -NoNewline
-Write-Host "[2/6] Synchronized public/version.json" -ForegroundColor Green
-
-# 4. Synchronize remoteconfig.template.json
-$remoteConfigPath = "$rootDir\remoteconfig.template.json"
-$remoteConfig = Get-Content $remoteConfigPath -Raw | ConvertFrom-Json
-$remoteConfig.parameters.latest_version_code.defaultValue.value = "$VersionCode"
-$remoteConfig.parameters.latest_version_name.defaultValue.value = "$VersionName"
-if (-not [string]::IsNullOrWhiteSpace($UpdateNotes)) {
-    $remoteConfig.parameters.update_notes.defaultValue.value = $UpdateNotes
-}
-$remoteConfig | ConvertTo-Json -Depth 6 | Set-Content -Path $remoteConfigPath -NoNewline
-Write-Host "[3/6] Synchronized remoteconfig.template.json" -ForegroundColor Green
+# 3. Synchronize public/version.json & remoteconfig.template.json via Node (guaranteed pure UTF-8 without corruption)
+$notesToUse = if (-not [string]::IsNullOrWhiteSpace($UpdateNotes)) { $UpdateNotes } else { "تحديث v$VersionName: تحسينات شاملة في الأداء والسرعة وتحديث واجهة التطبيق." }
+node "$rootDir\scripts\sync_release_json.js" $VersionCode "$VersionName" "$notesToUse"
+Write-Host "[2/6] Synchronized public/version.json and remoteconfig.template.json (UTF-8)" -ForegroundColor Green
 
 # 5. Build APK via Gradle
 Write-Host "[4/6] Compiling APK (:app:assembleDebug)..." -ForegroundColor Yellow

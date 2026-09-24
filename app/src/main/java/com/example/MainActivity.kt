@@ -308,7 +308,7 @@ fun HolyQuranApp(
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = updateInfo.updateNotes,
+                                text = updateInfo.getLocalizedNotes(userSettings.languageCode.startsWith("ar", ignoreCase = true)),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(

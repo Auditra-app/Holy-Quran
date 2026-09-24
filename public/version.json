@@ -1,7 +1,9 @@
 {
-    "latest_version_code":  8,
-    "latest_version_name":  "1.2.4",
-    "apk_download_url":  "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data",
-    "force_update":  false,
-    "update_notes":  "����� v1.2.4: ����� ���� ������ ������� ������ ������� ��� ���� ���� ������ ������ ���� ���."
+    "latest_version_code": 8,
+    "latest_version_name": "1.2.4",
+    "apk_download_url": "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data",
+    "force_update": false,
+    "update_notes": "تحديث v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص.",
+    "update_notes_ar": "تحديث v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص.",
+    "update_notes_en": "Update v1.2.4: Comprehensive word-by-word meanings in Arabic with accurate linguistic definitions and tafsir enrichment."
 }
