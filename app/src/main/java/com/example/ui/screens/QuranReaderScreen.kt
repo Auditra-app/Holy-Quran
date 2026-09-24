@@ -3632,7 +3632,7 @@ fun GoldenMushafPageView(
 
     val isDarkParchment = isDarkMode && nightFontColorMode != "ORIGINAL"
 
-    // Original golden mushaf canvas padding with balanced side margins to ensure text is never clipped
+    // Original golden mushaf canvas padding: in immersive mode it perfectly frames the page between the top and bottom bars
     val animatedStartPadding by androidx.compose.animation.core.animateDpAsState(
         targetValue = if (isImmersive) 6.dp else 10.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
@@ -3644,12 +3644,12 @@ fun GoldenMushafPageView(
         label = "endPadding"
     )
     val animatedTopPadding by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isImmersive) 2.dp else 8.dp,
+        targetValue = if (isImmersive) 50.dp else 8.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "topPadding"
     )
     val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isImmersive) 2.dp else 4.dp,
+        targetValue = if (isImmersive) (if (isFullscreenControlsExpanded) 56.dp else 12.dp) else 4.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "bottomPadding"
     )
@@ -3751,7 +3751,7 @@ fun GoldenMushafPageView(
                         else -> null
                     }
                 } else null,
-                contentScale = ContentScale.Fit,
+                contentScale = if (isImmersive) ContentScale.FillBounds else ContentScale.Fit,
                 contentDescription = "Mushaf Page $pageNum",
                 loading = {
                     Box(

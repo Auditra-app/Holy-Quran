@@ -2,13 +2,13 @@
   "parameters": {
     "latest_version_code": {
       "defaultValue": {
-        "value": "6"
+        "value": "7"
       },
       "description": "Latest published app version code"
     },
     "latest_version_name": {
       "defaultValue": {
-        "value": "1.2.2"
+        "value": "1.2.3"
       },
       "description": "Latest published version string"
     },
@@ -26,7 +26,7 @@
     },
     "update_notes": {
       "defaultValue": {
-        "value": "تحديث جديد v1.2.2: ضبط الهوامش الجانبية لصفحات المصحف الشريف بدقة لمنع اقتطاع الآيات على كافة الشاشات، وتحسين عداد التنزيلات المباشر."
+        "value": "تحديث جديد v1.2.3: ملء صفحة المصحف للمساحة الكاملة في وضع ملء الشاشة بدقة وتناسق تام دون فراغات زائدة."
       },
       "description": "Release notes shown in update dialog"
     }
