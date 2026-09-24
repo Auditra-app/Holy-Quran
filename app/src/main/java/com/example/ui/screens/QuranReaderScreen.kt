@@ -1474,6 +1474,9 @@ fun QuranReaderScreen(
         val meaning = remember(word, verse) {
             QuranDataProvider.lookupWordMeaning(word, verse)
         }
+        var liveWordMeaningState by remember(word, verse) {
+            mutableStateOf(meaning)
+        }
 
         val liveWordItemState = remember(word, verse) {
             mutableStateOf<QuranWordItem?>(null)
@@ -1494,6 +1497,12 @@ fun QuranReaderScreen(
                     liveWordItemState.value = m
                 }
                 isWordFetching = false
+            }
+
+            // Ensure contextual Jalalayn word definitions are enriched if not yet in cache
+            if (TafsirProvider.getExactCachedTafsir(verse.surahId, verse.verseNumber, "jalalayn") == null) {
+                TafsirProvider.fetchAyahTafsirLive(verse.surahId, verse.verseNumber, "jalalayn")
+                liveWordMeaningState = QuranDataProvider.lookupWordMeaning(word, verse)
             }
         }
 
@@ -1652,12 +1661,13 @@ fun QuranReaderScreen(
                             )
                         }
                     } else {
-                        val arMeaning = meaning.arabicMeaning.ifBlank {
-                            "لفظ قرآني كريم في سياق سورة ${verse.surahNameArabic} (الآية ${verse.verseNumber})."
+                        val currentMeaning = liveWordMeaningState
+                        val arMeaning = currentMeaning.arabicMeaning.ifBlank {
+                            "لفظ قرآني كريم في سياق الآية الكريمة."
                         }
-                        val rootVal = meaning.rootWord.ifBlank { if (isArabic) "---" else "N/A" }
+                        val rootVal = currentMeaning.rootWord.ifBlank { if (isArabic) "---" else "N/A" }
                         val currentWordItem = liveWordItemState.value
-                        val engVal = if (currentWordItem != null && currentWordItem.translationEn.isNotBlank()) currentWordItem.translationEn else meaning.englishMeaning
+                        val engVal = if (currentWordItem != null && currentWordItem.translationEn.isNotBlank()) currentWordItem.translationEn else currentMeaning.englishMeaning
 
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -3155,11 +3165,13 @@ fun InteractiveVerseCard(
                                             ),
                                             color = EmeraldPrimary
                                         )
+                                        Spacer(modifier = Modifier.width(10.dp))
                                         Text(
                                             text = if (isArabic) wordMeaning.arabicMeaning else wordMeaning.englishMeaning.ifBlank { wordMeaning.arabicMeaning },
                                             style = MaterialTheme.typography.bodySmall.copy(fontFamily = TajawalFontFamily),
                                             color = MaterialTheme.colorScheme.onSurface,
-                                            maxLines = 2,
+                                            modifier = Modifier.weight(1f),
+                                            maxLines = 3,
                                             overflow = TextOverflow.Ellipsis
                                         )
                                     }

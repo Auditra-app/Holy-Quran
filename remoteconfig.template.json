@@ -2,13 +2,13 @@
   "parameters": {
     "latest_version_code": {
       "defaultValue": {
-        "value": "7"
+        "value": "8"
       },
       "description": "Latest published app version code"
     },
     "latest_version_name": {
       "defaultValue": {
-        "value": "1.2.3"
+        "value": "1.2.4"
       },
       "description": "Latest published version string"
     },
@@ -26,7 +26,7 @@
     },
     "update_notes": {
       "defaultValue": {
-        "value": "تحديث جديد v1.2.3: ملء صفحة المصحف للمساحة الكاملة في وضع ملء الشاشة بدقة وتناسق تام دون فراغات زائدة."
+        "value": "تحديث جديد v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص."
       },
       "description": "Release notes shown in update dialog"
     }

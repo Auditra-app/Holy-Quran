@@ -68,6 +68,7 @@ object QuranPageFetcher {
 
                 val englishTranslationsMap = fetchEnglishTranslationsForPage(page)
                 val tafsirMap = fetchTafsirMapForPage(page)
+                val jalalaynMap = fetchJalalaynMapForPage(page)
 
                 for (i in 0 until ayahs.length()) {
                     val ayahObj = ayahs.getJSONObject(i)
@@ -174,6 +175,50 @@ object QuranPageFetcher {
                         val key = surahId * 10000 + verseNum
                         resultMap[key] = tafsirText
                         TafsirProvider.cacheTafsir(surahId, verseNum, "muyassar", tafsirText)
+                    }
+                }
+                resultMap
+            } else {
+                emptyMap()
+            }
+        } catch (e: Throwable) {
+            emptyMap()
+        }
+    }
+
+    private fun fetchJalalaynMapForPage(page: Int): Map<Int, String> {
+        return try {
+            val url = URL("https://api.alquran.cloud/v1/page/$page/ar.jalalayn")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.requestMethod = "GET"
+            conn.connectTimeout = 4000
+            conn.readTimeout = 4000
+
+            if (conn.responseCode == 200) {
+                val stream = conn.inputStream
+                val reader = BufferedReader(InputStreamReader(stream))
+                val sb = StringBuilder()
+                var line: String?
+                while (reader.readLine().also { line = it } != null) {
+                    sb.append(line)
+                }
+                reader.close()
+
+                val json = JSONObject(sb.toString())
+                val data = json.getJSONObject("data")
+                val ayahs = data.getJSONArray("ayahs")
+                val resultMap = mutableMapOf<Int, String>()
+
+                for (i in 0 until ayahs.length()) {
+                    val item = ayahs.getJSONObject(i)
+                    val surahObj = item.getJSONObject("surah")
+                    val surahId = surahObj.getInt("number")
+                    val verseNum = item.getInt("numberInSurah")
+                    val tafsirText = item.optString("text", "").trim()
+                    if (tafsirText.isNotBlank()) {
+                        val key = surahId * 10000 + verseNum
+                        resultMap[key] = tafsirText
+                        TafsirProvider.cacheTafsir(surahId, verseNum, "jalalayn", tafsirText)
                     }
                 }
                 resultMap

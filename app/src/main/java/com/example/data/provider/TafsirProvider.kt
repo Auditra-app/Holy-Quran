@@ -97,6 +97,10 @@ object TafsirProvider {
         return tafsirCache[key] ?: tafsirCache["${surahNumber}_${verseNumber}_muyassar"]
     }
 
+    fun getExactCachedTafsir(surahNumber: Int, verseNumber: Int, bookId: String): String? {
+        return tafsirCache["${surahNumber}_${verseNumber}_${bookId}"]
+    }
+
     fun getApiEdition(bookId: String): String {
         return when (bookId) {
             "muyassar" -> "ar.muyassar"
