@@ -14,6 +14,10 @@ import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 object PrayerNotificationScheduler {
 
     private const val TAG = "PrayerNotificationSched"
@@ -36,10 +40,11 @@ object PrayerNotificationScheduler {
         context: Context,
         prayerTimesToday: List<PrayerTime>? = null
     ) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        CoroutineScope(Dispatchers.IO).launch {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return@launch
 
-        // Cancel previous pending intents to prevent duplicates
-        cancelPrayerNotifications(context)
+            // Cancel previous pending intents to prevent duplicates
+            cancelPrayerNotifications(context)
 
         val loc = LocationHelper.getSavedLocationAndSettings(context)
         val nowMs = System.currentTimeMillis()
@@ -132,6 +137,7 @@ object PrayerNotificationScheduler {
 
         // Schedule interactive follow-up reminders ("Have you prayed?") for tracked prayers
         PrayerFollowUpScheduler.scheduleFollowUpNotifications(context)
+        }
     }
 
     fun parseTimeToHourAndMinute(timeStr: String): Pair<Int, Int>? {

@@ -12,6 +12,8 @@ import androidx.activity.enableEdgeToEdge
 import com.example.notification.AzanPlaybackService
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +38,8 @@ data class NavTarget(
     val azkarCategory: String = "morning",
     val azkarQuickRead: Boolean = false,
     val prayerName: String? = null,
-    val readerPage: Int? = null
+    val readerPage: Int? = null,
+    val khatmaCode: String? = null
 )
 
 class MainActivity : ComponentActivity() {
@@ -49,6 +52,15 @@ class MainActivity : ComponentActivity() {
 
     private fun parseNavTarget(intent: android.content.Intent?): NavTarget? {
         if (intent == null) return null
+        val uriData = intent.data
+        val host = uriData?.host
+        val isAppHost = host == "holy-quran-app-live.web.app" || host == "quranapp.link" || uriData?.scheme == "holyquran"
+        val khatmaCodeParam = uriData?.getQueryParameter("code") ?: uriData?.getQueryParameter("data")
+
+        val appLinkRoute = if (isAppHost && (!khatmaCodeParam.isNullOrBlank() || uriData?.path == "/khatma" || uriData?.path == "/")) {
+            "group_khatma"
+        } else null
+
         val actionRoute = when (intent.action) {
             "com.example.ACTION_NAVIGATE_PRAYER_TIMES" -> "prayer_times"
             "com.example.ACTION_NAVIGATE_PRAYER_TRACKER" -> "prayer_tracker"
@@ -75,6 +87,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val route = intent.getStringExtra("navigate_to")
+            ?: appLinkRoute
             ?: actionRoute
             ?: uriRoute
         if (route.isNullOrBlank()) return null
@@ -108,13 +121,16 @@ class MainActivity : ComponentActivity() {
         val readerPage = intent.getIntExtra("reader_page", -1).takeIf { it > 0 }
             ?: intent.data?.getQueryParameter("page")?.toIntOrNull()
 
+        val khatmaCode = khatmaCodeParam ?: intent.getStringExtra("khatma_code")
+
         return NavTarget(
             eventId = System.currentTimeMillis(),
             route = route,
             azkarCategory = azkarCategory,
             azkarQuickRead = azkarQuickRead,
             prayerName = prayerName,
-            readerPage = readerPage
+            readerPage = readerPage,
+            khatmaCode = khatmaCode
         )
     }
 
@@ -241,20 +257,89 @@ class MainActivity : ComponentActivity() {
 fun HolyQuranApp(
     navTarget: NavTarget? = null
 ) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val viewModel: QuranViewModel = viewModel()
     val userSettings by viewModel.userSettings.collectAsState()
 
     var currentAzkarCategory by remember { mutableStateOf(navTarget?.azkarCategory ?: "morning") }
     var currentAzkarQuickRead by remember { mutableStateOf(navTarget?.azkarQuickRead ?: false) }
+    var pendingUpdateInfo by remember { mutableStateOf<com.example.data.provider.AppUpdateInfo?>(null) }
 
     LaunchedEffect(Unit) {
-        Log.d("HolyQuranApp", " Composition Root: HolyQuranApp mounted. Initializing navigation graph...")
+        Log.d("HolyQuranApp", " Composition Root: HolyQuranApp mounted. Checking for remote updates...")
+        com.example.data.provider.AppUpdateManager.checkForUpdate { updateInfo ->
+            if (updateInfo != null && updateInfo.isUpdateAvailable) {
+                pendingUpdateInfo = updateInfo
+            }
+        }
     }
 
     HolyQuranTheme(themeMode = userSettings.effectiveThemeMode()) {
         val layoutDirection = if (userSettings.languageCode == "ar") LayoutDirection.Rtl else LayoutDirection.Ltr
         CompositionLocalProvider(LocalLayoutDirection provides layoutDirection) {
             val navController = rememberNavController()
+
+            pendingUpdateInfo?.let { updateInfo ->
+                AlertDialog(
+                    onDismissRequest = {
+                        if (!updateInfo.forceUpdate) {
+                            pendingUpdateInfo = null
+                        }
+                    },
+                    icon = {
+                        Icon(
+                            imageVector = androidx.compose.material.icons.Icons.Default.Refresh,
+                            contentDescription = null,
+                            tint = com.example.ui.theme.EmeraldPrimary
+                        )
+                    },
+                    title = {
+                        Text(
+                            text = if (userSettings.languageCode == "ar") "يتوفر تحديث جديد لـ تطبيق القرآن الكريم 🚀" else "New App Update Available 🚀",
+                            fontFamily = com.example.ui.theme.TajawalFontFamily,
+                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                        )
+                    },
+                    text = {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = if (userSettings.languageCode == "ar") "الإصدار الحالي: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nالإصدار الجديد: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})" else "Current: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nNew: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})",
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Text(
+                                text = updateInfo.updateNotes,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = if (userSettings.languageCode == "ar") "اضغط على زر 'تحديث الآن' لتنزيل وتثبيت التحديث مباشرة." else "Click 'Update Now' to download and install directly.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    },
+                    confirmButton = {
+                        Button(
+                            onClick = {
+                                com.example.data.provider.AppUpdateManager.startApkDownload(context, updateInfo.apkDownloadUrl)
+                                if (!updateInfo.forceUpdate) {
+                                    pendingUpdateInfo = null
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = com.example.ui.theme.EmeraldPrimary)
+                        ) {
+                            Text(if (userSettings.languageCode == "ar") "تحديث الآن 🚀" else "Update Now 🚀")
+                        }
+                    },
+                    dismissButton = {
+                        if (!updateInfo.forceUpdate) {
+                            TextButton(onClick = { pendingUpdateInfo = null }) {
+                                Text(if (userSettings.languageCode == "ar") "تذكيري لاحقاً" else "Remind Later")
+                            }
+                        }
+                    }
+                )
+            }
 
             LaunchedEffect(navTarget?.eventId) {
                 val target = navTarget ?: return@LaunchedEffect
@@ -534,6 +619,7 @@ fun HolyQuranApp(
                     val currentLang = if (userSettings.languageCode == "ar") AppLanguage.ARABIC else AppLanguage.ENGLISH
                     GroupKhatmaScreen(
                         currentLanguage = currentLang,
+                        initialKhatmaCode = navTarget?.khatmaCode,
                         onNavigateBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
                         },

@@ -77,6 +77,10 @@ fun PrayerTrackerScreen(
             ?: weeklySummaries.firstOrNull()
     }
 
+    LaunchedEffect(Unit) {
+        com.example.util.AnalyticsHelper.logScreenView("PrayerTrackerScreen")
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -802,6 +806,8 @@ fun PrayerTrackerScreen(
                                         timeFormatted = timing,
                                         isArabic = isArabic,
                                         onToggle = {
+                                            val newDone = !prayerItem.isCompleted
+                                            com.example.util.AnalyticsHelper.logPrayerTracker(prayerItem.type.nameArabic, newDone)
                                             viewModel.togglePrayerStatus(
                                                 dateString = selectedDate,
                                                 prayerKey = prayerItem.type.key,

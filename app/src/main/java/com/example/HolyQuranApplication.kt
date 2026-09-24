@@ -53,8 +53,9 @@ class HolyQuranApplication : Application(), ImageLoaderFactory {
             defaultHandler?.uncaughtException(thread, throwable)
         }
 
-        // 2. Pre-initialize notification channels on the main thread
+        // 2. Pre-initialize Analytics Helper and Notification channels
         try {
+            com.example.util.AnalyticsHelper.initialize(this)
             Log.d(TAG, " HolyQuranApplication.onCreate: Setting up notification channels...")
             NotificationHelper.createNotificationChannels(this)
             Log.d(TAG, " HolyQuranApplication.onCreate: Notification channels created successfully.")

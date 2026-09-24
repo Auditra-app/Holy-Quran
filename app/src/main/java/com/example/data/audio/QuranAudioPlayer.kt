@@ -1,16 +1,29 @@
 package com.example.data.audio
 
 import android.content.Context
-import android.media.AudioAttributes
-import android.media.AudioManager
-import android.media.MediaPlayer
-import android.media.PlaybackParams
-import android.os.Build
 import android.speech.tts.TextToSpeech
 import android.util.Log
+import androidx.annotation.OptIn
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.MediaSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.io.File
 import java.util.Locale
 
 enum class AyahRepeatMode(val labelAr: String, val labelEn: String, val repeatTimes: Int) {
@@ -20,11 +33,32 @@ enum class AyahRepeatMode(val labelAr: String, val labelEn: String, val repeatTi
     LOOP("مستمر 🔁", "Loop 🔁", -1)
 }
 
+@OptIn(UnstableApi::class)
 class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListener {
 
-    private val TAG = "QuranAudioPlayer"
+    companion object {
+        private const val TAG = "QuranAudioPlayer"
+        private const val MAX_CACHE_SIZE = 200 * 1024 * 1024L // 200MB limit
 
-    private var mediaPlayer: MediaPlayer? = null
+        @Volatile
+        private var simpleCache: SimpleCache? = null
+
+        @Synchronized
+        private fun getSimpleCache(context: Context): SimpleCache {
+            return simpleCache ?: run {
+                val cacheDir = File(context.cacheDir, "quran_audio_cache")
+                if (!cacheDir.exists()) {
+                    cacheDir.mkdirs()
+                }
+                val evictor = LeastRecentlyUsedCacheEvictor(MAX_CACHE_SIZE)
+                val databaseProvider = StandaloneDatabaseProvider(context.applicationContext)
+                SimpleCache(cacheDir, evictor, databaseProvider).also { simpleCache = it }
+            }
+        }
+    }
+
+    private var exoPlayer: ExoPlayer? = null
+    private var mediaSession: MediaSession? = null
     private var tts: TextToSpeech? = null
     private var ttsReady = false
 
@@ -46,11 +80,101 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
     private var currentPlaybackSpeed: Float = 1.0f
     private var remainingLoops = 1
 
+    private var activeCompletionCallback: (() -> Unit)? = null
+    private var activeErrorCallback: (() -> Unit)? = null
+
+    private val cacheDataSourceFactory: CacheDataSource.Factory by lazy {
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setAllowCrossProtocolRedirects(true)
+            .setConnectTimeoutMs(15000)
+            .setReadTimeoutMs(15000)
+        CacheDataSource.Factory()
+            .setCache(getSimpleCache(context.applicationContext))
+            .setUpstreamDataSourceFactory(httpDataSourceFactory)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+    }
+
+    private val mediaSourceFactory by lazy {
+        DefaultMediaSourceFactory(context.applicationContext)
+            .setDataSourceFactory(cacheDataSourceFactory)
+    }
+
     init {
         try {
             tts = TextToSpeech(context.applicationContext, this)
         } catch (e: Exception) {
             Log.e(TAG, "TTS initialization error", e)
+        }
+    }
+
+    private fun getOrCreatePlayer(): ExoPlayer {
+        return exoPlayer ?: run {
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+                .setUsage(C.USAGE_MEDIA)
+                .build()
+
+            val player = ExoPlayer.Builder(context.applicationContext)
+                .setMediaSourceFactory(mediaSourceFactory)
+                .setAudioAttributes(audioAttributes, true)
+                .setHandleAudioBecomingNoisy(true)
+                .build()
+
+            player.addListener(object : Player.Listener {
+                override fun onIsLoadingChanged(isLoading: Boolean) {
+                    _isBuffering.value = isLoading && !player.isPlaying
+                }
+
+                override fun onPlaybackStateChanged(playbackState: Int) {
+                    when (playbackState) {
+                        Player.STATE_BUFFERING -> {
+                            _isBuffering.value = true
+                        }
+                        Player.STATE_READY -> {
+                            _isBuffering.value = false
+                            _isPlaying.value = player.isPlaying
+                        }
+                        Player.STATE_ENDED -> {
+                            _isBuffering.value = false
+                            _isPlaying.value = false
+                            val callback = activeCompletionCallback
+                            activeCompletionCallback = null
+                            callback?.invoke()
+                        }
+                        Player.STATE_IDLE -> {
+                            _isBuffering.value = false
+                            _isPlaying.value = false
+                        }
+                    }
+                }
+
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    _isPlaying.value = isPlaying
+                    if (isPlaying) {
+                        _isBuffering.value = false
+                    }
+                }
+
+                override fun onPlayerError(error: PlaybackException) {
+                    Log.w(TAG, "ExoPlayer playback error: ${error.message}")
+                    _isBuffering.value = false
+                    _isPlaying.value = false
+                    val errCb = activeErrorCallback
+                    activeErrorCallback = null
+                    errCb?.invoke()
+                }
+            })
+
+            try {
+                mediaSession = MediaSession.Builder(context.applicationContext, player)
+                    .setId("QuranAudioSession")
+                    .build()
+            } catch (e: Exception) {
+                Log.w(TAG, "MediaSession setup warning", e)
+            }
+
+            exoPlayer = player
+            player
         }
     }
 
@@ -67,16 +191,8 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
 
     fun setPlaybackSpeed(speed: Float) {
         currentPlaybackSpeed = speed
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                mediaPlayer?.let { mp ->
-                    if (mp.isPlaying) {
-                        mp.playbackParams = mp.playbackParams.setSpeed(speed)
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Failed to apply playback speed: $speed", e)
+        exoPlayer?.let { player ->
+            player.playbackParameters = PlaybackParameters(speed)
         }
     }
 
@@ -179,7 +295,6 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         onComplete: () -> Unit
     ) {
         if (candidateIndex >= candidates.size) {
-            // Fallback to TTS offline pronunciation
             Log.w(TAG, "All audio candidates failed for Ayah $surahNumber:$verseNumber, falling back to TTS")
             _isBuffering.value = false
             speakWithTts(verseText) {
@@ -196,44 +311,31 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         _currentPlayingVerse.value = Pair(surahNumber, verseNumber)
 
         try {
-            mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .build()
-                )
-                setDataSource(audioUrl)
-                setOnPreparedListener { mp ->
-                    _isBuffering.value = false
-                    _isPlaying.value = true
-                    try {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && currentPlaybackSpeed != 1.0f) {
-                            mp.playbackParams = mp.playbackParams.setSpeed(currentPlaybackSpeed)
-                        }
-                    } catch (e: Throwable) {
-                        Log.w(TAG, "Error setting playback params", e)
-                    }
-                    mp.start()
-                }
-                setOnCompletionListener {
-                    handleAyahPlaybackCompletion(
-                        surahNumber, verseNumber, verseText, reciterId, onComplete
-                    )
-                }
-                setOnErrorListener { _, what, extra ->
-                    Log.w(TAG, "MediaPlayer error on candidate $candidateIndex ($audioUrl): what=$what, extra=$extra")
-                    _isBuffering.value = false
-                    playAyahCandidate(
-                        surahNumber, verseNumber, verseText, reciterId,
-                        candidates, candidateIndex + 1, onComplete
-                    )
-                    true
-                }
-                prepareAsync()
+            val player = getOrCreatePlayer()
+            val mediaMetadata = MediaMetadata.Builder()
+                .setTitle("آية $verseNumber - سورة $surahNumber")
+                .setArtist(normalizeReciterKey(reciterId))
+                .build()
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(audioUrl)
+                .setMediaMetadata(mediaMetadata)
+                .build()
+
+            activeCompletionCallback = {
+                handleAyahPlaybackCompletion(surahNumber, verseNumber, verseText, reciterId, onComplete)
             }
+
+            activeErrorCallback = {
+                playAyahCandidate(surahNumber, verseNumber, verseText, reciterId, candidates, candidateIndex + 1, onComplete)
+            }
+
+            player.setMediaItem(mediaItem)
+            player.playbackParameters = PlaybackParameters(currentPlaybackSpeed)
+            player.prepare()
+            player.playWhenReady = true
         } catch (e: Exception) {
-            Log.e(TAG, "Error initializing Ayah MediaPlayer for $audioUrl", e)
+            Log.e(TAG, "Error playing Ayah candidate $audioUrl", e)
             playAyahCandidate(
                 surahNumber, verseNumber, verseText, reciterId,
                 candidates, candidateIndex + 1, onComplete
@@ -266,7 +368,6 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         if (ttsReady && tts != null) {
             _isPlaying.value = true
             tts?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "AYAH_TTS_ID")
-            // Schedule finish check based on text length
             android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
                 _isPlaying.value = false
                 onDone()
@@ -300,45 +401,37 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         val audioUrl = candidates[candidateIndex]
         try {
             stopAudio()
-
             _isBuffering.value = true
             _currentPlayingSurah.value = surahNumber
 
-            mediaPlayer = MediaPlayer().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder()
-                        .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
-                        .setUsage(AudioAttributes.USAGE_MEDIA)
-                        .build()
-                )
-                setDataSource(audioUrl)
-                setOnPreparedListener { mp ->
-                    _isBuffering.value = false
-                    _isPlaying.value = true
-                    try {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && currentPlaybackSpeed != 1.0f) {
-                            mp.playbackParams = mp.playbackParams.setSpeed(currentPlaybackSpeed)
-                        }
-                    } catch (e: Throwable) {
-                        Log.w(TAG, "Error setting playback params", e)
-                    }
-                    mp.start()
-                }
-                setOnCompletionListener {
-                    _isPlaying.value = false
-                    _isBuffering.value = false
-                    _currentPlayingSurah.value = null
-                    onComplete()
-                }
-                setOnErrorListener { _, what, extra ->
-                    Log.w(TAG, "Surah MediaPlayer error ($audioUrl): what=$what, extra=$extra")
-                    _isPlaying.value = false
-                    _isBuffering.value = false
-                    playSurahCandidate(surahNumber, reciterId, candidates, candidateIndex + 1, onComplete)
-                    true
-                }
-                prepareAsync()
+            val player = getOrCreatePlayer()
+            val mediaMetadata = MediaMetadata.Builder()
+                .setTitle("سورة $surahNumber")
+                .setArtist(normalizeReciterKey(reciterId))
+                .build()
+
+            val mediaItem = MediaItem.Builder()
+                .setUri(audioUrl)
+                .setMediaMetadata(mediaMetadata)
+                .build()
+
+            activeCompletionCallback = {
+                _isPlaying.value = false
+                _isBuffering.value = false
+                _currentPlayingSurah.value = null
+                onComplete()
             }
+
+            activeErrorCallback = {
+                _isPlaying.value = false
+                _isBuffering.value = false
+                playSurahCandidate(surahNumber, reciterId, candidates, candidateIndex + 1, onComplete)
+            }
+
+            player.setMediaItem(mediaItem)
+            player.playbackParameters = PlaybackParameters(currentPlaybackSpeed)
+            player.prepare()
+            player.playWhenReady = true
         } catch (e: Exception) {
             Log.e(TAG, "Error initializing Surah audio playback for $audioUrl", e)
             playSurahCandidate(surahNumber, reciterId, candidates, candidateIndex + 1, onComplete)
@@ -347,27 +440,21 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
 
     fun togglePlayPause() {
         try {
-            mediaPlayer?.let { mp ->
-                try {
-                    if (mp.isPlaying) {
-                        mp.pause()
-                        _isPlaying.value = false
-                    } else {
-                        mp.start()
-                        _isPlaying.value = true
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error toggling MediaPlayer state", e)
+            exoPlayer?.let { player ->
+                if (player.isPlaying) {
+                    player.pause()
                     _isPlaying.value = false
+                } else {
+                    if (player.playbackState == Player.STATE_ENDED) {
+                        player.seekTo(0)
+                    }
+                    player.play()
+                    _isPlaying.value = true
                 }
             } ?: run {
-                try {
-                    if (tts?.isSpeaking == true) {
-                        tts?.stop()
-                        _isPlaying.value = false
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error stopping TTS in togglePlayPause", e)
+                if (tts?.isSpeaking == true) {
+                    tts?.stop()
+                    _isPlaying.value = false
                 }
             }
         } catch (e: Exception) {
@@ -377,25 +464,17 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
     }
 
     fun stopAudio() {
+        activeCompletionCallback = null
+        activeErrorCallback = null
         try {
-            mediaPlayer?.let { mp ->
-                try {
-                    if (mp.isPlaying) {
-                        mp.stop()
-                    }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error stopping player", e)
-                }
-                try {
-                    mp.release()
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error releasing player", e)
+            exoPlayer?.let { player ->
+                if (player.isPlaying || player.playbackState != Player.STATE_IDLE) {
+                    player.stop()
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Error handling mediaPlayer in stopAudio", e)
+            Log.e(TAG, "Error stopping ExoPlayer", e)
         }
-        mediaPlayer = null
         try {
             if (tts?.isSpeaking == true) {
                 tts?.stop()
@@ -422,6 +501,20 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
 
     fun release() {
         stopAudio()
+        try {
+            mediaSession?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error releasing MediaSession", e)
+        }
+        mediaSession = null
+
+        try {
+            exoPlayer?.release()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error releasing ExoPlayer", e)
+        }
+        exoPlayer = null
+
         tts?.shutdown()
         tts = null
     }

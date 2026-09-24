@@ -109,16 +109,29 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     val universalSearchResult: StateFlow<com.example.data.provider.UniversalSearchResult> = _searchQuery
         .map { query ->
             try {
-                repository.universalSearch(query)
+                if (query.isBlank()) {
+                    com.example.data.provider.UniversalSearchResult(
+                        query = "",
+                        totalMatches = 0,
+                        surahResults = repository.getSurahs().map { com.example.data.provider.SearchResultItem.SurahResult(it) }
+                    )
+                } else {
+                    repository.universalSearch(query)
+                }
             } catch (e: Throwable) {
                 android.util.Log.e("QuranViewModel", "Error in universalSearch mapping", e)
                 com.example.data.provider.UniversalSearchResult("", 0, emptyList(), emptyList(), emptyList())
             }
         }
+        .flowOn(kotlinx.coroutines.Dispatchers.Default)
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = try { repository.universalSearch("") } catch (e: Throwable) { com.example.data.provider.UniversalSearchResult("", 0, emptyList(), emptyList(), emptyList()) }
+            initialValue = com.example.data.provider.UniversalSearchResult(
+                query = "",
+                totalMatches = 0,
+                surahResults = repository.getSurahs().map { com.example.data.provider.SearchResultItem.SurahResult(it) }
+            )
         )
 
     val filteredSurahs: StateFlow<List<Surah>> = combine(
@@ -126,7 +139,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         favoriteSurahIds
     ) { query, favIds ->
         try {
-            val list = repository.searchQuran(query)
+            val list = if (query.isBlank()) repository.getSurahs() else repository.searchQuran(query)
             list.map { surah ->
                 surah.copy(isFavorite = favIds.contains(surah.id))
             }
@@ -134,7 +147,8 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             android.util.Log.e("QuranViewModel", "Error filtering surahs", e)
             emptyList()
         }
-    }.stateIn(
+    }.flowOn(kotlinx.coroutines.Dispatchers.Default)
+    .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = try { repository.getSurahs() } catch (e: Throwable) { emptyList() }

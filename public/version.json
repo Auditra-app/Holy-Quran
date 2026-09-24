@@ -1,7 +1,7 @@
 {
-  "latest_version_code": 5,
-  "latest_version_name": "1.2.1",
+  "latest_version_code": 6,
+  "latest_version_name": "1.2.2",
   "apk_download_url": "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data",
   "force_update": false,
-  "update_notes": "تحديث جديد v1.2.1: استعادة التصميم الأصلي الأنيق لصفحة المصحف وضمان ظهور زر إنهاء ملء الشاشة لجميع أحجام الشاشات بدقة عالية."
+  "update_notes": "تحديث جديد v1.2.2: ضبط الهوامش الجانبية لصفحات المصحف الشريف بدقة لمنع اقتطاع الآيات على كافة الشاشات، وتحسين عداد التنزيلات المباشر."
 }

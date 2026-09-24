@@ -66,6 +66,26 @@ object FirebaseKhatmaRepository {
     }
 
     /**
+     * Fetches a GroupKhatma document once from Cloud Firestore without starting a persistent listener.
+     */
+    suspend fun fetchKhatmaOnce(khatmaId: String): GroupKhatma? {
+        val db = firestore ?: return null
+        return try {
+            val docRef = db.collection(COLLECTION_KHATMAS).document(khatmaId)
+            val snapshot = docRef.get().await()
+            if (snapshot.exists()) {
+                val data = snapshot.data
+                if (data != null) {
+                    parseFirestoreData(khatmaId, data)
+                } else null
+            } else null
+        } catch (e: Throwable) {
+            Log.w(TAG, "Error fetching Khatma $khatmaId once from Firestore: ${e.message}")
+            null
+        }
+    }
+
+    /**
      * Publishes or updates an entire GroupKhatma in Cloud Firestore.
      */
     suspend fun publishKhatma(khatma: GroupKhatma): Boolean {
@@ -95,10 +115,13 @@ object FirebaseKhatmaRepository {
         return try {
             val docRef = db.collection(COLLECTION_KHATMAS).document(khatmaId)
             val snapshot = docRef.get().await()
-            if (!snapshot.exists()) return false
-
-            val currentData = snapshot.data ?: return false
-            val khatma = parseFirestoreData(khatmaId, currentData)
+            val currentData = if (snapshot.exists()) snapshot.data else null
+            val khatma = if (currentData != null) {
+                parseFirestoreData(khatmaId, currentData)
+            } else {
+                val defaultJuzList = (1..30).map { GroupKhatmaJuz(juzNumber = it) }
+                GroupKhatma(id = khatmaId, title = "ختمة قرآنية جماعية", creatorName = userName.ifBlank { "مشارك" }, juzList = defaultJuzList)
+            }
 
             val updatedJuzList = khatma.juzList.map { juz ->
                 if (juz.juzNumber == juzNumber) {

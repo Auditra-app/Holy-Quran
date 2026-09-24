@@ -16,3 +16,7 @@
 local.properties
 .env
 debug.keystore
+.idea/
+.firebase/
+public/*.data
+gradle-daemon-jvm.properties

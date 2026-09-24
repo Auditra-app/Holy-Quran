@@ -11,6 +11,10 @@ import com.example.util.LocationHelper
 import java.util.Calendar
 import kotlin.math.abs
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 object DailyVerseScheduler {
 
     private const val TAG = "DailyVerseScheduler"
@@ -19,9 +23,10 @@ object DailyVerseScheduler {
     private val BASE_HOURS = listOf(8, 11, 14, 17, 20)
 
     fun scheduleDailyVerseNotification(context: Context, baseHour: Int = 8, baseMinute: Int = 0) {
-        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
-        val loc = LocationHelper.getSavedLocationAndSettings(context)
-        val nowMs = System.currentTimeMillis()
+        CoroutineScope(Dispatchers.IO).launch {
+            val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return@launch
+            val loc = LocationHelper.getSavedLocationAndSettings(context)
+            val nowMs = System.currentTimeMillis()
 
         // Schedule across 7 days so notifications are continuous and resilient
         for (dayOffset in 0..6) {
@@ -107,6 +112,7 @@ object DailyVerseScheduler {
                     Log.d(TAG, "Scheduled Daily Verse Slot $slotIndex ($targetHour:$targetMinute) Day +$dayOffset for ${slotCal.time}")
                 }
             }
+        }
         }
     }
 

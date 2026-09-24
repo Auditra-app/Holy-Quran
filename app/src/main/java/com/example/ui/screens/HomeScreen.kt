@@ -139,6 +139,10 @@ fun HomeScreen(
         }
     }
 
+    LaunchedEffect(Unit) {
+        com.example.util.AnalyticsHelper.logScreenView("HomeScreen")
+    }
+
     var isEditLayoutMode by remember { mutableStateOf(false) }
     var showReorderDialog by remember { mutableStateOf(false) }
     var showOverflowMenu by remember { mutableStateOf(false) }
@@ -146,6 +150,7 @@ fun HomeScreen(
     var showExportBackupDialog by remember { mutableStateOf(false) }
     var showImportBackupDialog by remember { mutableStateOf(false) }
     var exportedJsonText by remember { mutableStateOf("") }
+    var pendingUpdateInfo by remember { mutableStateOf<com.example.data.provider.AppUpdateInfo?>(null) }
 
     val defaultGridItems = remember {
         listOf(
@@ -412,11 +417,11 @@ fun HomeScreen(
                                         val shareText = if (isArabic) {
                                             "الْقُرْآنُ الْكَرِيمُ - تطبيق المصحف الشريف الشامل (بدون إعلانات • صدقة جارية)\n\n" +
                                             "دعواتكم الصادقة للمطور علي إبراهيم الشيخ ووالديه وأهل بيته بالرحمة والمغفرة.\n\n" +
-                                            "رابط التطبيق:\nhttps://ais-pre-yl7wt5ra36i6pvhsa4hafu-95995359564.europe-west2.run.app"
+                                            "رابط التطبيق:\nhttps://holy-quran-app-live.web.app"
                                         } else {
                                             "The Holy Quran App - Complete Offline Quran, Prayer Times & Azkar (100% Ad-Free)\n\n" +
                                             "Dedicated as Sadaqah Jariyah by Ali Ibrahim Elsheikh for his parents and household.\n\n" +
-                                            "Open app:\nhttps://ais-pre-yl7wt5ra36i6pvhsa4hafu-95995359564.europe-west2.run.app"
+                                            "Open app:\nhttps://holy-quran-app-live.web.app"
                                         }
                                         val intent = Intent(Intent.ACTION_SEND).apply {
                                             type = "text/plain"
@@ -426,6 +431,30 @@ fun HomeScreen(
                                         context.startActivity(Intent.createChooser(intent, if (isArabic) "مشاركة التطبيق" else "Share App"))
                                     } catch (e: Exception) {
                                         Toast.makeText(context, if (isArabic) "تعذر فتح المشاركة" else "Cannot share", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            )
+
+                            // Check for Updates (3-dots menu item)
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(Icons.Default.Refresh, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(18.dp))
+                                        Text(text = if (isArabic) "التحقق من التحديثات 🚀" else "Check for Updates 🚀")
+                                    }
+                                },
+                                onClick = {
+                                    showOverflowMenu = false
+                                    Toast.makeText(context, if (isArabic) "جاري التحقق من التحديثات..." else "Checking for updates...", Toast.LENGTH_SHORT).show()
+                                    com.example.data.provider.AppUpdateManager.checkForUpdate { info ->
+                                        if (info != null && info.isUpdateAvailable) {
+                                            pendingUpdateInfo = info
+                                        } else {
+                                            Toast.makeText(context, if (isArabic) "التطبيق مُحدّث لأحدث إصدار رسمي (v${com.example.BuildConfig.VERSION_NAME}) ✅" else "Holy Quran App is up to date (v${com.example.BuildConfig.VERSION_NAME}) ✅", Toast.LENGTH_LONG).show()
+                                        }
                                     }
                                 }
                             )
@@ -1473,6 +1502,68 @@ fun HomeScreen(
                     }
                 },
                 onDismiss = { showImportBackupDialog = false }
+            )
+        }
+
+        pendingUpdateInfo?.let { updateInfo ->
+            AlertDialog(
+                onDismissRequest = {
+                    if (!updateInfo.forceUpdate) {
+                        pendingUpdateInfo = null
+                    }
+                },
+                icon = {
+                    Icon(
+                        imageVector = Icons.Default.Refresh,
+                        contentDescription = null,
+                        tint = EmeraldPrimary
+                    )
+                },
+                title = {
+                    Text(
+                        text = if (isArabic) "يتوفر تحديث جديد لـ تطبيق القرآن الكريم 🚀" else "New App Update Available 🚀",
+                        fontFamily = TajawalFontFamily,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = if (isArabic) "الإصدار الحالي: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nالإصدار الجديد: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})" else "Current: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nNew: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})",
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            text = updateInfo.updateNotes,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = if (isArabic) "اضغط على زر 'تحديث الآن' لتنزيل وتثبيت التحديث مباشرة." else "Click 'Update Now' to download and install directly.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            com.example.data.provider.AppUpdateManager.startApkDownload(context, updateInfo.apkDownloadUrl)
+                            if (!updateInfo.forceUpdate) {
+                                pendingUpdateInfo = null
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                    ) {
+                        Text(if (isArabic) "تحديث الآن 🚀" else "Update Now 🚀")
+                    }
+                },
+                dismissButton = {
+                    if (!updateInfo.forceUpdate) {
+                        TextButton(onClick = { pendingUpdateInfo = null }) {
+                            Text(if (isArabic) "تذكيري لاحقاً" else "Remind Later")
+                        }
+                    }
+                }
             )
         }
     }

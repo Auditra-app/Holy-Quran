@@ -85,6 +85,7 @@ fun SettingsScreen(
     var showExportBackupDialog by remember { mutableStateOf(false) }
     var showImportBackupDialog by remember { mutableStateOf(false) }
     var exportedJsonText by remember { mutableStateOf("") }
+    var updateDialogInfo by remember { mutableStateOf<com.example.data.provider.AppUpdateInfo?>(null) }
 
     val createDocumentLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.CreateDocument("application/json")
@@ -1928,11 +1929,11 @@ fun SettingsScreen(
                                     val shareText = if (isArabic) {
                                         "الْقُرْآنُ الْكَرِيمُ - تطبيق المصحف الشريف الشامل (بدون إعلانات • صدقة جارية)\n\n" +
                                         "دعواتكم الصادقة للمطور علي إبراهيم الشيخ ووالديه وأهل بيته بالرحمة والمغفرة.\n\n" +
-                                        "رابط التطبيق:\nhttps://ais-pre-yl7wt5ra36i6pvhsa4hafu-95995359564.europe-west2.run.app"
+                                        "رابط التطبيق:\nhttps://holy-quran-app-live.web.app"
                                     } else {
                                         "The Holy Quran App - Complete Offline Quran & Prayer Times (100% Ad-Free)\n\n" +
                                         "Dedicated as Sadaqah Jariyah by Ali Ibrahim Elsheikh for his parents and household.\n\n" +
-                                        "Open app:\nhttps://ais-pre-yl7wt5ra36i6pvhsa4hafu-95995359564.europe-west2.run.app"
+                                        "Open app:\nhttps://holy-quran-app-live.web.app"
                                     }
                                     val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                         type = "text/plain"
@@ -1955,17 +1956,95 @@ fun SettingsScreen(
                         )
                         HorizontalDivider()
                         ListItem(
-                            headlineContent = { Text(if (isArabic) "إصدار التطبيق الرسمى" else "Official App Version", fontWeight = FontWeight.Bold) },
-                            supportingContent = { Text(if (isArabic) "الإصدار v1.0.0 (Build 1) • نسخة الإطلاق الرسمية" else "v1.0.0 (Build 1) • Official Production Launch") },
-                            leadingContent = { Icon(imageVector = Icons.Default.Info, contentDescription = null, tint = EmeraldPrimary) },
+                            headlineContent = { Text(if (isArabic) "إصدار التطبيق والتحقق من التحديثات" else "App Version & Check Updates", fontWeight = FontWeight.Bold) },
+                            supportingContent = { Text(if (isArabic) "الإصدار الحالي: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE}) • انقر للتحقق من وجود تحديث جديد" else "Current Version: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE}) • Tap to check for updates") },
+                            leadingContent = { Icon(imageVector = Icons.Default.Refresh, contentDescription = null, tint = EmeraldPrimary) },
+                            trailingContent = {
+                                Button(
+                                    onClick = {
+                                        Toast.makeText(context, if (isArabic) "جاري التحقق من التحديثات..." else "Checking for updates...", Toast.LENGTH_SHORT).show()
+                                        com.example.data.provider.AppUpdateManager.checkForUpdate { info ->
+                                            if (info != null && info.isUpdateAvailable) {
+                                                updateDialogInfo = info
+                                            } else {
+                                                Toast.makeText(context, if (isArabic) "تطبيق القرآن الكريم مُحدث لأحدث إصدار رسمي (v${com.example.BuildConfig.VERSION_NAME}) ✅" else "Holy Quran App is up to date (v${com.example.BuildConfig.VERSION_NAME}) ✅", Toast.LENGTH_LONG).show()
+                                            }
+                                        }
+                                    },
+                                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                                ) {
+                                    Text(if (isArabic) "تحقق الآن 🚀" else "Check Now 🚀")
+                                }
+                            },
                             modifier = Modifier.clickable {
-                                Toast.makeText(context, if (isArabic) "القرآن الكريم v1.0.0 - نسخة الإطلاق الرسمية" else "Holy Quran App v1.0.0 - Production Launch Version", Toast.LENGTH_SHORT).show()
+                                Toast.makeText(context, if (isArabic) "جاري التحقق من التحديثات..." else "Checking for updates...", Toast.LENGTH_SHORT).show()
+                                com.example.data.provider.AppUpdateManager.checkForUpdate { info ->
+                                    if (info != null && info.isUpdateAvailable) {
+                                        updateDialogInfo = info
+                                    } else {
+                                        Toast.makeText(context, if (isArabic) "تطبيق القرآن الكريم مُحدث لأحدث إصدار رسمي (v${com.example.BuildConfig.VERSION_NAME}) ✅" else "Holy Quran App is up to date (v${com.example.BuildConfig.VERSION_NAME}) ✅", Toast.LENGTH_LONG).show()
+                                    }
+                                }
                             }
                         )
                     }
                 }
             }
         }
+    }
+
+    updateDialogInfo?.let { info ->
+        AlertDialog(
+            onDismissRequest = { updateDialogInfo = null },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = null,
+                    tint = EmeraldPrimary
+                )
+            },
+            title = {
+                Text(
+                    text = if (isArabic) "يتوفر تحديث جديد لـ تطبيق القرآن الكريم 🚀" else "New App Update Available 🚀",
+                    fontFamily = TajawalFontFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = if (isArabic) "الإصدار الحالي: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nالإصدار الجديد: v${info.latestVersionName} (Build ${info.latestVersionCode})" else "Current: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nNew: v${info.latestVersionName} (Build ${info.latestVersionCode})",
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = info.updateNotes,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Text(
+                        text = if (isArabic) "اضغط على زر 'تحديث الآن' لتنزيل وتثبيت التحديث مباشرة." else "Click 'Update Now' to download and install directly.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        com.example.data.provider.AppUpdateManager.startApkDownload(context, info.apkDownloadUrl)
+                        updateDialogInfo = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                ) {
+                    Text(if (isArabic) "تحديث الآن 🚀" else "Update Now 🚀")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { updateDialogInfo = null }) {
+                    Text(if (isArabic) "إلغاء" else "Cancel")
+                }
+            }
+        )
     }
 
     if (showExportBackupDialog) {

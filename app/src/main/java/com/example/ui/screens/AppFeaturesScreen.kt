@@ -170,11 +170,11 @@ fun AppFeaturesScreen(
                 "• مواقيت الصلاة والأذان وتحديد القبلة\n" +
                 "• الأذكار والمسبحة الرقمية وآية اليوم\n\n" +
                 "دعواتكم الصادقة للمطور علي إبراهيم الشيخ ووالديه وأهل بيته بالرحمة والمغفرة.\n\n" +
-                "رابط التطبيق:\nhttps://ais-pre-yl7wt5ra36i6pvhsa4hafu-95995359564.europe-west2.run.app"
+                "رابط التطبيق:\nhttps://holy-quran-app-live.web.app"
             } else {
                 "The Holy Quran App - Complete Offline Quran, Prayer Times, Qibla & Azkar (100% Ad-Free)\n\n" +
                 "Dedicated as Sadaqah Jariyah by Ali Ibrahim Elsheikh for his parents and household.\n\n" +
-                "Download/Open here:\nhttps://ais-pre-yl7wt5ra36i6pvhsa4hafu-95995359564.europe-west2.run.app"
+                "Download/Open here:\nhttps://holy-quran-app-live.web.app"
             }
             val intent = Intent(Intent.ACTION_SEND).apply {
                 type = "text/plain"

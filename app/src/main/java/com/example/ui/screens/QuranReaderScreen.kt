@@ -3599,8 +3599,8 @@ fun GoldenMushafPageView(
     // Night font mode: "WHITE" (default for dark theme: crisp white font), "SEPIA" (warm golden sepia font), "ORIGINAL" (original paper)
     var nightFontColorMode by remember { mutableStateOf("WHITE") }
 
-    // Enlarged comfortable reading scale (1.14f) for enhanced script visibility, clarity, and relaxing reading experience
-    val effectiveScale = 1.14f
+    // Standard natural 1:1 reading scale ensuring complete page and outer ornate frame are visible without clipping
+    val effectiveScale = 1.0f
 
     val imageUrl = remember(pageNum) { QuranPageFetcher.getPageImageUrl(pageNum) }
     val surahOnPage = remember(pageNum) { QuranDataProvider.getSurahByPage(pageNum) }
@@ -3632,24 +3632,24 @@ fun GoldenMushafPageView(
 
     val isDarkParchment = isDarkMode && nightFontColorMode != "ORIGINAL"
 
-    // Original golden mushaf canvas padding
+    // Original golden mushaf canvas padding with balanced side margins to ensure text is never clipped
     val animatedStartPadding by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isImmersive) 2.dp else 4.dp,
+        targetValue = if (isImmersive) 6.dp else 10.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "startPadding"
     )
     val animatedEndPadding by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isImmersive) 2.dp else 4.dp,
+        targetValue = if (isImmersive) 6.dp else 10.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "endPadding"
     )
     val animatedTopPadding by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isImmersive) 1.dp else 8.dp,
+        targetValue = if (isImmersive) 2.dp else 8.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "topPadding"
     )
     val animatedBottomPadding by androidx.compose.animation.core.animateDpAsState(
-        targetValue = if (isImmersive) 1.dp else 4.dp,
+        targetValue = if (isImmersive) 2.dp else 4.dp,
         animationSpec = androidx.compose.animation.core.tween(durationMillis = 350, easing = androidx.compose.animation.core.FastOutSlowInEasing),
         label = "bottomPadding"
     )

@@ -65,7 +65,8 @@ val juzArabicNames = listOf(
 fun GroupKhatmaScreen(
     currentLanguage: AppLanguage,
     onNavigateBack: () -> Unit,
-    onReadJuzClick: (Int) -> Unit = {}
+    onReadJuzClick: (Int) -> Unit = {},
+    initialKhatmaCode: String? = null
 ) {
     val context = LocalContext.current
     val isArabic = currentLanguage == AppLanguage.ARABIC
@@ -81,12 +82,24 @@ fun GroupKhatmaScreen(
         )
     }
 
-    // Live ticker for active countdowns
-    var currentTimeMillis by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
-        while (isActive) {
-            currentTimeMillis = System.currentTimeMillis()
-            delay(1000L)
+        com.example.util.AnalyticsHelper.logScreenView("GroupKhatmaScreen")
+        com.example.util.AnalyticsHelper.logKhatmaEvent("opened", activeKhatma.id)
+    }
+
+    LaunchedEffect(initialKhatmaCode) {
+        if (!initialKhatmaCode.isNullOrBlank()) {
+            try {
+                val imported = GroupKhatmaManager.decodeKhatmaFromCode(initialKhatmaCode)
+                if (imported != null) {
+                    GroupKhatmaManager.saveKhatma(context, imported)
+                    allKhatmas = GroupKhatmaManager.getAllKhatmas(context)
+                    activeKhatma = imported
+                    com.example.util.AnalyticsHelper.logKhatmaEvent("joined", imported.id)
+                }
+            } catch (e: Throwable) {
+                android.util.Log.e("GroupKhatmaScreen", "Error handling initial khatma code", e)
+            }
         }
     }
 
@@ -101,6 +114,33 @@ fun GroupKhatmaScreen(
     // Juz selected for details / reservation / reading
     var selectedJuzDetails by remember { mutableStateOf<GroupKhatmaJuz?>(null) }
     var savedUserName by remember { mutableStateOf(GroupKhatmaManager.getSavedUserName(context)) }
+
+    // Live ticker for active countdowns
+    var currentTimeMillis by remember { mutableStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (isActive) {
+            currentTimeMillis = System.currentTimeMillis()
+            delay(1000L)
+        }
+    }
+
+    // Real-time Cloud Sync Observer
+    LaunchedEffect(activeKhatma.id) {
+        try {
+            com.example.data.provider.FirebaseKhatmaRepository.observeKhatma(activeKhatma.id).collect { liveKhatma ->
+                if (liveKhatma != null) {
+                    activeKhatma = liveKhatma
+                    GroupKhatmaManager.saveKhatma(context, liveKhatma)
+                    allKhatmas = GroupKhatmaManager.getAllKhatmas(context)
+                    selectedJuzDetails?.let { current ->
+                        selectedJuzDetails = liveKhatma.juzList.firstOrNull { it.juzNumber == current.juzNumber }
+                    }
+                }
+            }
+        } catch (e: Throwable) {
+            android.util.Log.e("GroupKhatmaScreen", "Error in observeKhatma flow", e)
+        }
+    }
 
     fun refreshData() {
         allKhatmas = GroupKhatmaManager.getAllKhatmas(context)
@@ -172,7 +212,7 @@ fun GroupKhatmaScreen(
                 .padding(paddingValues)
                 .background(MaterialTheme.colorScheme.background)
         ) {
-            val isWide = maxWidth > 600.dp
+            val isWide = this.maxWidth > 600.dp
 
             Column(
                 modifier = Modifier
@@ -558,6 +598,7 @@ fun GroupKhatmaScreen(
                         )
                         activeKhatma = created
                         refreshData()
+                        com.example.util.AnalyticsHelper.logKhatmaEvent("created", created.id)
                         showCreateDialog = false
                         Toast.makeText(context, if (isArabic) "تم إنشاء الختمة بنجاح!" else "Khatma created successfully!", Toast.LENGTH_SHORT).show()
                     },
@@ -699,6 +740,7 @@ fun GroupKhatmaScreen(
                             GroupKhatmaManager.saveKhatma(context, imported)
                             activeKhatma = imported
                             refreshData()
+                            com.example.util.AnalyticsHelper.logKhatmaEvent("joined", imported.id)
                             showImportDialog = false
                             Toast.makeText(context, if (isArabic) "تم استيراد الختمة '${imported.title}' بنجاح!" else "Khatma imported successfully!", Toast.LENGTH_LONG).show()
                         } else {
