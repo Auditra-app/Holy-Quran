@@ -57,6 +57,7 @@ fun GoalTrackerScreen(
     val isArabic = userSettings.languageCode == "ar"
 
     var showResetDialog by remember { mutableStateOf(false) }
+    var showDivisionsExplanationDialog by remember { mutableStateOf(false) }
 
     // Pages read today from reading history
     val todayPagesRead = remember(readingHistory) {
@@ -364,12 +365,29 @@ fun GoalTrackerScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = if (isArabic) "تخصيص الأهداف والتخطيط" else "Goal & Pace Customization",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = EmeraldPrimary
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "تخصيص الأهداف والتخطيط" else "Goal & Pace Customization",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = EmeraldPrimary
+                        )
+                        IconButton(
+                            onClick = { showDivisionsExplanationDialog = true },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = if (isArabic) "شرح تقسيمات المصحف" else "Quran Divisions Info",
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
 
@@ -387,11 +405,11 @@ fun GoalTrackerScreen(
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         val presets = listOf(
-                            2 to if (isArabic) "2 صفحة (عشر)" else "2 pages",
-                            5 to if (isArabic) "5 صفحات (ربع)" else "5 pages",
-                            10 to if (isArabic) "10 صفحات (نصف حزب)" else "10 pages",
+                            2 to if (isArabic) "2 صفحة (نحو ربع حزب)" else "2 pages (~Rub' Hizb)",
+                            5 to if (isArabic) "5 صفحات (نصف حزب / ربع جزء)" else "5 pages (Half Hizb / Quarter Juz)",
+                            10 to if (isArabic) "10 صفحات (حزب كامل)" else "10 pages (1 Hizb)",
                             20 to if (isArabic) "20 صفحة (جزء كامل)" else "20 pages (1 Juz)",
-                            30 to if (isArabic) "30 صفحة" else "30 pages"
+                            30 to if (isArabic) "30 صفحة (جزء ونصف)" else "30 pages (1.5 Juz)"
                         )
 
                         presets.forEach { (count, label) ->
@@ -527,6 +545,87 @@ fun GoalTrackerScreen(
             dismissButton = {
                 TextButton(onClick = { showResetDialog = false }) {
                     Text(if (isArabic) "إلغاء" else "Cancel")
+                }
+            }
+        )
+    }
+
+    // Quran Divisions Explanation Dialog
+    if (showDivisionsExplanationDialog) {
+        AlertDialog(
+            onDismissRequest = { showDivisionsExplanationDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    tint = EmeraldPrimary,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = if (isArabic) "دليل تقسيمات المصحف الشريف" else "Quran Divisions Guide",
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
+            },
+            text = {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = if (isArabic)
+                            "يعتمد التخطيط على طبعة مصحف المدينة النبوية (604 صفحات):"
+                        else
+                            "Based on the standard Madinah Mushaf (604 pages):",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                    val items = if (isArabic) listOf(
+                        "• القرآن كاملاً" to "30 جزءاً (60 حزباً)",
+                        "• الجزء الواحد" to "حزبان ≈ 20 صفحة",
+                        "• الحزب الواحد" to "نصف جزء ≈ 10 صفحات",
+                        "• نصف الحزب" to "ربع جزء ≈ 5 صفحات",
+                        "• ربع الحزب (۞)" to "≈ 2.5 صفحة"
+                    ) else listOf(
+                        "• Whole Quran" to "30 Ajza' (60 Ahzab)",
+                        "• 1 Juz'" to "2 Ahzab ≈ 20 pages",
+                        "• 1 Hizb" to "Half Juz ≈ 10 pages",
+                        "• Half Hizb" to "Quarter Juz ≈ 5 pages",
+                        "• Rub' al-Hizb (۞)" to "≈ 2.5 pages"
+                    )
+
+                    items.forEach { (term, desc) ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = term,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = desc,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = EmeraldPrimary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { showDivisionsExplanationDialog = false },
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                ) {
+                    Text(if (isArabic) "حسناً، فهمت" else "Got it")
                 }
             }
         )
