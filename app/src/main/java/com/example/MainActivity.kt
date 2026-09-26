@@ -55,9 +55,17 @@ class MainActivity : ComponentActivity() {
         val uriData = intent.data
         val host = uriData?.host
         val isAppHost = host == "holy-quran-app-live.web.app" || host == "quranapp.link" || uriData?.scheme == "holyquran"
-        val khatmaCodeParam = uriData?.getQueryParameter("code") ?: uriData?.getQueryParameter("data")
+        val pathCode = if (uriData?.path?.startsWith("/khatma/") == true) {
+            uriData.path?.substringAfter("/khatma/")?.trim()
+        } else if (uriData?.scheme == "holyquran" && uriData.host == "khatma" && !uriData.path.isNullOrBlank()) {
+            uriData.path?.trim('/')?.trim()
+        } else null
+        val khatmaCodeParam = uriData?.getQueryParameter("code")
+            ?: uriData?.getQueryParameter("data")
+            ?: pathCode
+            ?: (if (uriData?.scheme == "holyquran" && host != null && host.length in 4..16 && !host.contains(".") && host != "khatma") host else null)
 
-        val appLinkRoute = if (isAppHost && (!khatmaCodeParam.isNullOrBlank() || uriData?.path == "/khatma" || uriData?.path == "/")) {
+        val appLinkRoute = if (isAppHost && (!khatmaCodeParam.isNullOrBlank() || uriData?.path?.startsWith("/khatma") == true || uriData?.host == "khatma")) {
             "group_khatma"
         } else null
 

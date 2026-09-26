@@ -16,9 +16,20 @@ object GroupKhatmaManager {
     private const val PREFS_NAME = "group_khatma_prefs"
     private const val KEY_KHATMAS = "khatmas_list_json"
     private const val KEY_USER_NAME = "saved_user_name"
+    private const val KEY_LAST_ACTIVE_KHATMA_ID = "last_active_khatma_id"
 
     private fun getPrefs(context: Context): SharedPreferences {
         return context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+    }
+
+    fun getLastActiveKhatmaId(context: Context): String? {
+        return getPrefs(context).getString(KEY_LAST_ACTIVE_KHATMA_ID, null)
+    }
+
+    fun saveLastActiveKhatmaId(context: Context, khatmaId: String) {
+        if (khatmaId.isNotBlank()) {
+            getPrefs(context).edit().putString(KEY_LAST_ACTIVE_KHATMA_ID, khatmaId).apply()
+        }
     }
 
     fun getSavedUserName(context: Context): String {
@@ -39,7 +50,7 @@ object GroupKhatmaManager {
         return (1..6).map { chars.random() }.joinToString("")
     }
 
-    fun saveKhatma(context: Context, khatma: GroupKhatma) {
+    fun saveKhatmaLocalOnly(context: Context, khatma: GroupKhatma) {
         val currentList = getAllKhatmas(context).toMutableList()
         val index = currentList.indexOfFirst { it.id == khatma.id }
         if (index >= 0) {
@@ -49,6 +60,10 @@ object GroupKhatmaManager {
         }
         val jsonStr = khatmasListToJson(currentList)
         getPrefs(context).edit().putString(KEY_KHATMAS, jsonStr).apply()
+    }
+
+    fun saveKhatma(context: Context, khatma: GroupKhatma) {
+        saveKhatmaLocalOnly(context, khatma)
 
         CoroutineScope(Dispatchers.IO).launch {
             try {
@@ -112,13 +127,6 @@ object GroupKhatmaManager {
         if (userName.isNotBlank()) {
             saveUserName(context, userName)
         }
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                FirebaseKhatmaRepository.updateJuzStatusCloud(khatmaId, juzNumber, userName, newStatus)
-            } catch (e: Exception) {
-                android.util.Log.w("GroupKhatmaManager", "Background cloud update error", e)
-            }
-        }
         return updatedKhatma
     }
 
@@ -128,70 +136,96 @@ object GroupKhatmaManager {
         return "KHATMA#$base64"
     }
 
-    fun decodeKhatmaFromCode(codeOrLink: String): GroupKhatma? {
-        val cleanCode = codeOrLink.trim()
-        if (cleanCode.isBlank()) return null
+    fun extractKhatmaCode(input: String): String {
+        var raw = input.trim()
+        if (raw.isBlank()) return ""
 
-        val base64Part = when {
-            cleanCode.startsWith("KHATMA#") -> cleanCode.removePrefix("KHATMA#")
-            cleanCode.contains("code=") -> cleanCode.substringAfter("code=").substringBefore("&")
-            cleanCode.contains("data=") -> cleanCode.substringAfter("data=").substringBefore("&")
-            else -> cleanCode
+        // 1. If it contains a URL with code= or data=
+        if (raw.contains("code=")) {
+            val extracted = raw.substringAfter("code=").substringBefore("&").substringBefore(" ").substringBefore("\n").substringBefore("#Intent").trim()
+            val cleaned = extracted.removeSurrounding("`").removeSurrounding("\"").removeSurrounding("'").trim()
+            if (cleaned.isNotBlank()) return cleaned
+        }
+        if (raw.contains("data=")) {
+            val extracted = raw.substringAfter("data=").substringBefore("&").substringBefore(" ").substringBefore("\n").substringBefore("#Intent").trim()
+            val cleaned = extracted.removeSurrounding("`").removeSurrounding("\"").removeSurrounding("'").trim()
+            if (cleaned.isNotBlank()) return cleaned
         }
 
+        // 2. If it contains a full KHATMA# base64 string
+        if (raw.contains("KHATMA#")) {
+            val part = raw.substringAfter("KHATMA#").substringBefore(" ").substringBefore("\n").trim()
+            return "KHATMA#$part"
+        }
+
+        // 3. Search for 6-character alphanumeric code pattern (e.g. 6ZZBSL, NJ3GB9, RL56PV)
+        val shortCodeMatch = Regex("\\b([2-9A-HJ-NP-Z]{6})\\b").find(raw)
+        if (shortCodeMatch != null) {
+            return shortCodeMatch.groupValues[1]
+        }
+
+        // 4. Backtick match `XYZ123`
+        val backtickMatch = Regex("`([A-Za-z0-9_-]{4,20})`").find(raw)
+        if (backtickMatch != null) {
+            return backtickMatch.groupValues[1]
+        }
+
+        // 5. Line scan: find first line that looks like a clean code (no spaces, 4-16 chars)
+        val stripped = raw.removeSurrounding("`").removeSurrounding("\"").removeSurrounding("'").trim()
+        for (line in stripped.lines()) {
+            val trimmedLine = line.trim().removeSurrounding("`").removeSurrounding("\"").removeSurrounding("'").trim()
+            if (trimmedLine.length in 4..16 && !trimmedLine.contains(" ") && !trimmedLine.contains(":") && !trimmedLine.contains("•") && !trimmedLine.contains("http")) {
+                return trimmedLine
+            }
+        }
+
+        return stripped.lines().firstOrNull { it.isNotBlank() }?.trim()?.removeSurrounding("`")?.trim() ?: ""
+    }
+
+    suspend fun importKhatma(codeOrLink: String): GroupKhatma? = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val cleanCode = extractKhatmaCode(codeOrLink)
+        if (cleanCode.isBlank()) return@withContext null
+
+        // Check if it's base64 encoded KHATMA#...
+        val base64Part = if (cleanCode.startsWith("KHATMA#")) cleanCode.removePrefix("KHATMA#") else cleanCode
         try {
             val jsonBytes = Base64.decode(base64Part, Base64.NO_WRAP or Base64.URL_SAFE)
             val jsonStr = String(jsonBytes, Charsets.UTF_8)
             if (jsonStr.startsWith("{") && jsonStr.endsWith("}")) {
                 val jsonObj = JSONObject(jsonStr)
                 val parsed = parseKhatmaJsonObject(jsonObj)
-                CoroutineScope(Dispatchers.IO).launch {
-                    try {
-                        FirebaseKhatmaRepository.publishKhatma(parsed)
-                    } catch (e: Exception) {
-                        android.util.Log.w("GroupKhatmaManager", "Background cloud publish error on import", e)
-                    }
-                }
-                return parsed
+                FirebaseKhatmaRepository.publishKhatma(parsed)
+                return@withContext parsed
             }
-        } catch (e: Exception) {
-            // Not a raw base64 JSON string, fallback to short Khatma ID lookup
+        } catch (e: Throwable) {
+            // Not a base64 JSON payload, proceed to cloud lookup
         }
 
-        val idCandidate = when {
-            cleanCode.contains("code=") -> cleanCode.substringAfter("code=").substringBefore("&")
-            cleanCode.contains("data=") -> cleanCode.substringAfter("data=").substringBefore("&")
-            cleanCode.startsWith("KHATMA#") -> cleanCode.removePrefix("KHATMA#")
-            else -> cleanCode
-        }
-
-        if (idCandidate.isNotBlank()) {
+        // Lookup in Cloud Firestore (SDK + REST)
+        val candidateId = cleanCode.removePrefix("KHATMA#").trim()
+        if (candidateId.isNotBlank()) {
             try {
-                val cloudKhatma = kotlinx.coroutines.runBlocking {
-                    FirebaseKhatmaRepository.fetchKhatmaOnce(idCandidate)
-                }
+                val cloudKhatma = FirebaseKhatmaRepository.fetchKhatmaOnce(candidateId)
                 if (cloudKhatma != null) {
-                    return cloudKhatma
+                    return@withContext cloudKhatma
                 }
-            } catch (e: Exception) {
-                android.util.Log.w("GroupKhatmaManager", "Error fetching Khatma $idCandidate from cloud: ${e.message}")
+            } catch (e: Throwable) {
+                android.util.Log.w("GroupKhatmaManager", "Error fetching Khatma $candidateId from cloud: ${e.message}")
             }
-
-            val juzList = (1..30).map { GroupKhatmaJuz(juzNumber = it) }
-            return GroupKhatma(
-                id = idCandidate,
-                title = "ختمة قرآنية جماعية",
-                creatorName = "مشارك",
-                createdAt = System.currentTimeMillis(),
-                juzList = juzList
-            )
         }
 
-        return null
+        // Return null if not found in Cloud - never create a fake empty Khatma!
+        return@withContext null
+    }
+
+    fun decodeKhatmaFromCode(codeOrLink: String): GroupKhatma? {
+        return kotlinx.coroutines.runBlocking(Dispatchers.IO) {
+            importKhatma(codeOrLink)
+        }
     }
 
     fun generateShareableMessage(khatma: GroupKhatma, isArabic: Boolean, context: Context? = null): String {
-        val cleanId = if (khatma.id.isNotBlank() && !khatma.id.startsWith("KHATMA#") && khatma.id.length <= 12) {
+        val cleanId = if (khatma.id.isNotBlank() && !khatma.id.startsWith("KHATMA#") && khatma.id.length <= 16) {
             khatma.id
         } else {
             generateShortKhatmaId()
@@ -202,6 +236,15 @@ object GroupKhatmaManager {
             val ctx = context ?: com.example.HolyQuranApplication.instance
             if (ctx != null) {
                 saveKhatma(ctx, updated)
+            }
+        }
+
+        // Ensure cloud is immediately synced with the latest data
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                FirebaseKhatmaRepository.publishKhatma(khatma)
+            } catch (e: Exception) {
+                android.util.Log.w("GroupKhatmaManager", "Background cloud publish error on share", e)
             }
         }
 
@@ -222,7 +265,7 @@ object GroupKhatmaManager {
             "• الأجزاء المحجوزة: $bookedCount\n" +
             "• الأجزاء المتبقية: $remainingCount\n\n" +
             "نسأل الله القبول والشفاعة. لحجز جزء وتسجيل إنجازك، افتح تطبيق القرآن الكريم واستورد كود الختمة التالي:\n\n" +
-            "`$cleanId`\n\n" +
+            "$cleanId\n\n" +
             "رابط مباشر للفتح في التطبيق:\n" +
             "https://holy-quran-app-live.web.app/?code=$cleanId"
         } else {
@@ -233,7 +276,7 @@ object GroupKhatmaManager {
             "• Reserved: $bookedCount\n" +
             "• Remaining: $remainingCount\n\n" +
             "Open Holy Quran App and import this Khatma code to reserve your Juz:\n\n" +
-            "`$cleanId`\n\n" +
+            "$cleanId\n\n" +
             "Direct link:\n" +
             "https://holy-quran-app-live.web.app/?code=$cleanId"
         }

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" prefix="og: https://ogp.me/ns#">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,33 +7,67 @@
     
     <!-- Favicon & Touch Icons -->
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="icon" type="image/webp" href="app_logo.webp">
-    <link rel="apple-touch-icon" href="app_logo.webp">
+    <link rel="icon" type="image/png" href="app_logo.png">
+    <link rel="apple-touch-icon" href="app_logo.png">
     <link rel="shortcut icon" href="favicon.svg">
 
-    <!-- SEO & Social Meta Tags -->
+    <!-- SEO & Standard Meta Tags -->
+    <meta name="title" content="تطبيق القرآن الكريم - Holy Quran App">
     <meta name="description" content="تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة كاملة بالرسم العثماني، ختمات جماعية مباشرة، مواقيت الصلاة والأذان، الأذكار والتفاسير. صدقة جارية وبدون إعلانات.">
     <meta name="keywords" content="قرآن كريم, مصحف, مواقيت الصلاة, أذكار, ختمة جماعية, تطبيق أندرويد, Holy Quran App, APK">
+    <meta name="author" content="Holy Quran App">
+    <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#02120b" id="metaThemeColor">
 
     <!-- Open Graph / WhatsApp / Facebook / Telegram -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="تطبيق القرآن الكريم">
+    <meta property="og:locale" content="ar_AR">
     <meta property="og:title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta property="og:description" content="المصحف الشريف الكامل بالرسم العثماني، الختمات الجماعية، مواقيت الصلاة، والتفسير. صدقة جارية وبدون إعلانات نهائياً.">
+    <meta property="og:description" content="المصحف الشريف كاملاً بالرسم العثماني، الختمات الجماعية المباشرة، مواقيت الصلاة، والتفسير. صدقة جارية وبدون إعلانات.">
     <meta property="og:url" content="https://holy-quran-app-live.web.app/">
-    <meta property="og:image" content="https://holy-quran-app-live.web.app/app_logo.webp">
-    <meta property="og:image:secure_url" content="https://holy-quran-app-live.web.app/app_logo.webp">
-    <meta property="og:image:type" content="image/webp">
+    
+    <!-- Primary App Logo (Square 512x512 PNG, 11KB) - WhatsApp Thumbnails & Link Previews -->
+    <meta property="og:image" content="https://holy-quran-app-live.web.app/app_logo.png">
+    <meta property="og:image:secure_url" content="https://holy-quran-app-live.web.app/app_logo.png">
+    <meta property="og:image:type" content="image/png">
     <meta property="og:image:width" content="512">
     <meta property="og:image:height" content="512">
     <meta property="og:image:alt" content="شعار تطبيق القرآن الكريم">
 
+    <!-- Secondary Social Share Banner (JPEG 1200x630) -->
+    <meta property="og:image" content="https://holy-quran-app-live.web.app/share_preview.jpg">
+    <meta property="og:image:secure_url" content="https://holy-quran-app-live.web.app/share_preview.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="تطبيق القرآن الكريم - Holy Quran App">
+
     <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta name="twitter:description" content="تحميل مباشر للنسخة الرسمية من تطبيق القرآن الكريم الشامل لنظام أندرويد.">
-    <meta name="twitter:image" content="https://holy-quran-app-live.web.app/app_logo.webp">
+    <meta name="twitter:description" content="المصحف الشريف كاملاً بالرسم العثماني، الختمات الجماعية، مواقيت الصلاة، والتفسير. صدقة جارية وبدون إعلانات.">
+    <meta name="twitter:image" content="https://holy-quran-app-live.web.app/share_preview.jpg">
+
+    <!-- Structured Data (JSON-LD) for Search Engines and Social Preview Parsers -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "تطبيق القرآن الكريم",
+      "alternateName": "Holy Quran App",
+      "applicationCategory": "BooksApplication",
+      "operatingSystem": "Android",
+      "description": "تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة كاملة بالرسم العثماني، ختمات جماعية، ومواقيت الصلاة.",
+      "url": "https://holy-quran-app-live.web.app/",
+      "image": "https://holy-quran-app-live.web.app/app_logo.png",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    }
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -690,15 +724,44 @@
         /* Shared Khatma Dynamic Section */
         .khatma-invitation-card {
             display: none;
+            position: relative;
             background: rgba(255, 215, 0, 0.08);
             border: 2px dashed var(--gold-primary);
             border-radius: 20px;
-            padding: 22px;
+            padding: 24px 22px 22px 22px;
             margin-bottom: 25px;
             text-align: center;
             width: 100%;
             max-width: 680px;
             backdrop-filter: blur(8px);
+            transition: opacity 0.25s ease, transform 0.25s ease;
+        }
+
+        .khatma-close-btn {
+            position: absolute;
+            top: 12px;
+            left: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-gold);
+            color: var(--gold-light);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+            outline: none;
+            z-index: 10;
+        }
+
+        .khatma-close-btn:hover {
+            background: rgba(255, 215, 0, 0.22);
+            color: #ffffff;
+            transform: scale(1.1);
         }
 
         .khatma-invitation-card.active {
@@ -823,11 +886,12 @@
             <div class="hero-artwork-gloss"></div>
         </div>
 
-        <div class="app-version-badge">✨ الإصدار الحالي: v1.1.0 (Build 3) • صدقة جارية</div>
+        <div class="app-version-badge" id="appVersionBadge">✨ الإصدار الحالي: v1.2.8 (Build 12) • صدقة جارية لكل من ساهم في إكمال هذا التطبيق ومن ساهم في نشره</div>
 
         <!-- Dynamic Shared Khatma Invitation Card -->
         <div class="khatma-invitation-card" id="khatmaCard">
-            <h3 style="color: var(--gold-primary); font-size: 20px; margin-bottom: 6px;">📖 دعوة ختمة قرآنية جماعية</h3>
+            <button class="khatma-close-btn" onclick="closeKhatmaCard()" title="إغلاق والعودة للموقع الرئيسي" aria-label="Close">✕</button>
+            <h3 style="color: var(--gold-primary); font-size: 20px; margin-bottom: 6px; padding: 0 28px;">📖 دعوة ختمة قرآنية جماعية</h3>
             <p style="color: var(--text-muted); font-size: 14px;">تمت دعوتك للمشاركة في قراءة القرآن وحجز الأجزاء مع التزامن المباشر.</p>
             <div class="code-display-box" id="codeDisplay">جاري جلب كود الختمة...</div>
             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
@@ -849,8 +913,8 @@
             <p style="color: var(--text-muted); font-size: 14.5px; margin-bottom: 18px; line-height: 1.6;">
                 تحميل مباشر لأحدث نسخة رسمية من التطبيق بالرسم العثماني كامل، الختمات الجماعية، التفسير والأحاديث، ومواقيت الصلاة.
             </p>
-            <a href="HolyQuran_v1.1.0.data" download="HolyQuran_v1.1.0.apk" class="download-btn-main" id="mainDownloadBtn" onclick="handleDownloadClick(event, this)">
-                <span>تحميل التطبيق المباشر (APK) v1.1.0</span>
+            <a href="HolyQuran_v1.2.8.data" download="HolyQuran_v1.2.8.apk" class="download-btn-main" id="mainDownloadBtn" onclick="handleDownloadClick(event, this)">
+                <span id="mainDownloadBtnText">تحميل التطبيق المباشر (APK) v1.2.8</span>
                 <span>📲</span>
             </a>
 
@@ -866,8 +930,8 @@
                 </button>
             </div>
 
-            <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 14px;">
-                حجم الملف: 63.0 MB • الإصدار: v1.1.0 • يدعم أجهزة أندرويد (Android 7.0+)
+            <p style="font-size: 12.5px; color: var(--text-muted); margin-top: 14px;" id="appSpecsText">
+                حجم الملف: 39.1 MB • الإصدار: v1.2.8 (Build 12) • يدعم أجهزة أندرويد (Android 7.0+)
             </p>
 
             <!-- Trust and Security Badges -->
@@ -878,7 +942,7 @@
                 </div>
                 <div class="trust-badge-item">
                     <span>🚫</span>
-                    <span>بدون أي إعلانات نهائياً</span>
+                    <span>بدون إعلانات</span>
                 </div>
                 <div class="trust-badge-item">
                     <span>⚡</span>
@@ -886,7 +950,7 @@
                 </div>
                 <div class="trust-badge-item">
                     <span>❤️</span>
-                    <span>صدقة جارية ومجاني</span>
+                    <span>صدقة جارية لكل من ساهم في إكماله ونشره</span>
                 </div>
             </div>
         </div>
@@ -1066,6 +1130,38 @@
         </div>
     </div>
 
+    <!-- Khatma App Not Installed Prompt Modal -->
+    <div class="modal-overlay" id="khatmaInstallModal" onclick="handleBackdropClick(event, 'khatmaInstallModal')">
+        <div class="modal-box" style="max-width: 440px; text-align: center;">
+            <div class="modal-header" style="justify-content: center; position: relative;">
+                <div class="modal-title" style="color: var(--gold-primary); font-size: 19px;">
+                    <span>📲</span>
+                    <span>تطبيق القرآن الكريم مطلوب</span>
+                </div>
+                <button class="modal-close-btn" style="position: absolute; left: 0;" onclick="closeModal('khatmaInstallModal')" aria-label="إغلاق">&times;</button>
+            </div>
+            <div style="padding: 10px 0 16px 0;">
+                <p style="color: var(--text-main); font-size: 15px; margin-bottom: 12px; line-height: 1.6;">
+                    لم نتمكن من فتح التطبيق على هاتفك. يبدو أن التطبيق غير مثبت لديك بعد.
+                </p>
+                <div style="background: rgba(255, 215, 0, 0.1); border: 1px dashed var(--gold-primary); border-radius: 12px; padding: 12px; margin-bottom: 16px;">
+                    <p style="font-size: 13px; color: var(--gold-light); margin-bottom: 4px;">كود الختمة للمشاركة:</p>
+                    <strong style="font-size: 20px; letter-spacing: 2px; color: var(--text-main);" id="modalKhatmaCodeDisplay">------</strong>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">(تم نسخ الكود تلقائياً لحافظة هاتفك 📋)</p>
+                </div>
+                <p style="color: var(--text-muted); font-size: 13.5px; margin-bottom: 18px; line-height: 1.5;">
+                    حمّل التطبيق الآن للمشاركة في الختمة وحجز الأجزاء ومتابعة التلاوة مباشرة وبدون إعلانات.
+                </p>
+                <a href="HolyQuran_v1.2.8.data" download="HolyQuran_v1.2.8.apk" class="download-btn-main" id="khatmaModalDownloadBtn" style="width: 100%; font-size: 16px; padding: 14px;" onclick="closeModal('khatmaInstallModal'); handleDownloadClick(event, this);">
+                    <span>تحميل التطبيق الآن (APK مجاني) 📥</span>
+                </a>
+                <button type="button" class="btn-secondary-action" style="width: 100%; margin-top: 10px; justify-content: center;" onclick="closeModal('khatmaInstallModal')">
+                    إلغاء والعودة
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Floating Toast Notification -->
     <div class="toast-notification" id="toastMessage">تم النسخ بنجاح!</div>
 
@@ -1220,6 +1316,7 @@
             if (e.key === 'Escape') {
                 closeModal('installModal');
                 closeModal('qrModal');
+                closeModal('khatmaInstallModal');
             }
         });
 
@@ -1296,8 +1393,8 @@
             if (analytics) {
                 try {
                     analytics.logEvent('app_download', {
-                        file_name: 'HolyQuran_v1.1.0.apk',
-                        version: '1.2.0',
+                        file_name: 'HolyQuran_v1.2.8.apk',
+                        version: '1.2.8',
                         source: 'landing_page_direct_btn'
                     });
                 } catch (e) {}
@@ -1333,6 +1430,37 @@
             }, 2000);
         }
 
+        // Dynamic Version Fetcher from version.json
+        fetch('version.json')
+            .then(res => res.json())
+            .then(data => {
+                if (data && data.latest_version_name) {
+                    const badge = document.getElementById('appVersionBadge');
+                    if (badge) {
+                        badge.innerText = `✨ الإصدار الحالي: v${data.latest_version_name} (Build ${data.latest_version_code || 11}) • صدقة جارية لكل من ساهم في إكمال هذا التطبيق ومن ساهم في نشره`;
+                    }
+                    const btnText = document.getElementById('mainDownloadBtnText');
+                    if (btnText) {
+                        btnText.innerText = `تحميل التطبيق المباشر (APK) v${data.latest_version_name}`;
+                    }
+                    const specs = document.getElementById('appSpecsText');
+                    if (specs) {
+                        const sizeStr = data.file_size_formatted || (data.file_size_mb ? `${data.file_size_mb} MB` : '39.1 MB');
+                        specs.innerText = `حجم الملف: ${sizeStr} • الإصدار: v${data.latest_version_name} (Build ${data.latest_version_code || 11}) • يدعم أجهزة أندرويد (Android 7.0+)`;
+                    }
+                    const mainBtn = document.getElementById('mainDownloadBtn');
+                    if (mainBtn) {
+                        mainBtn.href = `HolyQuran_v${data.latest_version_name}.data`;
+                        mainBtn.download = `HolyQuran_v${data.latest_version_name}.apk`;
+                    }
+                    const modalBtn = document.getElementById('khatmaModalDownloadBtn');
+                    if (modalBtn) {
+                        modalBtn.href = `HolyQuran_v${data.latest_version_name}.data`;
+                        modalBtn.download = `HolyQuran_v${data.latest_version_name}.apk`;
+                    }
+                }
+            }).catch(() => {});
+
         // Shared Khatma Link Handler
         const urlParams = new URLSearchParams(window.location.search);
         const codeParam = urlParams.get('code') || urlParams.get('data') || '';
@@ -1340,6 +1468,30 @@
         if (codeParam) {
             document.getElementById('khatmaCard').classList.add('active');
             document.getElementById('codeDisplay').innerText = codeParam;
+            const modalCode = document.getElementById('modalKhatmaCodeDisplay');
+            if (modalCode) modalCode.innerText = codeParam;
+
+            // Smooth automatic detection on page load (700ms delay)
+            setTimeout(() => {
+                openDeepLink(true);
+            }, 700);
+        }
+
+        function closeKhatmaCard() {
+            const card = document.getElementById('khatmaCard');
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.96)';
+                setTimeout(() => {
+                    card.classList.remove('active');
+                    card.style.display = 'none';
+                }, 250);
+            }
+            try {
+                const cleanUrl = window.location.origin + window.location.pathname;
+                window.history.replaceState({}, document.title, cleanUrl);
+            } catch (e) {}
+            showToast("تمت العودة للصفحة الرئيسية للمصحف الشريف 📖");
         }
 
         function copyKhatmaCode() {
@@ -1353,24 +1505,66 @@
             }
         }
 
-        function openDeepLink() {
-            if (codeParam) {
-                copyKhatmaCode();
-                showToast("جاري فتح الختمة في التطبيق... 📲");
-                if (analytics) try { analytics.logEvent('khatma_open_app'); } catch(e){}
+        let isDetectingApp = false;
+        function openDeepLink(isAuto = false) {
+            if (!codeParam) return;
+            copyKhatmaCode();
 
-                const cleanCode = encodeURIComponent(codeParam);
-                const apkDownloadUrl = "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data";
-                const intentUrl = "intent://holy-quran-app-live.web.app/?code=" + cleanCode + "#Intent;scheme=https;package=com.holyquran.app;S.browser_fallback_url=" + encodeURIComponent(apkDownloadUrl) + ";end;";
-
-                const isAndroid = /Android/i.test(navigator.userAgent);
-                if (isAndroid) {
-                    window.location.href = intentUrl;
-                } else {
-                    showToast("للانضمام التلقائي، افتح الرابط على هاتف أندرويد 📲");
-                    window.location.href = apkDownloadUrl;
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            if (!isAndroid) {
+                if (!isAuto) {
+                    showToast("للانضمام التلقائي، افتح الرابط على هاتف أندرويد المثبت عليه التطبيق 📲");
                 }
+                return;
             }
+
+            if (isDetectingApp) return;
+            isDetectingApp = true;
+
+            showToast("جاري فتح الختمة في تطبيق القرآن الكريم... 📲");
+            if (analytics) try { analytics.logEvent('khatma_open_app'); } catch(e){}
+
+            const cleanCode = encodeURIComponent(codeParam);
+            const intentUrl = "intent://khatma?code=" + cleanCode + "#Intent;scheme=holyquran;package=com.holyquran.app;end;";
+            const appSchemeUrl = "holyquran://khatma?code=" + cleanCode;
+
+            let appOpened = false;
+
+            const onWindowBlur = function() {
+                appOpened = true;
+            };
+
+            const onVisibilityChange = function() {
+                if (document.hidden) {
+                    appOpened = true;
+                }
+            };
+
+            window.addEventListener('blur', onWindowBlur, { once: true });
+            document.addEventListener('visibilitychange', onVisibilityChange);
+
+            // Attempt to launch via Android intent
+            window.location.href = intentUrl;
+
+            // Fallback to custom URI scheme after short delay
+            setTimeout(() => {
+                if (!appOpened && !document.hidden) {
+                    window.location.href = appSchemeUrl;
+                }
+            }, 350);
+
+            // Detection timer: if browser is STILL visible after 1800ms, the app is not installed!
+            setTimeout(() => {
+                document.removeEventListener('visibilitychange', onVisibilityChange);
+                window.removeEventListener('blur', onWindowBlur);
+                isDetectingApp = false;
+
+                if (!appOpened && !document.hidden) {
+                    const modalCode = document.getElementById('modalKhatmaCodeDisplay');
+                    if (modalCode) modalCode.innerText = codeParam;
+                    openModal('khatmaInstallModal');
+                }
+            }, 1800);
         }
     </script>
 </body>

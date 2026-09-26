@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.MenuBook
@@ -71,15 +72,23 @@ fun GroupKhatmaScreen(
     val context = LocalContext.current
     val isArabic = currentLanguage == AppLanguage.ARABIC
 
+    val coroutineScope = rememberCoroutineScope()
     var allKhatmas by remember { mutableStateOf(GroupKhatmaManager.getAllKhatmas(context)) }
+    val lastActiveId = remember { GroupKhatmaManager.getLastActiveKhatmaId(context) }
     var activeKhatma by remember {
         mutableStateOf(
-            allKhatmas.firstOrNull() ?: GroupKhatmaManager.createNewKhatma(
-                context,
-                title = if (isArabic) "ختمة المحبة والتآخي" else "Shared Group Khatma",
-                creatorName = if (isArabic) "مشارك" else "Participant"
-            )
+            allKhatmas.firstOrNull { it.id == lastActiveId }
+                ?: allKhatmas.firstOrNull()
+                ?: GroupKhatmaManager.createNewKhatma(
+                    context,
+                    title = if (isArabic) "ختمة المحبة والتآخي" else "Shared Group Khatma",
+                    creatorName = if (isArabic) "مشارك" else "Participant"
+                )
         )
+    }
+
+    LaunchedEffect(activeKhatma.id) {
+        GroupKhatmaManager.saveLastActiveKhatmaId(context, activeKhatma.id)
     }
 
     LaunchedEffect(Unit) {
@@ -90,12 +99,15 @@ fun GroupKhatmaScreen(
     LaunchedEffect(initialKhatmaCode) {
         if (!initialKhatmaCode.isNullOrBlank()) {
             try {
-                val imported = GroupKhatmaManager.decodeKhatmaFromCode(initialKhatmaCode)
+                val imported = GroupKhatmaManager.importKhatma(initialKhatmaCode)
                 if (imported != null) {
                     GroupKhatmaManager.saveKhatma(context, imported)
                     allKhatmas = GroupKhatmaManager.getAllKhatmas(context)
                     activeKhatma = imported
                     com.example.util.AnalyticsHelper.logKhatmaEvent("joined", imported.id)
+                    Toast.makeText(context, if (isArabic) "تم فتح الختمة '${imported.title}' بنجاح! ✨" else "Khatma '${imported.title}' loaded successfully! ✨", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(context, if (isArabic) "تعذر العثور على الختمة المطلوبة من الرابط" else "Could not find requested Khatma from link", Toast.LENGTH_SHORT).show()
                 }
             } catch (e: Throwable) {
                 android.util.Log.e("GroupKhatmaScreen", "Error handling initial khatma code", e)
@@ -106,31 +118,32 @@ fun GroupKhatmaScreen(
     // View mode: True = 30-Juz Compact Visual Grid (Single Glance), False = Detailed List View
     var isGridView by remember { mutableStateOf(true) }
 
+    // Dialog states
     var showCreateDialog by remember { mutableStateOf(false) }
     var showImportDialog by remember { mutableStateOf(false) }
     var showSelectKhatmaDialog by remember { mutableStateOf(false) }
+    var showOngoingKhatmasDialog by remember { mutableStateOf(false) }
+    var showPreviousKhatmasDialog by remember { mutableStateOf(false) }
     var showDeadlineDialog by remember { mutableStateOf(false) }
-    
+
+    val ongoingKhatmas = remember(allKhatmas) {
+        allKhatmas.filter { k -> k.juzList.count { it.status == GroupKhatmaJuzStatus.COMPLETED } < 30 }
+    }
+    val previousKhatmas = remember(allKhatmas) {
+        allKhatmas.filter { k -> k.juzList.count { it.status == GroupKhatmaJuzStatus.COMPLETED } == 30 }
+    }
+
     // Juz selected for details / reservation / reading
     var selectedJuzDetails by remember { mutableStateOf<GroupKhatmaJuz?>(null) }
     var savedUserName by remember { mutableStateOf(GroupKhatmaManager.getSavedUserName(context)) }
 
-    // Live ticker for active countdowns
-    var currentTimeMillis by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) {
-        while (isActive) {
-            currentTimeMillis = System.currentTimeMillis()
-            delay(1000L)
-        }
-    }
-
-    // Real-time Cloud Sync Observer
+    // Real-time Cloud Sync Observer (Safeguarded against infinite loops and screen flicker)
     LaunchedEffect(activeKhatma.id) {
         try {
             com.example.data.provider.FirebaseKhatmaRepository.observeKhatma(activeKhatma.id).collect { liveKhatma ->
-                if (liveKhatma != null) {
+                if (liveKhatma != null && liveKhatma != activeKhatma) {
                     activeKhatma = liveKhatma
-                    GroupKhatmaManager.saveKhatma(context, liveKhatma)
+                    GroupKhatmaManager.saveKhatmaLocalOnly(context, liveKhatma)
                     allKhatmas = GroupKhatmaManager.getAllKhatmas(context)
                     selectedJuzDetails?.let { current ->
                         selectedJuzDetails = liveKhatma.juzList.firstOrNull { it.juzNumber == current.juzNumber }
@@ -220,15 +233,24 @@ fun GroupKhatmaScreen(
                     .widthIn(max = 800.dp)
                     .align(Alignment.TopCenter)
             ) {
-                // Summary Header Card & Re-allocated non-wrapping action buttons
+                // 3 Primary Navigation Buttons: Ongoing Khatmas, Create New Khatma, Previous Khatmas
+                KhatmaTopNavButtons(
+                    isArabic = isArabic,
+                    ongoingCount = ongoingKhatmas.size,
+                    previousCount = previousKhatmas.size,
+                    onOngoingClick = { showOngoingKhatmasDialog = true },
+                    onCreateClick = { showCreateDialog = true },
+                    onPreviousClick = { showPreviousKhatmasDialog = true }
+                )
+
+                // Summary Header Card
                 KhatmaSummaryHeaderCard(
                     khatma = activeKhatma,
                     isArabic = isArabic,
-                    currentTimeMillis = currentTimeMillis,
                     onSetDeadlineClick = { showDeadlineDialog = true },
                     onCreateClick = { showCreateDialog = true },
                     onImportClick = { showImportDialog = true },
-                    onSelectKhatmaClick = { showSelectKhatmaDialog = true },
+                    onSelectKhatmaClick = { showOngoingKhatmasDialog = true },
                     onShareClick = {
                         val msg = GroupKhatmaManager.generateShareableMessage(activeKhatma, isArabic)
                         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
@@ -685,9 +707,10 @@ fun GroupKhatmaScreen(
     // Import Khatma Code Dialog
     if (showImportDialog) {
         var inputCode by remember { mutableStateOf("") }
+        var isImporting by remember { mutableStateOf(false) }
 
         AlertDialog(
-            onDismissRequest = { showImportDialog = false },
+            onDismissRequest = { if (!isImporting) showImportDialog = false },
             icon = { Icon(Icons.Default.QrCodeScanner, contentDescription = null, tint = EmeraldPrimary) },
             title = {
                 Text(
@@ -699,14 +722,16 @@ fun GroupKhatmaScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(
-                        text = if (isArabic) "ألصق كود الختمة المشترك (الذي يبدأ بـ KHATMA#) أو الرابط للانضمام إليه:" else "Paste the shared Khatma code or link to join:",
+                        text = if (isArabic) "ألصق كود الختمة المشترك أو الرابط للانضمام إليها:" else "Paste the shared Khatma code or link to join:",
                         style = MaterialTheme.typography.bodySmall
                     )
                     OutlinedTextField(
                         value = inputCode,
                         onValueChange = { inputCode = it },
                         label = { Text(if (isArabic) "كود أو رابط الختمة" else "Khatma Code / Link") },
+                        placeholder = { Text("مثال: 4K8Z2A أو رابط الختمة") },
                         maxLines = 3,
+                        enabled = !isImporting,
                         modifier = Modifier.fillMaxWidth()
                     )
                     Row(
@@ -714,6 +739,7 @@ fun GroupKhatmaScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         TextButton(
+                            enabled = !isImporting,
                             onClick = {
                                 val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
                                 val clipData = clipboard.primaryClip
@@ -734,26 +760,49 @@ fun GroupKhatmaScreen(
             },
             confirmButton = {
                 Button(
+                    enabled = !isImporting && inputCode.isNotBlank(),
                     onClick = {
-                        val imported = GroupKhatmaManager.decodeKhatmaFromCode(inputCode)
-                        if (imported != null) {
-                            GroupKhatmaManager.saveKhatma(context, imported)
-                            activeKhatma = imported
-                            refreshData()
-                            com.example.util.AnalyticsHelper.logKhatmaEvent("joined", imported.id)
-                            showImportDialog = false
-                            Toast.makeText(context, if (isArabic) "تم استيراد الختمة '${imported.title}' بنجاح!" else "Khatma imported successfully!", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(context, if (isArabic) "كود الختمة غير صحيح أو غير مكتمل" else "Invalid Khatma code", Toast.LENGTH_SHORT).show()
+                        isImporting = true
+                        coroutineScope.launch {
+                            try {
+                                val imported = GroupKhatmaManager.importKhatma(inputCode)
+                                isImporting = false
+                                if (imported != null) {
+                                    GroupKhatmaManager.saveKhatma(context, imported)
+                                    activeKhatma = imported
+                                    refreshData()
+                                    com.example.util.AnalyticsHelper.logKhatmaEvent("joined", imported.id)
+                                    showImportDialog = false
+                                    Toast.makeText(context, if (isArabic) "تم استيراد الختمة '${imported.title}' بنجاح! ✨" else "Khatma '${imported.title}' imported successfully! ✨", Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(context, if (isArabic) "تعذر العثور على الختمة بهذا الكود. تأكد من صحة الكود أو الرابط واتصال الإنترنت." else "Could not find Khatma. Please check code/link and internet connection.", Toast.LENGTH_LONG).show()
+                                }
+                            } catch (e: Throwable) {
+                                isImporting = false
+                                Toast.makeText(context, if (isArabic) "حدث خطأ أثناء الاتصال: ${e.message}" else "Network error: ${e.message}", Toast.LENGTH_LONG).show()
+                            }
                         }
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
                 ) {
-                    Text(if (isArabic) "استيراد وانضمام" else "Import & Join")
+                    if (isImporting) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(18.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(if (isArabic) "جاري البحث..." else "Searching...")
+                    } else {
+                        Text(if (isArabic) "استيراد وانضمام" else "Import & Join")
+                    }
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showImportDialog = false }) {
+                TextButton(
+                    enabled = !isImporting,
+                    onClick = { showImportDialog = false }
+                ) {
                     Text(if (isArabic) "إلغاء" else "Cancel")
                 }
             }
@@ -843,6 +892,479 @@ fun GroupKhatmaScreen(
             }
         )
     }
+
+    // Ongoing Khatmas Dialog
+    if (showOngoingKhatmasDialog) {
+        AlertDialog(
+            onDismissRequest = { showOngoingKhatmasDialog = false },
+            icon = { Icon(Icons.Default.MenuBook, contentDescription = null, tint = EmeraldPrimary) },
+            title = {
+                Text(
+                    text = if (isArabic) "الختمات الجارية" else "Ongoing Khatmas",
+                    fontFamily = TajawalFontFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                if (ongoingKhatmas.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = if (isArabic) "لا توجد ختمات جارية حالياً." else "No ongoing Khatmas.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.heightIn(max = 340.dp)
+                    ) {
+                        items(ongoingKhatmas) { k ->
+                            val isCurrent = k.id == activeKhatma.id
+                            val completedCount = k.juzList.count { it.status == GroupKhatmaJuzStatus.COMPLETED }
+                            val bookedCount = k.juzList.count { it.status == GroupKhatmaJuzStatus.BOOKED }
+
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isCurrent) EmeraldPrimary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                border = BorderStroke(1.dp, if (isCurrent) EmeraldPrimary else Color.Transparent),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        activeKhatma = k
+                                        showOngoingKhatmasDialog = false
+                                    }
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(k.title, fontWeight = FontWeight.Bold)
+                                            if (isCurrent) {
+                                                Spacer(modifier = Modifier.width(6.dp))
+                                                Surface(
+                                                    shape = RoundedCornerShape(4.dp),
+                                                    color = EmeraldPrimary,
+                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                ) {
+                                                    Text(
+                                                        text = if (isArabic) "الحالية" else "Active",
+                                                        fontSize = 10.sp,
+                                                        color = Color.White,
+                                                        modifier = Modifier.padding(horizontal = 4.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        Text(
+                                            text = if (isArabic) "مكتمل: $completedCount | محجوز: $bookedCount من 30 جزء"
+                                            else "Completed: $completedCount | Booked: $bookedCount / 30",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                    if (allKhatmas.size > 1) {
+                                        IconButton(
+                                            onClick = {
+                                                GroupKhatmaManager.deleteKhatma(context, k.id)
+                                                refreshData()
+                                            }
+                                        ) {
+                                            Icon(Icons.Default.DeleteOutline, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showOngoingKhatmasDialog = false
+                        showCreateDialog = true
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(if (isArabic) "إنشاء ختمة جديدة" else "New Khatma")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showOngoingKhatmasDialog = false }) {
+                    Text(if (isArabic) "إغلاق" else "Close")
+                }
+            }
+        )
+    }
+
+    // Previous (Completed) Khatmas Dialog
+    if (showPreviousKhatmasDialog) {
+        AlertDialog(
+            onDismissRequest = { showPreviousKhatmasDialog = false },
+            icon = { Icon(Icons.Default.History, contentDescription = null, tint = IslamicGold) },
+            title = {
+                Text(
+                    text = if (isArabic) "الختمات السابقة (المكتملة)" else "Previous Completed Khatmas",
+                    fontFamily = TajawalFontFamily,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                if (previousKhatmas.isEmpty()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 20.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = null,
+                            tint = Color.Gray.copy(alpha = 0.5f),
+                            modifier = Modifier.size(48.dp)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = if (isArabic) "لا توجد ختمات سابقة مكتملة حتى الآن." else "No completed Khatmas yet.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = if (isArabic) "عند إتمام جميع أجزاء الختمة (30 جزء) ستظهر هنا في الأرشيف المبارك."
+                            else "When all 30 Juz are completed, the Khatma will appear here.",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.heightIn(max = 340.dp)
+                    ) {
+                        items(previousKhatmas) { k ->
+                            val isCurrent = k.id == activeKhatma.id
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (isCurrent) EmeraldPrimary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                border = BorderStroke(1.dp, if (isCurrent) EmeraldPrimary else Color.Transparent),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clickable {
+                                        activeKhatma = k
+                                        showPreviousKhatmasDialog = false
+                                    }
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .padding(12.dp)
+                                        .fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(k.title, fontWeight = FontWeight.Bold)
+                                        Text(
+                                            text = if (isArabic) "✅ مكتملة بالكامل (30 جزء) - تقبل الله" else "✅ 30/30 Completed",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = Color(0xFF2E7D32)
+                                        )
+                                    }
+                                    IconButton(
+                                        onClick = {
+                                            GroupKhatmaManager.deleteKhatma(context, k.id)
+                                            refreshData()
+                                        }
+                                    ) {
+                                        Icon(Icons.Default.DeleteOutline, contentDescription = "Delete", tint = Color.Red.copy(alpha = 0.7f))
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {},
+            dismissButton = {
+                TextButton(onClick = { showPreviousKhatmasDialog = false }) {
+                    Text(if (isArabic) "إغلاق" else "Close")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun KhatmaTopNavButtons(
+    isArabic: Boolean,
+    ongoingCount: Int,
+    previousCount: Int,
+    onOngoingClick: () -> Unit,
+    onCreateClick: () -> Unit,
+    onPreviousClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.2f)),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 6.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // 1. Ongoing Khatmas Button
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = EmeraldPrimary.copy(alpha = 0.12f),
+                border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onOngoingClick() }
+            ) {
+                Column(
+                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    BadgedBox(
+                        badge = {
+                            Badge(
+                                containerColor = EmeraldPrimary,
+                                contentColor = Color.White
+                            ) {
+                                Text("$ongoingCount", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.MenuBook,
+                            contentDescription = null,
+                            tint = EmeraldPrimary,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Text(
+                        text = if (isArabic) "الختمات الجارية" else "Ongoing",
+                        fontFamily = TajawalFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = EmeraldPrimary,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // 2. Create New Khatma Button (Prominent Center)
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = EmeraldPrimary,
+                modifier = Modifier
+                    .weight(1.1f)
+                    .clickable { onCreateClick() }
+            ) {
+                Column(
+                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.AddCircle,
+                        contentDescription = null,
+                        tint = IslamicGold,
+                        modifier = Modifier.size(24.dp)
+                    )
+                    Text(
+                        text = if (isArabic) "إنشاء ختمة جديدة" else "Create New",
+                        fontFamily = TajawalFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+
+            // 3. Previous Khatmas Button
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.4f)),
+                modifier = Modifier
+                    .weight(1f)
+                    .clickable { onPreviousClick() }
+            ) {
+                Column(
+                    modifier = Modifier.padding(vertical = 10.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    BadgedBox(
+                        badge = {
+                            Badge(
+                                containerColor = if (previousCount > 0) Color(0xFF2E7D32) else Color.Gray,
+                                contentColor = Color.White
+                            ) {
+                                Text("$previousCount", fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.History,
+                            contentDescription = null,
+                            tint = IslamicGold,
+                            modifier = Modifier.size(22.dp)
+                        )
+                    }
+                    Text(
+                        text = if (isArabic) "الختمات السابقة" else "Previous",
+                        fontFamily = TajawalFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DeadlineCountdownTimerBanner(
+    deadlineTimestamp: Long,
+    isArabic: Boolean,
+    onSetDeadlineClick: () -> Unit
+) {
+    var currentTime by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    if (deadlineTimestamp > 0L) {
+        LaunchedEffect(deadlineTimestamp) {
+            while (isActive) {
+                currentTime = System.currentTimeMillis()
+                delay(1000L)
+            }
+        }
+    }
+
+    val remainingMillis = deadlineTimestamp - currentTime
+
+    Surface(
+        shape = RoundedCornerShape(12.dp),
+        color = if (remainingMillis <= 0L && deadlineTimestamp > 0L) Color(0xFFFEF2F2) else EmeraldPrimary.copy(alpha = 0.08f),
+        border = BorderStroke(
+            1.dp,
+            if (remainingMillis <= 0L && deadlineTimestamp > 0L) Color(0xFFEF4444) else IslamicGold.copy(alpha = 0.6f)
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onSetDeadlineClick() }
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Timer,
+                    contentDescription = null,
+                    tint = if (remainingMillis <= 0L && deadlineTimestamp > 0L) Color(0xFFDC2626) else IslamicGold,
+                    modifier = Modifier.size(20.dp)
+                )
+                Column {
+                    if (deadlineTimestamp > 0L) {
+                        if (remainingMillis > 0L) {
+                            val hours = remainingMillis / (1000 * 60 * 60)
+                            val minutes = (remainingMillis / (1000 * 60)) % 60
+                            val seconds = (remainingMillis / 1000) % 60
+                            val formattedTime = if (hours >= 24) {
+                                val days = hours / 24
+                                val remHours = hours % 24
+                                if (isArabic) "$days يوم و $remHours ساعة" else "$days days & $remHours hrs"
+                            } else {
+                                String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, seconds)
+                            }
+
+                            Text(
+                                text = if (isArabic) "متبقي على إغلاق الختمة:" else "Closing timer:",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Text(
+                                text = "⏱️ $formattedTime",
+                                fontSize = 13.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = EmeraldPrimary
+                            )
+                        } else {
+                            Text(
+                                text = if (isArabic) "⌛ انتهت مهلة الختمة المحددة" else "⌛ Deadline elapsed",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFFDC2626)
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = if (isArabic) "تحديد وقت لإغلاق الختمة (مؤقت مباشر)" else "Set Khatma Closing Timer",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = EmeraldPrimary
+                        )
+                    }
+                }
+            }
+
+            IconButton(
+                onClick = onSetDeadlineClick,
+                modifier = Modifier.size(32.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.EditCalendar,
+                    contentDescription = "Set Timer",
+                    tint = EmeraldPrimary,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+        }
+    }
 }
 
 fun getTodayAtHourMillis(hour24: Int): Long {
@@ -861,7 +1383,6 @@ fun getTodayAtHourMillis(hour24: Int): Long {
 fun KhatmaSummaryHeaderCard(
     khatma: GroupKhatma,
     isArabic: Boolean,
-    currentTimeMillis: Long = System.currentTimeMillis(),
     onSetDeadlineClick: () -> Unit = {},
     onCreateClick: () -> Unit,
     onImportClick: () -> Unit,
@@ -872,7 +1393,6 @@ fun KhatmaSummaryHeaderCard(
     val bookedCount = khatma.juzList.count { it.status == GroupKhatmaJuzStatus.BOOKED }
     val unassignedCount = 30 - completedCount - bookedCount
     val progressPercent = (completedCount / 30f)
-    val remainingMillis = khatma.targetDeadlineTimestamp - currentTimeMillis
 
     Card(
         shape = RoundedCornerShape(20.dp),
@@ -982,91 +1502,12 @@ fun KhatmaSummaryHeaderCard(
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
 
-                // Live Closing Timer Banner
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = if (remainingMillis <= 0L && khatma.targetDeadlineTimestamp > 0L) Color(0xFFFEF2F2) else EmeraldPrimary.copy(alpha = 0.08f),
-                    border = BorderStroke(
-                        1.dp,
-                        if (remainingMillis <= 0L && khatma.targetDeadlineTimestamp > 0L) Color(0xFFEF4444) else IslamicGold.copy(alpha = 0.6f)
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onSetDeadlineClick() }
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Timer,
-                                contentDescription = null,
-                                tint = if (remainingMillis <= 0L && khatma.targetDeadlineTimestamp > 0L) Color(0xFFDC2626) else IslamicGold,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Column {
-                                if (khatma.targetDeadlineTimestamp > 0L) {
-                                    if (remainingMillis > 0L) {
-                                        val hours = remainingMillis / (1000 * 60 * 60)
-                                        val minutes = (remainingMillis / (1000 * 60)) % 60
-                                        val seconds = (remainingMillis / 1000) % 60
-                                        val formattedTime = if (hours >= 24) {
-                                            val days = hours / 24
-                                            val remHours = hours % 24
-                                            if (isArabic) "$days يوم و $remHours ساعة" else "$days days & $remHours hrs"
-                                        } else {
-                                            String.format("%02d:%02d:%02d", hours, minutes, seconds)
-                                        }
-
-                                        Text(
-                                            text = if (isArabic) "متبقي على إغلاق الختمة:" else "Closing timer:",
-                                            fontSize = 11.sp,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                        Text(
-                                            text = "⏱️ $formattedTime",
-                                            fontSize = 13.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = EmeraldPrimary
-                                        )
-                                    } else {
-                                        Text(
-                                            text = if (isArabic) "⌛ انتهت مهلة الختمة المحددة" else "⌛ Deadline elapsed",
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold,
-                                            color = Color(0xFFDC2626)
-                                        )
-                                    }
-                                } else {
-                                    Text(
-                                        text = if (isArabic) "تحديد وقت لإغلاق الختمة (مؤقت مباشر)" else "Set Khatma Closing Timer",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.SemiBold,
-                                        color = EmeraldPrimary
-                                    )
-                                }
-                            }
-                        }
-
-                        IconButton(
-                            onClick = onSetDeadlineClick,
-                            modifier = Modifier.size(32.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.EditCalendar,
-                                contentDescription = "Set Timer",
-                                tint = EmeraldPrimary,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                    }
-                }
+                // Live Closing Timer Banner (Self-contained timer to eliminate full-screen flickering)
+                DeadlineCountdownTimerBanner(
+                    deadlineTimestamp = khatma.targetDeadlineTimestamp,
+                    isArabic = isArabic,
+                    onSetDeadlineClick = onSetDeadlineClick
+                )
 
                 // Stats Summary Pills
                 Row(

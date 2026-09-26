@@ -181,9 +181,9 @@ fun DonationScreen(
 
                         Text(
                             text = if (isArabic)
-                                "نسأل الله العلي القدير أن يجعل هذا العمل خالصاً لوجهه الكريم، وصدقة جارية عني (علي إبراهيم الشيخ) وعن والديّ وأهل بيتي وكل من ساهم في نشره وقراءته والعمل به.\n\nفضلاً لا تنسونا من صالح دعائكم بالرحمة والمغفرة والقبول."
+                                "نسأل الله العلي القدير أن يجعل هذا العمل خالصاً لوجهه الكريم، وصدقة جارية عني (علي إبراهيم الشيخ) وعن والديّ وأهل بيتي، ولكل من ساهم في إكمال هذا التطبيق ومن ساهم في نشره وقراءته والعمل به.\n\nفضلاً لا تنسونا من صالح دعائكم بالرحمة والمغفرة والقبول."
                             else
-                                "May Almighty Allah accept this noble application as an ongoing charity (Sadaqah Jariyah) for me (Ali Ibrahim Elsheikh), my parents, my household, and all who benefit from it.\n\nPlease keep us in your sincere prayers.",
+                                "May Almighty Allah accept this noble application as an ongoing charity (Sadaqah Jariyah) for me (Ali Ibrahim Elsheikh), my parents, my household, and for everyone who contributed to completing this application and spreading it.\n\nPlease keep us in your sincere prayers.",
                             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = TajawalFontFamily, lineHeight = 24.sp),
                             textAlign = TextAlign.Center,
                             color = MaterialTheme.colorScheme.onSurface

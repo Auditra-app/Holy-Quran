@@ -129,13 +129,153 @@ class QuranRepository(private val quranDao: QuranDao) {
         quranDao.clearAllReadingHistory()
     }
 
-    // User Settings
+    // User Settings with Permanent Dual-Persistence Backup across App Updates
     val userSettings: Flow<UserSettingsEntity> = quranDao.getUserSettings().map { entity ->
-        entity ?: UserSettingsEntity()
+        if (entity != null) {
+            backupSettingsToPrefs(entity)
+            entity
+        } else {
+            val restored = restoreSettingsFromPrefs()
+            if (restored != null) {
+                try { quranDao.saveUserSettings(restored) } catch (_: Throwable) {}
+                restored
+            } else {
+                UserSettingsEntity()
+            }
+        }
     }
 
     suspend fun saveSettings(settings: UserSettingsEntity) {
         quranDao.saveUserSettings(settings)
+        backupSettingsToPrefs(settings)
+    }
+
+    private fun backupSettingsToPrefs(settings: UserSettingsEntity) {
+        try {
+            val ctx = com.example.HolyQuranApplication.instance ?: return
+            val prefs = ctx.getSharedPreferences("quran_settings_permanent_backup", android.content.Context.MODE_PRIVATE)
+            val json = org.json.JSONObject().apply {
+                put("languageCode", settings.languageCode)
+                put("themeMode", settings.themeMode)
+                put("fontSizeSp", settings.fontSizeSp.toDouble())
+                put("enableDailyVerseNotification", settings.enableDailyVerseNotification)
+                put("enableReadingReminderNotification", settings.enableReadingReminderNotification)
+                put("enableInactivityNotification", settings.enableInactivityNotification)
+                put("enableAzkarNotification", settings.enableAzkarNotification)
+                put("enableMorningAzkar", settings.enableMorningAzkar)
+                put("enableEveningAzkar", settings.enableEveningAzkar)
+                put("morningAzkarHour", settings.morningAzkarHour)
+                put("morningAzkarMinute", settings.morningAzkarMinute)
+                put("eveningAzkarHour", settings.eveningAzkarHour)
+                put("eveningAzkarMinute", settings.eveningAzkarMinute)
+                put("notificationTimeHour", settings.notificationTimeHour)
+                put("notificationTimeMinute", settings.notificationTimeMinute)
+                put("calculationMethod", settings.calculationMethod)
+                put("madhhab", settings.madhhab)
+                put("preferredReciterId", settings.preferredReciterId)
+                put("showEnglishTranslation", settings.showEnglishTranslation)
+                put("enableTajweed", settings.enableTajweed)
+                put("keepScreenOn", settings.keepScreenOn)
+                put("nightModeTheme", settings.nightModeTheme)
+                put("enableNightSchedule", settings.enableNightSchedule)
+                put("nightScheduleStartHour", settings.nightScheduleStartHour)
+                put("nightScheduleStartMinute", settings.nightScheduleStartMinute)
+                put("nightScheduleEndHour", settings.nightScheduleEndHour)
+                put("nightScheduleEndMinute", settings.nightScheduleEndMinute)
+                put("isSummerTime", settings.isSummerTime)
+                put("takbeerAzanOnly", settings.takbeerAzanOnly)
+                put("selectedAzanSound", settings.selectedAzanSound)
+                put("enabledPrayersJson", settings.enabledPrayersJson)
+                put("silentPrayersJson", settings.silentPrayersJson)
+                put("selectedTafsirBook", settings.selectedTafsirBook)
+                put("audioPlaybackSpeed", settings.audioPlaybackSpeed.toDouble())
+                put("dailyPageGoal", settings.dailyPageGoal)
+                put("khatmahTargetDays", settings.khatmahTargetDays)
+                put("khatmahStartDate", settings.khatmahStartDate)
+                put("homeGridOrderJson", settings.homeGridOrderJson)
+                put("enableHaptic", settings.enableHaptic)
+                put("hapticType", settings.hapticType)
+                put("fajrOffsetMins", settings.fajrOffsetMins)
+                put("dhuhrOffsetMins", settings.dhuhrOffsetMins)
+                put("asrOffsetMins", settings.asrOffsetMins)
+                put("maghribOffsetMins", settings.maghribOffsetMins)
+                put("ishaOffsetMins", settings.ishaOffsetMins)
+                put("quranScriptType", settings.quranScriptType)
+                put("trackedPrayersJson", settings.trackedPrayersJson)
+                put("enablePrayerFollowUpNotification", settings.enablePrayerFollowUpNotification)
+                put("prayerFollowUpDelayMinutes", settings.prayerFollowUpDelayMinutes)
+                put("enableAzanOnSilent", settings.enableAzanOnSilent)
+            }
+            prefs.edit().putString("settings_json", json.toString()).apply()
+        } catch (e: Throwable) {
+            android.util.Log.e("QuranRepository", "Error backing up settings to prefs", e)
+        }
+    }
+
+    private fun restoreSettingsFromPrefs(): UserSettingsEntity? {
+        try {
+            val ctx = com.example.HolyQuranApplication.instance ?: return null
+            val prefs = ctx.getSharedPreferences("quran_settings_permanent_backup", android.content.Context.MODE_PRIVATE)
+            val jsonStr = prefs.getString("settings_json", null) ?: return null
+            val obj = org.json.JSONObject(jsonStr)
+            val def = UserSettingsEntity()
+            return UserSettingsEntity(
+                id = 1,
+                languageCode = obj.optString("languageCode", def.languageCode),
+                themeMode = obj.optString("themeMode", def.themeMode),
+                fontSizeSp = obj.optDouble("fontSizeSp", def.fontSizeSp.toDouble()).toFloat(),
+                enableDailyVerseNotification = obj.optBoolean("enableDailyVerseNotification", def.enableDailyVerseNotification),
+                enableReadingReminderNotification = obj.optBoolean("enableReadingReminderNotification", def.enableReadingReminderNotification),
+                enableInactivityNotification = obj.optBoolean("enableInactivityNotification", def.enableInactivityNotification),
+                enableAzkarNotification = obj.optBoolean("enableAzkarNotification", def.enableAzkarNotification),
+                enableMorningAzkar = obj.optBoolean("enableMorningAzkar", def.enableMorningAzkar),
+                enableEveningAzkar = obj.optBoolean("enableEveningAzkar", def.enableEveningAzkar),
+                morningAzkarHour = obj.optInt("morningAzkarHour", def.morningAzkarHour),
+                morningAzkarMinute = obj.optInt("morningAzkarMinute", def.morningAzkarMinute),
+                eveningAzkarHour = obj.optInt("eveningAzkarHour", def.eveningAzkarHour),
+                eveningAzkarMinute = obj.optInt("eveningAzkarMinute", def.eveningAzkarMinute),
+                notificationTimeHour = obj.optInt("notificationTimeHour", def.notificationTimeHour),
+                notificationTimeMinute = obj.optInt("notificationTimeMinute", def.notificationTimeMinute),
+                calculationMethod = obj.optString("calculationMethod", def.calculationMethod),
+                madhhab = obj.optString("madhhab", def.madhhab),
+                preferredReciterId = obj.optString("preferredReciterId", def.preferredReciterId),
+                showEnglishTranslation = obj.optBoolean("showEnglishTranslation", def.showEnglishTranslation),
+                enableTajweed = obj.optBoolean("enableTajweed", def.enableTajweed),
+                keepScreenOn = obj.optBoolean("keepScreenOn", def.keepScreenOn),
+                nightModeTheme = obj.optString("nightModeTheme", def.nightModeTheme),
+                enableNightSchedule = obj.optBoolean("enableNightSchedule", def.enableNightSchedule),
+                nightScheduleStartHour = obj.optInt("nightScheduleStartHour", def.nightScheduleStartHour),
+                nightScheduleStartMinute = obj.optInt("nightScheduleStartMinute", def.nightScheduleStartMinute),
+                nightScheduleEndHour = obj.optInt("nightScheduleEndHour", def.nightScheduleEndHour),
+                nightScheduleEndMinute = obj.optInt("nightScheduleEndMinute", def.nightScheduleEndMinute),
+                isSummerTime = obj.optBoolean("isSummerTime", def.isSummerTime),
+                takbeerAzanOnly = obj.optBoolean("takbeerAzanOnly", def.takbeerAzanOnly),
+                selectedAzanSound = obj.optString("selectedAzanSound", def.selectedAzanSound),
+                enabledPrayersJson = obj.optString("enabledPrayersJson", def.enabledPrayersJson),
+                silentPrayersJson = obj.optString("silentPrayersJson", def.silentPrayersJson),
+                selectedTafsirBook = obj.optString("selectedTafsirBook", def.selectedTafsirBook),
+                audioPlaybackSpeed = obj.optDouble("audioPlaybackSpeed", def.audioPlaybackSpeed.toDouble()).toFloat(),
+                dailyPageGoal = obj.optInt("dailyPageGoal", def.dailyPageGoal),
+                khatmahTargetDays = obj.optInt("khatmahTargetDays", def.khatmahTargetDays),
+                khatmahStartDate = obj.optLong("khatmahStartDate", def.khatmahStartDate),
+                homeGridOrderJson = obj.optString("homeGridOrderJson", def.homeGridOrderJson),
+                enableHaptic = obj.optBoolean("enableHaptic", def.enableHaptic),
+                hapticType = obj.optString("hapticType", def.hapticType),
+                fajrOffsetMins = obj.optInt("fajrOffsetMins", def.fajrOffsetMins),
+                dhuhrOffsetMins = obj.optInt("dhuhrOffsetMins", def.dhuhrOffsetMins),
+                asrOffsetMins = obj.optInt("asrOffsetMins", def.asrOffsetMins),
+                maghribOffsetMins = obj.optInt("maghribOffsetMins", def.maghribOffsetMins),
+                ishaOffsetMins = obj.optInt("ishaOffsetMins", def.ishaOffsetMins),
+                quranScriptType = obj.optString("quranScriptType", def.quranScriptType),
+                trackedPrayersJson = obj.optString("trackedPrayersJson", def.trackedPrayersJson),
+                enablePrayerFollowUpNotification = obj.optBoolean("enablePrayerFollowUpNotification", def.enablePrayerFollowUpNotification),
+                prayerFollowUpDelayMinutes = obj.optInt("prayerFollowUpDelayMinutes", def.prayerFollowUpDelayMinutes),
+                enableAzanOnSilent = obj.optBoolean("enableAzanOnSilent", def.enableAzanOnSilent)
+            )
+        } catch (e: Throwable) {
+            android.util.Log.e("QuranRepository", "Error restoring settings from prefs", e)
+            return null
+        }
     }
 
     // Export / Import Backup Data

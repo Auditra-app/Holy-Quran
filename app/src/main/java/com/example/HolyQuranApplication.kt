@@ -53,14 +53,25 @@ class HolyQuranApplication : Application(), ImageLoaderFactory {
             defaultHandler?.uncaughtException(thread, throwable)
         }
 
-        // 2. Pre-initialize Analytics Helper and Notification channels
+        // 2. Pre-initialize Firebase and Notification channels
         try {
+            if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {
+                val options = com.google.firebase.FirebaseOptions.Builder()
+                    .setApiKey("AIzaSyAkUKpq947M8UmFULf4qH6UUwBhH0BiDS0")
+                    .setApplicationId("1:222454764594:android:e51df3f94c285754a2d82b")
+                    .setProjectId("holy-quran-app-live")
+                    .setStorageBucket("holy-quran-app-live.firebasestorage.app")
+                    .setGcmSenderId("222454764594")
+                    .build()
+                com.google.firebase.FirebaseApp.initializeApp(this, options)
+                Log.d(TAG, "FirebaseApp initialized programmatically successfully.")
+            }
             com.example.util.AnalyticsHelper.initialize(this)
             Log.d(TAG, " HolyQuranApplication.onCreate: Setting up notification channels...")
             NotificationHelper.createNotificationChannels(this)
             Log.d(TAG, " HolyQuranApplication.onCreate: Notification channels created successfully.")
         } catch (e: Throwable) {
-            Log.e(TAG, " Error creating notification channels in Application", e)
+            Log.e(TAG, " Error initializing Firebase or notification channels in Application", e)
         }
 
         // 3. Async pre-warming of database and schedulers to ensure instantaneous UI startup

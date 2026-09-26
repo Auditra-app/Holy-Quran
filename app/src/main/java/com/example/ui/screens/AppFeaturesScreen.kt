@@ -150,8 +150,8 @@ fun AppFeaturesScreen(
             FeatureItem(
                 titleAr = "تطبيق بدون إعلانات • صدقة جارية",
                 titleEn = "100% Ad-Free • Sadaqah Jariyah",
-                descAr = "تطبيق خالص لوجه الله تعالى بدون أي إعلانات، صدقة جارية عن المطور علي إبراهيم الشيخ ووالديه وأهل بيته.",
-                descEn = "Completely free & ad-free app, built as an ongoing charity (Sadaqah Jariyah) by Ali Ibrahim Elsheikh for his parents & household.",
+                descAr = "تطبيق خالص لوجه الله تعالى بدون أي إعلانات، صدقة جارية عن المطور علي إبراهيم الشيخ ووالديه وأهل بيته، ولكل من ساهم في إكمال هذا التطبيق ومن ساهم في نشره.",
+                descEn = "Completely free & ad-free app, built as an ongoing charity (Sadaqah Jariyah) by Ali Ibrahim Elsheikh for his parents & household, and for everyone who contributed to completing and sharing this app.",
                 icon = Icons.Default.Favorite,
                 categoryAr = "إهداء",
                 categoryEn = "Pledge",

@@ -62,8 +62,7 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
-                    android:scheme="holyquran"
-                    android:host="khatma" />
+                    android:scheme="holyquran" />
             </intent-filter>
         </activity>
 

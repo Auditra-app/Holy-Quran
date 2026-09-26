@@ -1949,7 +1949,7 @@ fun SettingsScreen(
                         HorizontalDivider()
                         ListItem(
                             headlineContent = { Text(if (isArabic) "عن التطبيق والمطور (صدقة جارية)" else "About App & Developer (Sadaqah Jariyah)", fontWeight = FontWeight.Bold) },
-                            supportingContent = { Text(if (isArabic) "علي إبراهيم الشيخ • الدعاء والتواصل مع المطور" else "Ali Ibrahim Elsheikh • Sadaqah Jariyah & Contact") },
+                            supportingContent = { Text(if (isArabic) "علي إبراهيم الشيخ • صدقة جارية لكل من ساهم في إكمال هذا التطبيق ومن ساهم في نشره" else "Ali Ibrahim Elsheikh • Sadaqah Jariyah for all who contributed and shared") },
                             leadingContent = { Icon(imageVector = Icons.Default.Favorite, contentDescription = null, tint = IslamicGold) },
                             trailingContent = { Icon(imageVector = if (isArabic) Icons.AutoMirrored.Filled.KeyboardArrowLeft else Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null) },
                             modifier = Modifier.clickable { onNavigate("donation") }.testTag("settings_donation_item")

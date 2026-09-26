@@ -1,0 +1,32 @@
+{
+  "project_info": {
+    "project_number": "222454764594",
+    "project_id": "holy-quran-app-live",
+    "storage_bucket": "holy-quran-app-live.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:222454764594:android:e51df3f94c285754a2d82b",
+        "android_client_info": {
+          "package_name": "com.holyquran.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDKF_Ig4unejLXEMzpvloJyh0Q884XdLOo"
+        },
+        {
+          "current_key": "AIzaSyAkUKpq947M8UmFULf4qH6UUwBhH0BiDS0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

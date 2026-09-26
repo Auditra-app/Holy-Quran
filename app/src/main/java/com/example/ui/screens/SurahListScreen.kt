@@ -309,7 +309,7 @@ fun SurahListScreen(
 
                                         IconButton(
                                             onClick = { viewModel.toggleFavoriteSurah(surah.id, !surah.isFavorite) },
-                                            modifier = Modifier.size(28.dp).testTag("fav_surah_${surah.id}")
+                                            modifier = Modifier.size(36.dp).testTag("fav_surah_${surah.id}")
                                         ) {
                                             Icon(
                                                 imageVector = if (surah.isFavorite) Icons.Default.Star else Icons.Default.StarBorder,

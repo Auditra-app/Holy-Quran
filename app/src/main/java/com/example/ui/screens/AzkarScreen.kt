@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.provider.AzkarDataProvider
@@ -223,7 +224,13 @@ fun AzkarScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
+                        ) {
                             Surface(
                                 shape = CircleShape,
                                 color = EmeraldPrimary,
@@ -233,7 +240,7 @@ fun AzkarScreen(
                                     Icon(imageVector = Icons.Default.AutoAwesome, contentDescription = null, tint = IslamicGold, modifier = Modifier.size(20.dp))
                                 }
                             }
-                            Column {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
                                 Text(
                                     text = if (isArabic) "وضع القراءة السريعة للأذكار ⚡" else "Quick Read Mode ⚡",
                                     fontSize = 14.sp,
@@ -309,6 +316,7 @@ fun AzkarScreen(
                                 if (currentCount < zikr.count) {
                                     val nextCount = currentCount + 1
                                     countsMap[zikr.id] = nextCount
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                     if (nextCount == zikr.count) {
                                         Toast.makeText(context, if (isArabic) "تمت قراءة الذكر بنجاح! جزاك الله خيراً 🌿" else "Completed! May Allah reward you.", Toast.LENGTH_SHORT).show()
                                     }
@@ -420,7 +428,10 @@ fun AzkarCardItem(
             ) {
                 Surface(
                     shape = RoundedCornerShape(8.dp),
-                    color = EmeraldPrimary.copy(alpha = 0.12f)
+                    color = EmeraldPrimary.copy(alpha = 0.12f),
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .padding(end = 8.dp)
                 ) {
                     Text(
                         text = zikr.reference.ifEmpty { "حصن المسلم" },
@@ -428,31 +439,36 @@ fun AzkarCardItem(
                         fontWeight = FontWeight.SemiBold,
                         fontFamily = TajawalFontFamily,
                         color = EmeraldPrimary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                     )
                 }
 
-                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     // Favorite Toggle Button
                     IconButton(
                         onClick = onToggleFavorite,
                         modifier = Modifier
-                            .size(32.dp)
+                            .size(38.dp)
                             .testTag("favorite_azkar_btn_${zikr.id}")
                     ) {
                         Icon(
                             imageVector = if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                             contentDescription = "Favorite",
                             tint = if (isFavorite) Color(0xFFE53935) else MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
 
-                    IconButton(onClick = onCopy, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                    IconButton(onClick = onCopy, modifier = Modifier.size(38.dp)) {
+                        Icon(imageVector = Icons.Default.ContentCopy, contentDescription = "Copy", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(19.dp))
                     }
-                    IconButton(onClick = onShare, modifier = Modifier.size(32.dp)) {
-                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                    IconButton(onClick = onShare, modifier = Modifier.size(38.dp)) {
+                        Icon(imageVector = Icons.Default.Share, contentDescription = "Share", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(19.dp))
                     }
                 }
             }
@@ -487,7 +503,10 @@ fun AzkarCardItem(
                     ) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AutoAwesome,
@@ -495,19 +514,23 @@ fun AzkarCardItem(
                                 tint = IslamicGold,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Column {
+                            Column(modifier = Modifier.weight(1f, fill = false)) {
                                 Text(
                                     text = if (isArabic) "فضل وثواب هذا الذكر ✨" else "Virtue & Reward ✨",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     fontFamily = TajawalFontFamily,
-                                    color = EmeraldPrimary
+                                    color = EmeraldPrimary,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                                 Text(
                                     text = if (isArabic) "كما ورد عن النبي ﷺ (اضغط للمشاهدة)" else "As taught by Prophet Muhammad ﷺ",
                                     fontSize = 10.5.sp,
                                     fontFamily = TajawalFontFamily,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -537,10 +560,16 @@ fun AzkarCardItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .padding(end = 8.dp)
+                ) {
                     if (currentCount > 0) {
-                        IconButton(onClick = onReset, modifier = Modifier.size(32.dp)) {
-                            Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reset", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(18.dp))
+                        IconButton(onClick = onReset, modifier = Modifier.size(36.dp)) {
+                            Icon(imageVector = Icons.Default.Refresh, contentDescription = "Reset", tint = MaterialTheme.colorScheme.outline, modifier = Modifier.size(20.dp))
                         }
                     }
                     Text(
@@ -548,7 +577,9 @@ fun AzkarCardItem(
                         fontSize = 13.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = TajawalFontFamily,
-                        color = if (isCompleted) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isCompleted) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
 
@@ -561,7 +592,8 @@ fun AzkarCardItem(
                         disabledContainerColor = EmeraldPrimary.copy(alpha = 0.3f)
                     ),
                     shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                    modifier = Modifier.defaultMinSize(minHeight = 42.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         if (isCompleted) {
@@ -604,16 +636,24 @@ fun QuickReadSheetContent(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
+            ) {
                 Icon(imageVector = Icons.Default.MenuBook, contentDescription = null, tint = EmeraldPrimary)
                 Text(
                     text = if (isArabic) "القراءة السريعة والأوردة المباركة 📖" else "Quick Adhkar Reader",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold,
-                    fontFamily = TajawalFontFamily
+                    fontFamily = TajawalFontFamily,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
             }
-            IconButton(onClick = onClose) {
+            IconButton(onClick = onClose, modifier = Modifier.size(38.dp)) {
                 Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
             }
         }
@@ -668,7 +708,9 @@ fun QuickReadSheetContent(
                                         fontSize = 11.sp,
                                         fontFamily = TajawalFontFamily,
                                         color = EmeraldPrimary,
-                                        maxLines = 1
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                        modifier = Modifier.weight(1f)
                                     )
                                 }
                             }
@@ -683,21 +725,33 @@ fun QuickReadSheetContent(
                                 text = zikr.reference,
                                 fontSize = 11.sp,
                                 fontFamily = TajawalFontFamily,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp)
                             )
 
                             Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = if (completed) EmeraldPrimary else IslamicGold
+                                onClick = { onCountIncrement(zikr.id, zikr.count) },
+                                shape = RoundedCornerShape(10.dp),
+                                color = if (completed) EmeraldPrimary else IslamicGold,
+                                modifier = Modifier.defaultMinSize(minWidth = 72.dp, minHeight = 36.dp)
                             ) {
-                                Text(
-                                    text = if (completed) "تم ✓" else "$current / ${zikr.count}",
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    fontFamily = TajawalFontFamily,
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                )
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = if (completed) "تم ✓" else "$current / ${zikr.count}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        fontFamily = TajawalFontFamily,
+                                        color = Color.White,
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 1,
+                                        softWrap = false
+                                    )
+                                }
                             }
                         }
                     }
@@ -737,7 +791,10 @@ fun AzkarVirtueBottomSheet(
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp)
                 ) {
                     Surface(
                         shape = CircleShape,
@@ -753,23 +810,27 @@ fun AzkarVirtueBottomSheet(
                             )
                         }
                     }
-                    Column {
+                    Column(modifier = Modifier.weight(1f, fill = false)) {
                         Text(
                             text = if (isArabic) "فضل وثواب الذكر النبوي 🌟" else "Virtue & Prophetic Reward",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             fontFamily = TajawalFontFamily,
-                            color = EmeraldPrimary
+                            color = EmeraldPrimary,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = if (isArabic) "كما ورد عن سيدنا رسول الله ﷺ" else "As taught by Prophet Muhammad ﷺ",
                             style = MaterialTheme.typography.bodySmall,
                             fontFamily = TajawalFontFamily,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
                     }
                 }
-                IconButton(onClick = onDismiss) {
+                IconButton(onClick = onDismiss, modifier = Modifier.size(38.dp)) {
                     Icon(imageVector = Icons.Default.Close, contentDescription = "Close")
                 }
             }

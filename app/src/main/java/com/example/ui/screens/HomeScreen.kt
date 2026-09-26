@@ -1187,7 +1187,7 @@ fun HomeScreen(
                         IconButton(
                             onClick = { isEditLayoutMode = !isEditLayoutMode },
                             modifier = Modifier
-                                .size(32.dp)
+                                .size(36.dp)
                                 .testTag("toggle_reorder_mode_btn")
                         ) {
                             Surface(
@@ -1366,13 +1366,13 @@ fun HomeScreen(
                                                             }
                                                         },
                                                         enabled = overallIndex > 0,
-                                                        modifier = Modifier.size(28.dp)
+                                                        modifier = Modifier.size(36.dp)
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.ArrowUpward,
                                                             contentDescription = "Move Up",
                                                             tint = if (overallIndex > 0) IslamicGold else Color.Gray,
-                                                            modifier = Modifier.size(16.dp)
+                                                            modifier = Modifier.size(18.dp)
                                                         )
                                                     }
 
@@ -1387,7 +1387,7 @@ fun HomeScreen(
                                                             }
                                                         },
                                                         enabled = overallIndex < gridItems.size - 1,
-                                                        modifier = Modifier.size(28.dp)
+                                                        modifier = Modifier.size(36.dp)
                                                     ) {
                                                         Icon(
                                                             imageVector = Icons.Default.ArrowDownward,
@@ -1659,7 +1659,7 @@ fun HomeReorderDialog(
                                             }
                                         },
                                         enabled = index > 0,
-                                        modifier = Modifier.size(30.dp)
+                                        modifier = Modifier.size(36.dp)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.ArrowUpward,
@@ -1681,7 +1681,7 @@ fun HomeReorderDialog(
                                             }
                                         },
                                         enabled = index < items.size - 1,
-                                        modifier = Modifier.size(30.dp)
+                                        modifier = Modifier.size(36.dp)
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.ArrowDownward,

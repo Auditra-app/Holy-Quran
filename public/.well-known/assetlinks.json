@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.holyquran.app",
+    "sha256_cert_fingerprints": [
+      "BC:18:2D:F3:D3:B8:C3:0B:E3:28:B4:B9:32:76:CF:06:17:B7:A3:18:AD:DB:4C:2C:72:19:11:3D:CF:17:4B:53"
+    ]
+  }
+}]

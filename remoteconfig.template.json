@@ -2,19 +2,19 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "8"
+                "value": "12"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.2.4"
+                "value": "1.2.8"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data"
+                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.2.8.data"
             },
             "description": "Direct download link for APK update"
         },
@@ -26,19 +26,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "تحديث v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص."
+                "value": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية."
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "تحديث v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص."
+                "value": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية."
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "Update v1.2.4: Comprehensive word-by-word meanings in Arabic with accurate linguistic definitions and tafsir enrichment."
+                "value": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية."
             },
             "description": "English release notes shown in update dialog"
         }

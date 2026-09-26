@@ -1,9 +1,12 @@
 {
-    "latest_version_code": 8,
-    "latest_version_name": "1.2.4",
-    "apk_download_url": "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data",
+    "latest_version_code": 12,
+    "latest_version_name": "1.2.8",
+    "apk_download_url": "https://holy-quran-app-live.web.app/HolyQuran_v1.2.8.data",
+    "file_size_bytes": 41025666,
+    "file_size_mb": 39.1,
+    "file_size_formatted": "39.1 MB",
     "force_update": false,
-    "update_notes": "تحديث v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص.",
-    "update_notes_ar": "تحديث v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص.",
-    "update_notes_en": "Update v1.2.4: Comprehensive word-by-word meanings in Arabic with accurate linguistic definitions and tafsir enrichment."
+    "update_notes": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية.",
+    "update_notes_ar": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية.",
+    "update_notes_en": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية."
 }
