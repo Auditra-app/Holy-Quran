@@ -2,19 +2,19 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "12"
+                "value": "13"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.2.8"
+                "value": "1.2.9"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.2.8.data"
+                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.2.9.data"
             },
             "description": "Direct download link for APK update"
         },
@@ -26,19 +26,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية."
+                "value": "تحديث جديد v1.2.9: تصحيح تسميات خيارات الأهداف اليومية للختمة، وإضافة دليل توضيحي لتقسيمات المصحف الشريف."
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية."
+                "value": "تحديث جديد v1.2.9: تصحيح تسميات خيارات الأهداف اليومية للختمة، وإضافة دليل توضيحي لتقسيمات المصحف الشريف."
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "تحديث جديد v1.2.8: إصلاح كامل لزر العداد في وضع القراءة السريعة للأذكار، تحسين استجابة وتجاوب الأزرار في الشاشات الصغيرة، وتحديثات شاملة لمزامنة الختمة الجماعية."
+                "value": "تحديث جديد v1.2.9: تصحيح تسميات خيارات الأهداف اليومية للختمة، وإضافة دليل توضيحي لتقسيمات المصحف الشريف."
             },
             "description": "English release notes shown in update dialog"
         }

@@ -17,8 +17,8 @@ android {
     applicationId = "com.holyquran.app"
     minSdk = 24
     targetSdk = 35
-    versionCode = 12
-    versionName = "1.2.8"
+    versionCode = 13
+    versionName = "1.2.9"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
