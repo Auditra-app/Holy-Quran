@@ -15,6 +15,7 @@ import androidx.compose.ui.input.pointer.positionChanged
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,7 +49,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -76,6 +79,7 @@ import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import com.example.data.provider.QuranDataProvider
 import com.example.data.provider.QuranPageFetcher
+import com.example.data.provider.QuranAyahPolygonProvider
 import com.example.data.provider.QuranWordItem
 import com.example.data.provider.TafsirProvider
 import com.example.data.provider.AsbabAlNuzulProvider
@@ -949,6 +953,7 @@ fun QuranReaderScreen(
                         onVerseClick = { verse -> viewModel.setSelectedVerseForDetail(verse) },
                         onWordMeaningClick = { word, verse -> activeClickedWord = Pair(word, verse) },
                         onOpenPageTafsir = { showPageTafseerSheet = true },
+                        selectedVerse = selectedVerse,
                         onToggleBookmark = {
                             val isThisPageBookmarked = bookmarks.any { it.pageNumber == pageNum }
                             if (isThisPageBookmarked) {
@@ -3589,6 +3594,7 @@ fun GoldenMushafPageView(
     onVerseClick: (Verse) -> Unit,
     onWordMeaningClick: (String, Verse) -> Unit,
     onOpenPageTafsir: () -> Unit,
+    selectedVerse: Verse? = null,
     onToggleBookmark: () -> Unit = {},
     isBookmarked: Boolean = false,
     onPlayPageAudio: () -> Unit = {},
@@ -3606,6 +3612,44 @@ fun GoldenMushafPageView(
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var selectedAyahOnPage by remember { mutableStateOf<Verse?>(null) }
+    var pageContainerWidth by remember { mutableIntStateOf(0) }
+    var pageContainerHeight by remember { mutableIntStateOf(0) }
+
+    // Page Polygons for interactive ayah hit-testing and highlighting
+    var pagePolygons by remember(pageNum) {
+        mutableStateOf(QuranAyahPolygonProvider.getCachedPagePolygons(pageNum))
+    }
+
+    LaunchedEffect(pageNum) {
+        if (pagePolygons == null) {
+            pagePolygons = QuranAyahPolygonProvider.getPagePolygons(pageNum)
+        }
+    }
+
+    // Sync selectedVerse from parent / bottom sheet dismissal
+    LaunchedEffect(selectedVerse) {
+        if (selectedVerse == null) {
+            selectedAyahOnPage = null
+        } else if (selectedVerse.pageNumber == pageNum || pageVerses.any { it.id == selectedVerse.id }) {
+            selectedAyahOnPage = selectedVerse
+        }
+    }
+
+    val activeHighlightPolygon = remember(selectedAyahOnPage, currentPlayingVerse, isPlayingAudio, pagePolygons) {
+        val playing = if (isPlayingAudio && currentPlayingVerse != null) {
+            pagePolygons?.ayahs?.firstOrNull {
+                it.surahNumber == currentPlayingVerse.first && it.ayahNumber == currentPlayingVerse.second
+            }
+        } else null
+
+        val selected = selectedAyahOnPage?.let { sel ->
+            pagePolygons?.ayahs?.firstOrNull {
+                it.surahNumber == sel.surahId && it.ayahNumber == sel.verseNumber
+            }
+        }
+
+        playing ?: selected
+    }
     var showAyatQuickBar by remember { mutableStateOf(false) }
     var isFillWidth by remember { mutableStateOf(true) }
     var isFullscreenControlsExpanded by remember { mutableStateOf(true) }
@@ -3727,11 +3771,37 @@ fun GoldenMushafPageView(
                 } while (event.changes.any { it.pressed })
             }
         }
-        .pointerInput(pageNum) {
+        .pointerInput(pageNum, pagePolygons, pageContainerWidth, pageContainerHeight, isImmersive) {
             detectTapGestures(
-                onTap = {
-                    if (isImmersive) {
-                        isFullscreenControlsExpanded = !isFullscreenControlsExpanded
+                onTap = { tapOffset ->
+                    val polygons = pagePolygons
+                    val hitAyah = if (polygons != null && pageContainerWidth > 0 && pageContainerHeight > 0) {
+                        QuranAyahPolygonProvider.hitTest(
+                            pageData = polygons,
+                            tapX = tapOffset.x,
+                            tapY = tapOffset.y,
+                            viewWidth = pageContainerWidth.toFloat(),
+                            viewHeight = pageContainerHeight.toFloat(),
+                            isImmersive = isImmersive
+                        )
+                    } else null
+
+                    if (hitAyah != null) {
+                        val matchedVerse = pageVerses.firstOrNull {
+                            it.surahId == hitAyah.surahNumber && it.verseNumber == hitAyah.ayahNumber
+                        } ?: QuranDataProvider.getVersesForPage(pageNum).firstOrNull {
+                            it.surahId == hitAyah.surahNumber && it.verseNumber == hitAyah.ayahNumber
+                        }
+
+                        matchedVerse?.let { verse ->
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            selectedAyahOnPage = if (selectedAyahOnPage?.id == verse.id) null else verse
+                            onVerseClick(verse)
+                        }
+                    } else {
+                        if (isImmersive) {
+                            isFullscreenControlsExpanded = !isFullscreenControlsExpanded
+                        }
                     }
                 },
                 onDoubleTap = {
@@ -3755,79 +3825,8 @@ fun GoldenMushafPageView(
                 .fillMaxWidth()
                 .clipToBounds()
         ) {
-            // Fullscreen Quran Page Vector SVG (Exact Golden Quran 15-Line Mushaf Layout)
-            SubcomposeAsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(imageUrl)
-                    .decoderFactory(SvgDecoder.Factory())
-                    .crossfade(true)
-                    .build(),
-                onError = {
-                    if (!pageLoadFailed) {
-                        pageLoadFailed = true
-                    }
-                },
-                colorFilter = if (isDarkMode) {
-                    when (nightFontColorMode) {
-                        "WHITE" -> ColorFilter.colorMatrix(whiteDarkColorMatrix)
-                        "SEPIA" -> ColorFilter.colorMatrix(sepiaDarkColorMatrix)
-                        else -> null
-                    }
-                } else null,
-                contentScale = if (isImmersive) ContentScale.FillBounds else ContentScale.Fit,
-                contentDescription = "Mushaf Page $pageNum",
-                loading = {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            CircularProgressIndicator(
-                                color = EmeraldPrimary,
-                                strokeWidth = 3.dp,
-                                modifier = Modifier.size(44.dp)
-                            )
-                            Text(
-                                text = if (isArabic) "جارٍ تحميل صفحة المصحف المتجهية (SVG)..." else "Loading Vector Mushaf Page...",
-                                style = TextStyle(
-                                    fontFamily = TajawalFontFamily,
-                                    fontSize = 13.sp,
-                                    fontWeight = FontWeight.Medium
-                                ),
-                                color = if (isDarkMode) Color.LightGray else Color.DarkGray
-                            )
-                        }
-                    }
-                },
-                error = {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.MenuBook,
-                                contentDescription = null,
-                                tint = EmeraldPrimary,
-                                modifier = Modifier.size(56.dp)
-                            )
-                            Text(
-                                text = if (isArabic) "صفحة المصحف رقم ${toArabicDigits(pageNum)}" else "Mushaf Page $pageNum",
-                                fontFamily = TajawalFontFamily,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp
-                            )
-                        }
-                    }
-                },
+            // Padded container holding the vector SVG mushaf page and interactive highlight overlay
+            Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
@@ -3841,7 +3840,136 @@ fun GoldenMushafPageView(
                         scaleX = effectiveScale
                         scaleY = effectiveScale
                     }
-            )
+                    .onSizeChanged { size ->
+                        pageContainerWidth = size.width
+                        pageContainerHeight = size.height
+                    }
+            ) {
+                // Fullscreen Quran Page Vector SVG (Exact Golden Quran 15-Line Mushaf Layout)
+                SubcomposeAsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(imageUrl)
+                        .decoderFactory(SvgDecoder.Factory())
+                        .crossfade(true)
+                        .build(),
+                    onError = {
+                        if (!pageLoadFailed) {
+                            pageLoadFailed = true
+                        }
+                    },
+                    colorFilter = if (isDarkMode) {
+                        when (nightFontColorMode) {
+                            "WHITE" -> ColorFilter.colorMatrix(whiteDarkColorMatrix)
+                            "SEPIA" -> ColorFilter.colorMatrix(sepiaDarkColorMatrix)
+                            else -> null
+                        }
+                    } else null,
+                    contentScale = if (isImmersive) ContentScale.FillBounds else ContentScale.Fit,
+                    contentDescription = "Mushaf Page $pageNum",
+                    loading = {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    color = EmeraldPrimary,
+                                    strokeWidth = 3.dp,
+                                    modifier = Modifier.size(44.dp)
+                                )
+                                Text(
+                                    text = if (isArabic) "جارٍ تحميل صفحة المصحف المتجهية (SVG)..." else "Loading Vector Mushaf Page...",
+                                    style = TextStyle(
+                                        fontFamily = TajawalFontFamily,
+                                        fontSize = 13.sp,
+                                        fontWeight = FontWeight.Medium
+                                    ),
+                                    color = if (isDarkMode) Color.LightGray else Color.DarkGray
+                                )
+                            }
+                        }
+                    },
+                    error = {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.MenuBook,
+                                    contentDescription = null,
+                                    tint = EmeraldPrimary,
+                                    modifier = Modifier.size(56.dp)
+                                )
+                                Text(
+                                    text = if (isArabic) "صفحة المصحف رقم ${toArabicDigits(pageNum)}" else "Mushaf Page $pageNum",
+                                    fontFamily = TajawalFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                // Interactive Ayah Selection & Audio Playback Highlight Canvas Layer
+                val poly = activeHighlightPolygon
+                val data = pagePolygons
+                if (poly != null && data != null) {
+                    val isPlayingThisAyah = isPlayingAudio &&
+                            currentPlayingVerse?.first == poly.surahNumber &&
+                            currentPlayingVerse?.second == poly.ayahNumber
+
+                    val highlightFill = when {
+                        isPlayingThisAyah -> Color(0xFF10B981).copy(alpha = 0.30f)
+                        isDarkMode -> Color(0xFFFDE68A).copy(alpha = 0.32f)
+                        else -> Color(0xFFD97706).copy(alpha = 0.22f)
+                    }
+
+                    val highlightStroke = when {
+                        isPlayingThisAyah -> Color(0xFF059669).copy(alpha = 0.85f)
+                        isDarkMode -> IslamicGold.copy(alpha = 0.90f)
+                        else -> Color(0xFFB45309).copy(alpha = 0.75f)
+                    }
+
+                    Canvas(modifier = Modifier.fillMaxSize()) {
+                        withTransform({
+                            if (isImmersive) {
+                                val sx = size.width / data.width
+                                val sy = size.height / data.height
+                                scale(scaleX = sx, scaleY = sy, pivot = Offset.Zero)
+                                translate(left = -data.minX, top = -data.minY)
+                            } else {
+                                val scale = minOf(size.width / data.width, size.height / data.height)
+                                val offsetX = (size.width - data.width * scale) / 2f
+                                val offsetY = (size.height - data.height * scale) / 2f
+                                translate(left = offsetX, top = offsetY)
+                                scale(scaleX = scale, scaleY = scale, pivot = Offset.Zero)
+                                translate(left = -data.minX, top = -data.minY)
+                            }
+                        }) {
+                            drawPath(
+                                path = poly.composePath,
+                                color = highlightFill
+                            )
+                            drawPath(
+                                path = poly.composePath,
+                                color = highlightStroke,
+                                style = Stroke(width = 1.2f)
+                            )
+                        }
+                    }
+                }
+            }
 
             // Floating Top Fullscreen Bar (Page Number, Bookmark, Juz Number, Surah, Exit Fullscreen)
             androidx.compose.animation.AnimatedVisibility(

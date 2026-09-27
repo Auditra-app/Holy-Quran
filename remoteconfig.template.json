@@ -2,19 +2,19 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "14"
+                "value": "15"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.3.0"
+                "value": "1.3.1"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.0.data"
+                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.1.data"
             },
             "description": "Direct download link for APK update"
         },
@@ -26,19 +26,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "تحديث رئيسي v1.3.0: الانتقال الكامل إلى صفحات المصحف الشريف المتجهية عالية الدقة (SVG) من مجمع الملك فهد، لقراءة أوضح وجودة فائقة لا متناهية بدون تشويش مع دعم الوضع الليلي المتقدم."
+                "value": "تحديث v1.3.1: دعم التحديد والتظليل التفاعلي المباشر للآيات على صفحات المصحف المتجهية (SVG) وعرض التفسير والتحكم الكامل بالآية."
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "تحديث رئيسي v1.3.0: الانتقال الكامل إلى صفحات المصحف الشريف المتجهية عالية الدقة (SVG) من مجمع الملك فهد، لقراءة أوضح وجودة فائقة لا متناهية بدون تشويش مع دعم الوضع الليلي المتقدم."
+                "value": "تحديث v1.3.1: دعم التحديد والتظليل التفاعلي المباشر للآيات على صفحات المصحف المتجهية (SVG) وعرض التفسير والتحكم الكامل بالآية."
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "تحديث رئيسي v1.3.0: الانتقال الكامل إلى صفحات المصحف الشريف المتجهية عالية الدقة (SVG) من مجمع الملك فهد، لقراءة أوضح وجودة فائقة لا متناهية بدون تشويش مع دعم الوضع الليلي المتقدم."
+                "value": "تحديث v1.3.1: دعم التحديد والتظليل التفاعلي المباشر للآيات على صفحات المصحف المتجهية (SVG) وعرض التفسير والتحكم الكامل بالآية."
             },
             "description": "English release notes shown in update dialog"
         }

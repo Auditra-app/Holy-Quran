@@ -17,8 +17,8 @@ android {
     applicationId = "com.holyquran.app"
     minSdk = 24
     targetSdk = 35
-    versionCode = 14
-    versionName = "1.3.0"
+    versionCode = 15
+    versionName = "1.3.1"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -59,8 +59,8 @@ android {
     }
   }
   compileOptions {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
   }
   buildFeatures {
     compose = true
@@ -70,6 +70,10 @@ android {
     noCompress += listOf("ttf", "otf", "mp3")
   }
   testOptions { unitTests { isIncludeAndroidResources = true } }
+}
+
+kotlin {
+  jvmToolchain(17)
 }
 
 // Configure the Secrets Gradle Plugin to use .env and .env.example files
