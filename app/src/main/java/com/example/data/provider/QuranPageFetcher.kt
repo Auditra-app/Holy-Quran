@@ -30,14 +30,19 @@ object QuranPageFetcher {
         return wordsByVerseCache[key]
     }
 
-    fun getPageImageUrl(page: Int): String {
-        val pageStr = page.toString().padStart(3, '0')
-        return "https://files.quran.app/hafs/madani/width_1260/page$pageStr.png"
-    }
-
     fun getSvgPageUrl(page: Int): String {
         val pageStr = page.toString().padStart(3, '0')
-        return "https://raw.githubusercontent.com/itqandev/mushaf-svg/main/pages/page_$pageStr.svg"
+        return "https://raw.githubusercontent.com/quran-ws/quran-svg/main/mushafs/hafs/kfqc/svg/$pageStr.svg"
+    }
+
+    fun getPageImageUrl(page: Int): String {
+        // Direct to vector Quran SVG pages from quran-ws/quran-svg
+        return getSvgPageUrl(page)
+    }
+
+    fun getFallbackPageImageUrl(page: Int): String {
+        val pageStr = page.toString().padStart(3, '0')
+        return "https://files.quran.app/hafs/madani/width_1260/page$pageStr.png"
     }
 
     fun fetchAndCachePage(page: Int): List<Verse>? {

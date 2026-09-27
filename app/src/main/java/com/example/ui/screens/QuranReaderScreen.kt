@@ -72,6 +72,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
+import coil.decode.SvgDecoder
 import coil.request.ImageRequest
 import com.example.data.provider.QuranDataProvider
 import com.example.data.provider.QuranPageFetcher
@@ -3614,7 +3615,11 @@ fun GoldenMushafPageView(
     // Standard natural 1:1 reading scale ensuring complete page and outer ornate frame are visible without clipping
     val effectiveScale = 1.0f
 
-    val imageUrl = remember(pageNum) { QuranPageFetcher.getPageImageUrl(pageNum) }
+    var pageLoadFailed by remember(pageNum) { mutableStateOf(false) }
+    val imageUrl = remember(pageNum, pageLoadFailed) {
+        if (pageLoadFailed) QuranPageFetcher.getFallbackPageImageUrl(pageNum)
+        else QuranPageFetcher.getPageImageUrl(pageNum)
+    }
     val surahOnPage = remember(pageNum) { QuranDataProvider.getSurahByPage(pageNum) }
     val juzForPage = remember(pageNum) { QuranDataProvider.getJuzByPage(pageNum) }
 
@@ -3750,12 +3755,18 @@ fun GoldenMushafPageView(
                 .fillMaxWidth()
                 .clipToBounds()
         ) {
-            // Fullscreen Quran Page High-Res Image (Exact Golden Quran 15-Line Mushaf Layout)
+            // Fullscreen Quran Page Vector SVG (Exact Golden Quran 15-Line Mushaf Layout)
             SubcomposeAsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
                     .data(imageUrl)
+                    .decoderFactory(SvgDecoder.Factory())
                     .crossfade(true)
                     .build(),
+                onError = {
+                    if (!pageLoadFailed) {
+                        pageLoadFailed = true
+                    }
+                },
                 colorFilter = if (isDarkMode) {
                     when (nightFontColorMode) {
                         "WHITE" -> ColorFilter.colorMatrix(whiteDarkColorMatrix)
@@ -3780,7 +3791,7 @@ fun GoldenMushafPageView(
                                 modifier = Modifier.size(44.dp)
                             )
                             Text(
-                                text = if (isArabic) "جارٍ تحميل صفحة المصحف الذهبي عالية الدقة..." else "Loading HD Golden Mushaf Page...",
+                                text = if (isArabic) "جارٍ تحميل صفحة المصحف المتجهية (SVG)..." else "Loading Vector Mushaf Page...",
                                 style = TextStyle(
                                     fontFamily = TajawalFontFamily,
                                     fontSize = 13.sp,
