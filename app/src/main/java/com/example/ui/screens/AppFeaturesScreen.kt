@@ -165,14 +165,9 @@ fun AppFeaturesScreen(
         try {
             val shareText = if (isArabic) {
                 "الْقُرْآنُ الْكَرِيمُ - تطبيق المصحف الشريف الشامل (بدون إعلانات • صدقة جارية)\n\n" +
-                "• المصحف كاملاً بالرسم العثماني\n" +
-                "• تلاوات خاشعة وتفاسير الميسر وابن كثير\n" +
-                "• مواقيت الصلاة والأذان وتحديد القبلة\n" +
-                "• الأذكار والمسبحة الرقمية وآية اليوم والختمات\n\n" +
                 "رابط التطبيق:\nhttps://holy-quran-app-live.web.app"
             } else {
-                "The Holy Quran App - Complete Offline Quran, Prayer Times, Qibla & Azkar (100% Ad-Free • Sadaqah Jariyah)\n\n" +
-                "Complete Quran, translations, recitations, prayer times, and Khatmah tracker.\n\n" +
+                "The Holy Quran App - Complete Offline Quran, Prayer Times & Azkar (100% Ad-Free • Sadaqah Jariyah)\n\n" +
                 "Download/Open here:\nhttps://holy-quran-app-live.web.app"
             }
             val intent = Intent(Intent.ACTION_SEND).apply {
