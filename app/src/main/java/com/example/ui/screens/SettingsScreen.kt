@@ -1928,11 +1928,11 @@ fun SettingsScreen(
                                 try {
                                     val shareText = if (isArabic) {
                                         "الْقُرْآنُ الْكَرِيمُ - تطبيق المصحف الشريف الشامل (بدون إعلانات • صدقة جارية)\n\n" +
-                                        "دعواتكم الصادقة للمطور علي إبراهيم الشيخ ووالديه وأهل بيته بالرحمة والمغفرة.\n\n" +
+                                        "المصحف كاملاً بالرسم العثماني، تلاوات خاشعة، مواقيت الصلاة والأذكار والختمات القرآنية.\n\n" +
                                         "رابط التطبيق:\nhttps://holy-quran-app-live.web.app"
                                     } else {
-                                        "The Holy Quran App - Complete Offline Quran & Prayer Times (100% Ad-Free)\n\n" +
-                                        "Dedicated as Sadaqah Jariyah by Ali Ibrahim Elsheikh for his parents and household.\n\n" +
+                                        "The Holy Quran App - Complete Offline Quran & Prayer Times (100% Ad-Free • Sadaqah Jariyah)\n\n" +
+                                        "Complete Quran in Uthmani script, recitations, prayer times, Azkar, and Khatmah tracking.\n\n" +
                                         "Open app:\nhttps://holy-quran-app-live.web.app"
                                     }
                                     val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
