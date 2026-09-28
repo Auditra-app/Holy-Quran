@@ -2,19 +2,19 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "17"
+                "value": "18"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.3.3"
+                "value": "1.3.4"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.3.data"
+                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.4.data"
             },
             "description": "Direct download link for APK update"
         },
@@ -26,19 +26,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "إصلاح عاجل: حل تعطل التشغيل بترقية قاعدة البيانات Room إلى v19 مع الهجرة الآمنة للبيانات والتأمين الشامل للتدفقات"
+                "value": "Separate personal khatmah from free reading, fix done button responsiveness, and enable universal golden surah frame"
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "إصلاح عاجل: حل تعطل التشغيل بترقية قاعدة البيانات Room إلى v19 مع الهجرة الآمنة للبيانات والتأمين الشامل للتدفقات"
+                "value": "Separate personal khatmah from free reading, fix done button responsiveness, and enable universal golden surah frame"
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "إصلاح عاجل: حل تعطل التشغيل بترقية قاعدة البيانات Room إلى v19 مع الهجرة الآمنة للبيانات والتأمين الشامل للتدفقات"
+                "value": "Separate personal khatmah from free reading, fix done button responsiveness, and enable universal golden surah frame"
             },
             "description": "English release notes shown in update dialog"
         }

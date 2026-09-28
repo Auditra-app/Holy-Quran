@@ -236,6 +236,12 @@ fun QuranReaderScreen(
     val activeWirdSession by viewModel.activeWirdSession.collectAsState()
     var showWirdCompletionDialog by remember { mutableStateOf(false) }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            viewModel.exitWirdSession()
+        }
+    }
+
     val pagerState = rememberPagerState(
         initialPage = (currentPage - 1).coerceIn(0, 603),
         pageCount = { 604 }
@@ -4105,7 +4111,7 @@ fun GoldenMushafPageView(
                 val data = pagePolygons
                 if (data != null) {
                     val surahsStartingOnPage = remember(data.ayahs, pageNum) {
-                        if (pageNum >= 3) data.ayahs.filter { it.ayahNumber == 1 } else emptyList()
+                        data.ayahs.filter { it.ayahNumber == 1 }
                     }
 
                     val isPlayingThisAyah = poly != null && isPlayingAudio &&
@@ -4144,11 +4150,20 @@ fun GoldenMushafPageView(
                             for (ayah1 in surahsStartingOnPage) {
                                 val ayah1Bounds = ayah1.composePath.getBounds()
                                 val ayah1Top = ayah1Bounds.top
+                                val isOpeningPage = (pageNum <= 2)
                                 val isAtTawbah = (ayah1.surahNumber == 9)
-                                val frameTop = if (isAtTawbah) (ayah1Top - 34f) else (ayah1Top - 66f)
-                                val frameBottom = if (isAtTawbah) (ayah1Top - 3.5f) else (ayah1Top - 35.5f)
+                                val frameTop = when {
+                                    isOpeningPage -> -78f
+                                    isAtTawbah -> (ayah1Top - 34f)
+                                    else -> (ayah1Top - 66f)
+                                }
+                                val frameBottom = when {
+                                    isOpeningPage -> -43f
+                                    isAtTawbah -> (ayah1Top - 3.5f)
+                                    else -> (ayah1Top - 35.5f)
+                                }
                                 val frameLeft = 14f
-                                val frameRight = 331f
+                                val frameRight = if (isOpeningPage) 224f else 331f
                                 val frameWidth = frameRight - frameLeft
                                 val frameHeight = frameBottom - frameTop
                                 val centerY = frameTop + frameHeight / 2f

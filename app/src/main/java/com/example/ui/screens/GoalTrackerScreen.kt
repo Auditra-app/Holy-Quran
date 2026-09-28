@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.data.provider.QuranDataProvider
@@ -56,45 +57,28 @@ fun GoalTrackerScreen(
     onNavigateToPage: (Int) -> Unit,
     onBack: () -> Unit
 ) {
-    val readingProgress by viewModel.readingProgress.collectAsState()
-    val readingHistory by viewModel.readingHistory.collectAsState()
     val userSettings by viewModel.userSettings.collectAsState()
     val isArabic = userSettings.languageCode == "ar"
 
     var showResetDialog by remember { mutableStateOf(false) }
     var showDivisionsExplanationDialog by remember { mutableStateOf(false) }
 
-    // Pages read today from reading history
-    val todayPagesRead = remember(readingHistory) {
-        val todayStart = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
+    // Dedicated Wird Parameters (Matching reference app)
+    val wirdStartPage = userSettings.khatmahCurrentPage.coerceIn(1, 604)
+    val wirdDailyPages = userSettings.khatmahDailyGoalPages.coerceAtLeast(1)
+    val wirdEndPage = (wirdStartPage + wirdDailyPages - 1).coerceAtMost(604)
 
-        readingHistory
-            .filter { it.timestamp >= todayStart }
-            .map { it.pageNumber }
-            .distinct()
-            .size
-    }
-
-    val dailyGoal = userSettings.dailyPageGoal
-    val dailyProgressFraction = (todayPagesRead.toFloat() / dailyGoal.toFloat()).coerceIn(0f, 1f)
-
-    val currentLastPage = readingProgress.lastPage
     val totalPages = 604
-    val overallProgressFraction = (currentLastPage.toFloat() / totalPages.toFloat()).coerceIn(0f, 1f)
-    val remainingPages = totalPages - currentLastPage
+    val khatmahRemainingPages = (totalPages - wirdStartPage).coerceAtLeast(0)
+    val khatmahProgressFraction = (wirdStartPage.toFloat() / totalPages.toFloat()).coerceIn(0f, 1f)
 
-    val daysElapsed = remember(userSettings.khatmahStartDate) {
-        val diff = System.currentTimeMillis() - userSettings.khatmahStartDate
-        (diff / (1000 * 60 * 60 * 24)).toInt().coerceAtLeast(1)
-    }
+    val animatedKhatmahProgress by animateFloatAsState(
+        targetValue = khatmahProgressFraction,
+        animationSpec = tween(600)
+    )
 
     // Estimated completion date based on daily goal
-    val estimatedDaysRemaining = ceil(remainingPages.toDouble() / dailyGoal.toDouble()).toInt()
+    val estimatedDaysRemaining = ceil(khatmahRemainingPages.toDouble() / wirdDailyPages.toDouble()).toInt().coerceAtLeast(1)
     val estimatedFinishDateFormatted = remember(estimatedDaysRemaining) {
         val cal = Calendar.getInstance()
         cal.add(Calendar.DAY_OF_YEAR, estimatedDaysRemaining)
@@ -102,24 +86,10 @@ fun GoalTrackerScreen(
         sdf.format(cal.time)
     }
 
-    val animatedDailyProgress by animateFloatAsState(
-        targetValue = dailyProgressFraction,
-        animationSpec = tween(600)
-    )
-
-    val animatedOverallProgress by animateFloatAsState(
-        targetValue = overallProgressFraction,
-        animationSpec = tween(600)
-    )
-
-    val juzList: List<Juz> = remember { QuranDataProvider.JUZ_LIST }
-
-    val context = LocalContext.current
-
-    // Dedicated Wird Parameters (Matching Khatmah app screenshot 3)
-    val wirdStartPage = userSettings.khatmahCurrentPage.coerceIn(1, 604)
-    val wirdDailyPages = userSettings.khatmahDailyGoalPages.coerceAtLeast(1)
-    val wirdEndPage = (wirdStartPage + wirdDailyPages - 1).coerceAtMost(604)
+    val totalWirds = remember(wirdDailyPages) { ceil(604.0 / wirdDailyPages.toDouble()).toInt() }
+    val completedWirds = userSettings.khatmahCompletedWirdsCount
+    val remainingWirds = (totalWirds - completedWirds).coerceAtLeast(0)
+    val khatmahProgressPercent = ((wirdStartPage.toFloat() / 604f) * 100f).toInt().coerceIn(0, 100)
 
     val startSurah = remember(wirdStartPage) { QuranDataProvider.getSurahByPage(wirdStartPage) }
     val startJuz = remember(wirdStartPage) { QuranDataProvider.getJuzByPage(wirdStartPage) }
@@ -130,10 +100,8 @@ fun GoalTrackerScreen(
     val endVerses = remember(wirdEndPage) { QuranDataProvider.getVersesForPage(wirdEndPage) }
     val lastVerse = endVerses.lastOrNull()
 
-    val totalWirds = remember(wirdDailyPages) { ceil(604.0 / wirdDailyPages.toDouble()).toInt() }
-    val completedWirds = userSettings.khatmahCompletedWirdsCount
-    val remainingWirds = (totalWirds - completedWirds).coerceAtLeast(0)
-    val khatmahProgressPercent = ((wirdStartPage.toFloat() / 604f) * 100f).toInt().coerceIn(0, 100)
+    val juzList: List<Juz> = remember { QuranDataProvider.JUZ_LIST }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -286,30 +254,40 @@ fun GoalTrackerScreen(
                     // Action Buttons Row: Yellow ("أتممت القراءة >") & Green ("تابع قراءة الورد")
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Yellow Button
+                        // Yellow Button (Mark Done)
                         Button(
                             onClick = {
                                 viewModel.completeWirdDirectly()
                                 Toast.makeText(context, if (isArabic) "تقبل الله طاعتكم! تم إتمام الورد وحفظ تقدم الختمة." else "Wird marked as completed!", Toast.LENGTH_SHORT).show()
                             },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = Color(0xFFFBBF24),
+                                containerColor = Color(0xFFFACC15),
                                 contentColor = Color(0xFF78350F)
                             ),
                             shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
                             modifier = Modifier
                                 .weight(1f)
-                                .height(46.dp)
+                                .height(48.dp)
+                                .testTag("khatmah_done_button")
                         ) {
                             Text(
                                 text = if (isArabic) "أتممت القراءة >" else "Done >",
-                                style = MaterialTheme.typography.titleSmall.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
+                                style = TextStyle(
+                                    fontFamily = TajawalFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.5.sp
+                                ),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
 
-                        // Green Button
+                        // Green Button (Read Wird)
                         Button(
                             onClick = {
                                 viewModel.startWirdSession(wirdStartPage, wirdDailyPages)
@@ -320,15 +298,24 @@ fun GoalTrackerScreen(
                                 contentColor = Color.White
                             ),
                             shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 6.dp, vertical = 0.dp),
                             modifier = Modifier
-                                .weight(1.3f)
-                                .height(46.dp)
+                                .weight(1f)
+                                .height(48.dp)
+                                .testTag("khatmah_read_wird_button")
                         ) {
-                            Icon(imageVector = Icons.Outlined.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(6.dp))
+                            Icon(imageVector = Icons.Outlined.MenuBook, contentDescription = null, modifier = Modifier.size(17.dp))
+                            Spacer(modifier = Modifier.width(5.dp))
                             Text(
                                 text = if (isArabic) "تابع قراءة الورد" else "Read Wird",
-                                style = MaterialTheme.typography.titleSmall.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
+                                style = TextStyle(
+                                    fontFamily = TajawalFontFamily,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 13.5.sp
+                                ),
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
@@ -336,7 +323,7 @@ fun GoalTrackerScreen(
             }
 
             // =========================================================================
-            // CURRENT KHATMAH PROGRESS & STATS (Matching Screenshot 3)
+            // CURRENT KHATMAH PROGRESS & STATS (Dedicated Khatmah space)
             // =========================================================================
             Card(
                 shape = RoundedCornerShape(18.dp),
@@ -361,7 +348,7 @@ fun GoalTrackerScreen(
                     }
 
                     LinearProgressIndicator(
-                        progress = { animatedOverallProgress },
+                        progress = { animatedKhatmahProgress },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(10.dp)
@@ -437,123 +424,14 @@ fun GoalTrackerScreen(
                     }
                 }
             }
-            // 1. TODAY'S DAILY GOAL CARD
+
+            // =========================================================================
+            // KHATMAH PACE PLANNING & TARGET DURATION
+            // =========================================================================
             Card(
                 shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = if (dailyProgressFraction >= 1f)
-                        EmeraldPrimary.copy(alpha = 0.15f)
-                    else
-                        MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)
-                ),
-                border = BorderStroke(1.5.dp, if (dailyProgressFraction >= 1f) EmeraldPrimary else GoldAccent),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(
-                                imageVector = if (dailyProgressFraction >= 1f) Icons.Default.CheckCircle else Icons.Outlined.Flag,
-                                contentDescription = null,
-                                tint = if (dailyProgressFraction >= 1f) EmeraldPrimary else GoldAccent
-                            )
-                            Text(
-                                text = if (isArabic) "هدف القراءة اليومي" else "Today's Reading Goal",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Surface(
-                            shape = CircleShape,
-                            color = if (dailyProgressFraction >= 1f) EmeraldPrimary else GoldAccent,
-                            modifier = Modifier.padding(2.dp)
-                        ) {
-                            Text(
-                                text = "${(animatedDailyProgress * 100).toInt()}%",
-                                style = MaterialTheme.typography.labelMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = Color.White,
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Progress Ring & Counts
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceAround
-                    ) {
-                        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(100.dp)) {
-                            CircularProgressIndicator(
-                                progress = { animatedDailyProgress },
-                                modifier = Modifier.fillMaxSize(),
-                                color = if (dailyProgressFraction >= 1f) EmeraldPrimary else GoldAccent,
-                                trackColor = MaterialTheme.colorScheme.surfaceVariant,
-                                strokeWidth = 10.dp
-                            )
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    text = "$todayPagesRead / $dailyGoal",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Text(
-                                    text = if (isArabic) "صفحة" else "Pages",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-
-                        Column(
-                            modifier = Modifier.weight(1f).padding(start = 16.dp),
-                            verticalArrangement = Arrangement.spacedBy(6.dp)
-                        ) {
-                            Text(
-                                text = if (dailyProgressFraction >= 1f)
-                                    (if (isArabic) "🎉 ماشاء الله! أكملت هدف اليوم بنجاح." else "🎉 Excellent! Today's goal achieved.")
-                                else
-                                    (if (isArabic) "باقي ${(dailyGoal - todayPagesRead).coerceAtLeast(0)} صفحة لتحقيق هدف اليوم." else "${(dailyGoal - todayPagesRead).coerceAtLeast(0)} pages left for today's goal."),
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = if (dailyProgressFraction >= 1f) EmeraldPrimary else MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-
-                            Button(
-                                onClick = {
-                                    viewModel.jumpToPage(currentLastPage)
-                                    onNavigateToPage(currentLastPage)
-                                },
-                                colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Icon(imageVector = Icons.Outlined.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(if (isArabic) "مواصلة القراءة" else "Continue Reading")
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 2. OVERALL KHATMAH PROGRESS CARD
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -562,63 +440,26 @@ fun GoalTrackerScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            Icon(imageVector = Icons.Outlined.EmojiEvents, contentDescription = null, tint = IslamicGold)
-                            Text(
-                                text = if (isArabic) "تقدم ختمة القرآن الكريم" else "Overall Quran Khatmah",
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
                         Text(
-                            text = "${"%.1f".format(animatedOverallProgress * 100)}%",
-                            style = MaterialTheme.typography.titleLarge,
+                            text = if (isArabic) "تخطيط الختمة والموعد المتوقع" else "Khatmah Planning & Estimate",
+                            style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = EmeraldPrimary
                         )
+                        IconButton(
+                            onClick = { showDivisionsExplanationDialog = true },
+                            modifier = Modifier.size(28.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = if (isArabic) "شرح تقسيمات المصحف" else "Quran Divisions Info",
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
                     }
 
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    LinearProgressIndicator(
-                        progress = { animatedOverallProgress },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(12.dp)
-                            .clip(CircleShape),
-                        color = EmeraldPrimary,
-                        trackColor = MaterialTheme.colorScheme.surface
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Breakdown Grid Metrics
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        MetricBadge(
-                            label = if (isArabic) "الصفحات المكتملة" else "Pages Done",
-                            value = "$currentLastPage / 604",
-                            icon = Icons.Default.Description
-                        )
-                        MetricBadge(
-                            label = if (isArabic) "الأجزاء المكتملة" else "Juz Completed",
-                            value = "${currentLastPage / 20} / 30",
-                            icon = Icons.Default.Grid4x4
-                        )
-                        MetricBadge(
-                            label = if (isArabic) "الصفحات المتبقية" else "Remaining",
-                            value = "$remainingPages",
-                            icon = Icons.Default.HourglassEmpty
-                        )
-                    }
-
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     // Estimated Finish Banner
                     Row(
@@ -628,7 +469,7 @@ fun GoalTrackerScreen(
                     ) {
                         Column {
                             Text(
-                                text = if (isArabic) "الموعد المتوقع لإتمام الختمة:" else "Estimated Khatmah Finish Date:",
+                                text = if (isArabic) "الموعد المتوقع لإتمام الختمة:" else "Estimated Completion Date:",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -647,96 +488,13 @@ fun GoalTrackerScreen(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                     }
-                }
-            }
-
-            // 3. GOAL CUSTOMIZATION CONTROLS
-            Card(
-                shape = RoundedCornerShape(20.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = if (isArabic) "تخصيص الأهداف والتخطيط" else "Goal & Pace Customization",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = EmeraldPrimary
-                        )
-                        IconButton(
-                            onClick = { showDivisionsExplanationDialog = true },
-                            modifier = Modifier.size(28.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Info,
-                                contentDescription = if (isArabic) "شرح تقسيمات المصحف" else "Quran Divisions Info",
-                                tint = EmeraldPrimary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
 
                     Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = if (isArabic) "الهدف اليومي (عدد الصفحات): $dailyGoal صفحة" else "Daily Page Goal: $dailyGoal pages/day",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    // Daily Page Goal Presets Chips
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        val presets = listOf(
-                            2 to if (isArabic) "2 صفحة (نحو ربع حزب)" else "2 pages (~Rub' Hizb)",
-                            5 to if (isArabic) "5 صفحات (نصف حزب / ربع جزء)" else "5 pages (Half Hizb / Quarter Juz)",
-                            10 to if (isArabic) "10 صفحات (حزب كامل)" else "10 pages (1 Hizb)",
-                            20 to if (isArabic) "20 صفحة (جزء كامل)" else "20 pages (1 Juz)",
-                            30 to if (isArabic) "30 صفحة (جزء ونصف)" else "30 pages (1.5 Juz)"
-                        )
-
-                        presets.forEach { (count, label) ->
-                            FilterChip(
-                                selected = dailyGoal == count,
-                                onClick = { viewModel.updateDailyPageGoal(count) },
-                                label = { Text(label, fontSize = 12.sp) },
-                                colors = FilterChipDefaults.filterChipColors(
-                                    selectedContainerColor = EmeraldPrimary,
-                                    selectedLabelColor = Color.White
-                                )
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    // Slider for Custom Daily Pages Goal
-                    Slider(
-                        value = dailyGoal.toFloat(),
-                        onValueChange = { viewModel.updateDailyPageGoal(it.toInt()) },
-                        valueRange = 1f..60f,
-                        steps = 59,
-                        colors = SliderDefaults.colors(thumbColor = EmeraldPrimary, activeTrackColor = EmeraldPrimary)
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-
                     Spacer(modifier = Modifier.height(12.dp))
 
                     Text(
-                        text = if (isArabic) "مدة الختمة المستهدفة: ${userSettings.khatmahTargetDays} يوم" else "Target Khatmah Duration: ${userSettings.khatmahTargetDays} days",
+                        text = if (isArabic) "مدة الختمة المستهدفة: ${userSettings.khatmahTargetDays} يوم" else "Target Duration: ${userSettings.khatmahTargetDays} days",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium
                     )
@@ -790,8 +548,8 @@ fun GoalTrackerScreen(
                                 juzList.firstOrNull { it.number == juz.number + 1 }?.startPage?.minus(1) ?: 604
                             } else 604
 
-                            val isCompleted = currentLastPage >= juzEndPage
-                            val isActive = currentLastPage >= juz.startPage && currentLastPage < juzEndPage
+                            val isCompleted = wirdStartPage > juzEndPage
+                            val isActive = wirdStartPage >= juz.startPage && wirdStartPage <= juzEndPage
 
                             JuzProgressCard(
                                 juz = juz,
@@ -800,7 +558,7 @@ fun GoalTrackerScreen(
                                 isArabic = isArabic,
                                 modifier = Modifier.weight(1f),
                                 onClick = {
-                                    viewModel.jumpToPage(juz.startPage)
+                                    viewModel.startWirdSession(juz.startPage, wirdDailyPages)
                                     onNavigateToPage(juz.startPage)
                                 }
                             )
@@ -925,19 +683,6 @@ fun GoalTrackerScreen(
     }
 }
 
-@Composable
-fun MetricBadge(
-    label: String,
-    value: String,
-    icon: androidx.compose.ui.graphics.vector.ImageVector
-) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(imageVector = icon, contentDescription = null, tint = EmeraldPrimary, modifier = Modifier.size(20.dp))
-        Spacer(modifier = Modifier.height(2.dp))
-        Text(text = value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-        Text(text = label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-}
 
 @Composable
 fun JuzProgressCard(

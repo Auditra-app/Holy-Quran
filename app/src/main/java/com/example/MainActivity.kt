@@ -415,6 +415,9 @@ fun HolyQuranApp(
                         viewModel = viewModel,
                         onNavigate = { route ->
                             try {
+                                if (route == "reader") {
+                                    viewModel.exitWirdSession()
+                                }
                                 navController.navigate(route)
                             } catch (e: Throwable) {
                                 Log.e("HolyQuranApp", "Navigation error to $route", e)
@@ -426,7 +429,10 @@ fun HolyQuranApp(
                     QuranReaderScreen(
                         viewModel = viewModel,
                         onBack = {
-                            try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
+                            try {
+                                viewModel.exitWirdSession()
+                                navController.popBackStack()
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
                         },
                         onNavigateToTafsir = { _, _ ->
                             try { navController.navigate("tafsir") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate tafsir error", e) }
@@ -437,7 +443,10 @@ fun HolyQuranApp(
                     SurahListScreen(
                         viewModel = viewModel,
                         onNavigateToPage = {
-                            try { navController.navigate("reader") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
+                            try {
+                                viewModel.exitWirdSession()
+                                navController.navigate("reader")
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
@@ -448,7 +457,10 @@ fun HolyQuranApp(
                     JuzListScreen(
                         viewModel = viewModel,
                         onNavigateToPage = {
-                            try { navController.navigate("reader") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
+                            try {
+                                viewModel.exitWirdSession()
+                                navController.navigate("reader")
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
@@ -460,6 +472,7 @@ fun HolyQuranApp(
                         viewModel = viewModel,
                         onNavigateToPage = {
                             try {
+                                viewModel.exitWirdSession()
                                 navController.navigate("reader") {
                                     popUpTo("home") { saveState = true }
                                     launchSingleTop = true
@@ -478,7 +491,10 @@ fun HolyQuranApp(
                     ReadingHistoryScreen(
                         viewModel = viewModel,
                         onNavigateToPage = {
-                            try { navController.navigate("reader") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
+                            try {
+                                viewModel.exitWirdSession()
+                                navController.navigate("reader")
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
@@ -500,7 +516,10 @@ fun HolyQuranApp(
                     ReadingAnalyticsScreen(
                         viewModel = viewModel,
                         onNavigateToPage = {
-                            try { navController.navigate("reader") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
+                            try {
+                                viewModel.exitWirdSession()
+                                navController.navigate("reader")
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
@@ -511,7 +530,10 @@ fun HolyQuranApp(
                     SearchScreen(
                         viewModel = viewModel,
                         onNavigateToPage = {
-                            try { navController.navigate("reader") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
+                            try {
+                                viewModel.exitWirdSession()
+                                navController.navigate("reader")
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
@@ -522,7 +544,10 @@ fun HolyQuranApp(
                     DailyVerseScreen(
                         viewModel = viewModel,
                         onNavigateToPage = {
-                            try { navController.navigate("reader") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
+                            try {
+                                viewModel.exitWirdSession()
+                                navController.navigate("reader")
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
