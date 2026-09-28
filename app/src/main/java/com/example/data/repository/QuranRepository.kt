@@ -192,6 +192,10 @@ class QuranRepository(private val quranDao: QuranDao) {
                 put("dailyPageGoal", settings.dailyPageGoal)
                 put("khatmahTargetDays", settings.khatmahTargetDays)
                 put("khatmahStartDate", settings.khatmahStartDate)
+                put("khatmahCurrentPage", settings.khatmahCurrentPage)
+                put("khatmahDailyGoalPages", settings.khatmahDailyGoalPages)
+                put("khatmahCompletedWirdsCount", settings.khatmahCompletedWirdsCount)
+                put("khatmahLastCompletedDate", settings.khatmahLastCompletedDate)
                 put("homeGridOrderJson", settings.homeGridOrderJson)
                 put("enableHaptic", settings.enableHaptic)
                 put("hapticType", settings.hapticType)
@@ -258,6 +262,10 @@ class QuranRepository(private val quranDao: QuranDao) {
                 dailyPageGoal = obj.optInt("dailyPageGoal", def.dailyPageGoal),
                 khatmahTargetDays = obj.optInt("khatmahTargetDays", def.khatmahTargetDays),
                 khatmahStartDate = obj.optLong("khatmahStartDate", def.khatmahStartDate),
+                khatmahCurrentPage = obj.optInt("khatmahCurrentPage", def.khatmahCurrentPage),
+                khatmahDailyGoalPages = obj.optInt("khatmahDailyGoalPages", def.khatmahDailyGoalPages),
+                khatmahCompletedWirdsCount = obj.optInt("khatmahCompletedWirdsCount", def.khatmahCompletedWirdsCount),
+                khatmahLastCompletedDate = obj.optLong("khatmahLastCompletedDate", def.khatmahLastCompletedDate),
                 homeGridOrderJson = obj.optString("homeGridOrderJson", def.homeGridOrderJson),
                 enableHaptic = obj.optBoolean("enableHaptic", def.enableHaptic),
                 hapticType = obj.optString("hapticType", def.hapticType),
@@ -329,6 +337,10 @@ class QuranRepository(private val quranDao: QuranDao) {
             put("dailyPageGoal", settings.dailyPageGoal)
             put("khatmahTargetDays", settings.khatmahTargetDays)
             put("khatmahStartDate", settings.khatmahStartDate)
+            put("khatmahCurrentPage", settings.khatmahCurrentPage)
+            put("khatmahDailyGoalPages", settings.khatmahDailyGoalPages)
+            put("khatmahCompletedWirdsCount", settings.khatmahCompletedWirdsCount)
+            put("khatmahLastCompletedDate", settings.khatmahLastCompletedDate)
             put("homeGridOrderJson", settings.homeGridOrderJson)
             put("fajrOffsetMins", settings.fajrOffsetMins)
             put("dhuhrOffsetMins", settings.dhuhrOffsetMins)
@@ -420,6 +432,10 @@ class QuranRepository(private val quranDao: QuranDao) {
                     dailyPageGoal = obj.optInt("dailyPageGoal", current.dailyPageGoal),
                     khatmahTargetDays = obj.optInt("khatmahTargetDays", current.khatmahTargetDays),
                     khatmahStartDate = obj.optLong("khatmahStartDate", current.khatmahStartDate),
+                    khatmahCurrentPage = obj.optInt("khatmahCurrentPage", current.khatmahCurrentPage),
+                    khatmahDailyGoalPages = obj.optInt("khatmahDailyGoalPages", current.khatmahDailyGoalPages),
+                    khatmahCompletedWirdsCount = obj.optInt("khatmahCompletedWirdsCount", current.khatmahCompletedWirdsCount),
+                    khatmahLastCompletedDate = obj.optLong("khatmahLastCompletedDate", current.khatmahLastCompletedDate),
                     homeGridOrderJson = obj.optString("homeGridOrderJson", current.homeGridOrderJson),
                     fajrOffsetMins = obj.optInt("fajrOffsetMins", current.fajrOffsetMins),
                     dhuhrOffsetMins = obj.optInt("dhuhrOffsetMins", current.dhuhrOffsetMins),

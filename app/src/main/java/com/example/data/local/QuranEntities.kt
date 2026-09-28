@@ -63,6 +63,10 @@ data class UserSettingsEntity(
     val dailyPageGoal: Int = 10, // Default 10 pages/day
     val khatmahTargetDays: Int = 30, // Default 30 days
     val khatmahStartDate: Long = System.currentTimeMillis(),
+    val khatmahCurrentPage: Int = 1,
+    val khatmahDailyGoalPages: Int = 5,
+    val khatmahCompletedWirdsCount: Int = 0,
+    val khatmahLastCompletedDate: Long = 0L,
     val homeGridOrderJson: String = "",
     val enableHaptic: Boolean = true,
     val hapticType: String = "SOFT", // "SOFT" or "HARD"

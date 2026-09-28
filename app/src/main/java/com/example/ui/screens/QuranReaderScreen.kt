@@ -40,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.center
@@ -47,6 +48,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -231,6 +233,9 @@ fun QuranReaderScreen(
         }
     }
 
+    val activeWirdSession by viewModel.activeWirdSession.collectAsState()
+    var showWirdCompletionDialog by remember { mutableStateOf(false) }
+
     val pagerState = rememberPagerState(
         initialPage = (currentPage - 1).coerceIn(0, 603),
         pageCount = { 604 }
@@ -238,7 +243,14 @@ fun QuranReaderScreen(
 
     LaunchedEffect(pagerState.currentPage) {
         val targetPage = pagerState.currentPage + 1
-        if (targetPage != currentPage) {
+        val session = activeWirdSession
+        if (session != null && targetPage > session.endPage) {
+            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+            pagerState.scrollToPage(session.endPage - 1)
+            showWirdCompletionDialog = true
+        } else if (session != null && targetPage < session.startPage) {
+            pagerState.scrollToPage(session.startPage - 1)
+        } else if (targetPage != currentPage) {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             viewModel.jumpToPage(targetPage)
         }
@@ -317,6 +329,21 @@ fun QuranReaderScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.wrapContentWidth()
                             ) {
+                                if (activeWirdSession != null) {
+                                    Surface(
+                                        shape = RoundedCornerShape(7.dp),
+                                        color = Color(0xFF1E293B),
+                                        border = BorderStroke(1.dp, Color(0xFF34D399).copy(alpha = 0.8f)),
+                                        modifier = Modifier.padding(end = 6.dp)
+                                    ) {
+                                        Text(
+                                            text = "خ",
+                                            style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 13.sp),
+                                            color = Color(0xFF34D399),
+                                            modifier = Modifier.padding(horizontal = 7.dp, vertical = 1.dp)
+                                        )
+                                    }
+                                }
                                 Text(
                                     text = if (isArabic) surah.nameArabic else surah.nameEnglish,
                                     style = MaterialTheme.typography.titleMedium.copy(
@@ -1471,8 +1498,160 @@ fun QuranReaderScreen(
                 }
             }
         }
-    }
+
+        // Dedicated Wird Mode Bottom Progress Bar (Matching Screenshot 2 from 'ختمة')
+        val session = activeWirdSession
+        if (session != null) {
+            val wirdTotalPages = (session.endPage - session.startPage + 1).coerceAtLeast(1)
+            val wirdCurrentIndex = (currentPage - session.startPage).coerceIn(0, wirdTotalPages - 1)
+            val wirdProgressFraction = if (wirdTotalPages > 1) wirdCurrentIndex.toFloat() / (wirdTotalPages - 1).toFloat() else 1f
+            val isAtLastPage = (currentPage >= session.endPage)
+
+            Surface(
+                color = (if (isDarkMode) Color(0xFF0F172A) else Color(0xFFFFFBF2)).copy(alpha = 0.96f),
+                border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.4f)),
+                shadowElevation = 8.dp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp, vertical = 6.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Surface(
+                                shape = RoundedCornerShape(6.dp),
+                                color = EmeraldPrimary
+                            ) {
+                                Text(
+                                    text = "خ",
+                                    style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                )
+                            }
+                            Text(
+                                text = if (isArabic) "ورد اليوم: صفحة ${toArabicDigits(wirdCurrentIndex + 1)} من ${toArabicDigits(wirdTotalPages)}" else "Daily Wird: Page ${wirdCurrentIndex + 1} of $wirdTotalPages",
+                                style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp),
+                                color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF0D5C3A)
+                            )
+                        }
+
+                        if (isAtLastPage) {
+                            Button(
+                                onClick = { showWirdCompletionDialog = true },
+                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAB308), contentColor = Color(0xFF78350F)),
+                                shape = RoundedCornerShape(10.dp),
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 3.dp),
+                                modifier = Modifier.height(28.dp)
+                            ) {
+                                Text(
+                                    text = if (isArabic) "أتممت القراءة ✨" else "Mark Done ✨",
+                                    style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                )
+                            }
+                        }
+                    }
+
+                    // Minimalist Horizontal Progress Track with Active Indicator Dot (Screenshot 2)
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(16.dp),
+                        contentAlignment = Alignment.CenterStart
+                    ) {
+                        // Background Track
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(3.dp)
+                                .background(if (isDarkMode) Color(0xFF334155) else Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
+                        )
+
+                        // Active Track
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = wirdProgressFraction)
+                                .height(3.dp)
+                                .background(EmeraldPrimary, RoundedCornerShape(2.dp))
+                        )
+
+                        // Indicator Dot (Thumb)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth(fraction = wirdProgressFraction)
+                                .wrapContentWidth(align = Alignment.End)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(14.dp)
+                                    .background(EmeraldPrimary, CircleShape)
+                                    .border(2.dp, Color.White, CircleShape)
+                            )
+                        }
+                    }
+                }
+            }
         }
+    }
+}
+}
+
+    // Completion Dialog when User reaches end of Wird
+    if (showWirdCompletionDialog) {
+        val activeSession = activeWirdSession
+        AlertDialog(
+            onDismissRequest = { showWirdCompletionDialog = false },
+            title = {
+                Text(
+                    text = if (isArabic) "تقبل الله طاعتكم! 🤲" else "May Allah Accept! 🤲",
+                    style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 18.sp),
+                    color = EmeraldPrimary
+                )
+            },
+            text = {
+                Text(
+                    text = if (isArabic)
+                        "ما شاء الله! لقد أتممت قراءة ورد اليوم المخصص (${toArabicDigits(activeSession?.targetPages ?: 5)} صفحات).\n\nهل تريد تسجيل إتمام هذا الورد وتحديث تقدم الختمة؟"
+                    else
+                        "Masha'Allah! You have completed today's daily target (${activeSession?.targetPages ?: 5} pages).\n\nWould you like to mark this wird as completed and advance your Khatmah?",
+                    style = TextStyle(fontFamily = TajawalFontFamily, fontSize = 14.sp, lineHeight = 22.sp)
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showWirdCompletionDialog = false
+                        viewModel.completeCurrentWird()
+                        Toast.makeText(context, if (isArabic) "مبارك! تم تسجيل إتمام الورد وحفظ تقدم الختمة." else "Congratulations! Wird recorded.", Toast.LENGTH_LONG).show()
+                        onBack()
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)
+                ) {
+                    Text(
+                        text = if (isArabic) "نعم، أتممت القراءة" else "Yes, Mark Done",
+                        style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showWirdCompletionDialog = false }) {
+                    Text(
+                        text = if (isArabic) "مراجعة الورد" else "Review Pages",
+                        style = TextStyle(fontFamily = TajawalFontFamily)
+                    )
+                }
+            }
+        )
     }
 
     // Popup Card when ANY Word is Clicked (Interactive Word Meaning & Verse Tafseer)
@@ -3921,11 +4100,15 @@ fun GoldenMushafPageView(
                     modifier = Modifier.fillMaxSize()
                 )
 
-                // Interactive Ayah Selection & Audio Playback Highlight Canvas Layer
+                // Golden Surah Header Decorative Frame & Ayah Highlight Canvas Layer
                 val poly = activeHighlightPolygon
                 val data = pagePolygons
-                if (poly != null && data != null) {
-                    val isPlayingThisAyah = isPlayingAudio &&
+                if (data != null) {
+                    val surahsStartingOnPage = remember(data.ayahs, pageNum) {
+                        if (pageNum >= 3) data.ayahs.filter { it.ayahNumber == 1 } else emptyList()
+                    }
+
+                    val isPlayingThisAyah = poly != null && isPlayingAudio &&
                             currentPlayingVerse?.first == poly.surahNumber &&
                             currentPlayingVerse?.second == poly.ayahNumber
 
@@ -3957,15 +4140,105 @@ fun GoldenMushafPageView(
                                 translate(left = -data.minX, top = -data.minY)
                             }
                         }) {
-                            drawPath(
-                                path = poly.composePath,
-                                color = highlightFill
-                            )
-                            drawPath(
-                                path = poly.composePath,
-                                color = highlightStroke,
-                                style = Stroke(width = 1.2f)
-                            )
+                            // 1. Draw Golden Surah Header Decorative Frame for any Surah starting on this page
+                            for (ayah1 in surahsStartingOnPage) {
+                                val ayah1Bounds = ayah1.composePath.getBounds()
+                                val ayah1Top = ayah1Bounds.top
+                                val isAtTawbah = (ayah1.surahNumber == 9)
+                                val frameTop = if (isAtTawbah) (ayah1Top - 34f) else (ayah1Top - 66f)
+                                val frameBottom = if (isAtTawbah) (ayah1Top - 3.5f) else (ayah1Top - 35.5f)
+                                val frameLeft = 14f
+                                val frameRight = 331f
+                                val frameWidth = frameRight - frameLeft
+                                val frameHeight = frameBottom - frameTop
+                                val centerY = frameTop + frameHeight / 2f
+
+                                if (frameHeight > 10f) {
+                                    // Golden Shimmer Background Fill
+                                    val frameShimmer = Brush.horizontalGradient(
+                                        colors = if (isDarkMode) listOf(
+                                            Color(0xFF451A03).copy(alpha = 0.35f),
+                                            Color(0xFF78350F).copy(alpha = 0.48f),
+                                            Color(0xFF451A03).copy(alpha = 0.35f)
+                                        ) else listOf(
+                                            Color(0xFFD4AF37).copy(alpha = 0.08f),
+                                            Color(0xFFFEF3C7).copy(alpha = 0.30f),
+                                            Color(0xFFD4AF37).copy(alpha = 0.08f)
+                                        ),
+                                        startX = frameLeft,
+                                        endX = frameRight
+                                    )
+                                    drawRoundRect(
+                                        brush = frameShimmer,
+                                        topLeft = Offset(frameLeft, frameTop),
+                                        size = Size(frameWidth, frameHeight),
+                                        cornerRadius = CornerRadius(4.5f, 4.5f)
+                                    )
+
+                                    val outerGold = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFFD4AF37)
+                                    val innerGold = if (isDarkMode) IslamicGold else Color(0xFFB45309).copy(alpha = 0.75f)
+
+                                    // Outer Ornate Golden Border
+                                    drawRoundRect(
+                                        color = outerGold,
+                                        topLeft = Offset(frameLeft, frameTop),
+                                        size = Size(frameWidth, frameHeight),
+                                        cornerRadius = CornerRadius(4.5f, 4.5f),
+                                        style = Stroke(width = 1.35f)
+                                    )
+
+                                    // Inner Fine Golden Hairline
+                                    drawRoundRect(
+                                        color = innerGold,
+                                        topLeft = Offset(frameLeft + 2.2f, frameTop + 2.2f),
+                                        size = Size(frameWidth - 4.4f, frameHeight - 4.4f),
+                                        cornerRadius = CornerRadius(2.5f, 2.5f),
+                                        style = Stroke(width = 0.7f)
+                                    )
+
+                                    // Right Side Pointed Islamic Crest / Arch
+                                    val rightArch = Path().apply {
+                                        moveTo(frameRight, centerY - 7f)
+                                        cubicTo(frameRight + 3.5f, centerY - 5f, frameRight + 6.5f, centerY - 2.5f, frameRight + 8.5f, centerY)
+                                        cubicTo(frameRight + 6.5f, centerY + 2.5f, frameRight + 3.5f, centerY + 5f, frameRight, centerY + 7f)
+                                    }
+                                    drawPath(path = rightArch, color = outerGold, style = Stroke(width = 1.1f))
+                                    drawCircle(color = innerGold, radius = 1.2f, center = Offset(frameRight + 4.5f, centerY))
+
+                                    // Left Side Pointed Islamic Crest / Arch
+                                    val leftArch = Path().apply {
+                                        moveTo(frameLeft, centerY - 7f)
+                                        cubicTo(frameLeft - 3.5f, centerY - 5f, frameLeft - 6.5f, centerY - 2.5f, frameLeft - 8.5f, centerY)
+                                        cubicTo(frameLeft - 6.5f, centerY + 2.5f, frameLeft - 3.5f, centerY + 5f, frameLeft, centerY + 7f)
+                                    }
+                                    drawPath(path = leftArch, color = outerGold, style = Stroke(width = 1.1f))
+                                    drawCircle(color = innerGold, radius = 1.2f, center = Offset(frameLeft - 4.5f, centerY))
+
+                                    // Corner Rosettes
+                                    val cornerOffsets = listOf(
+                                        Offset(frameLeft + 2.2f, frameTop + 2.2f),
+                                        Offset(frameRight - 2.2f, frameTop + 2.2f),
+                                        Offset(frameLeft + 2.2f, frameBottom - 2.2f),
+                                        Offset(frameRight - 2.2f, frameBottom - 2.2f)
+                                    )
+                                    for (c in cornerOffsets) {
+                                        drawCircle(color = outerGold, radius = 1.1f, center = c)
+                                    }
+                                }
+                            }
+
+                            // 2. Draw Active Ayah Selection / Audio Recitation Highlight
+                            if (poly != null) {
+                                drawPath(
+                                    path = poly.composePath,
+                                    color = highlightFill
+                                )
+                                drawPath(
+                                    path = poly.composePath,
+                                    color = highlightStroke,
+                                    style = Stroke(width = 1.2f)
+                                )
+                            }
                         }
                     }
                 }
@@ -4147,555 +4420,6 @@ fun GoldenMushafPageView(
                                     )
                                 }
                             }
-                        }
-                    }
-                }
-            }
-
-            // Floating Bottom Action Overlay in Fullscreen Mode (Play audio, Page Tafsir, Ayat list with Tafsir/Recite triggers)
-            androidx.compose.animation.AnimatedVisibility(
-                visible = isImmersive,
-                enter = fadeIn() + slideInVertically(initialOffsetY = { it }),
-                exit = fadeOut() + slideOutVertically(targetOffsetY = { it }),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .padding(bottom = 10.dp, start = 12.dp, end = 12.dp)
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
-                ) {
-                    // Fullscreen Ayat Quick Bar (when toggled on)
-                    AnimatedVisibility(
-                        visible = showAyatQuickBar && pageVerses.isNotEmpty() && isFullscreenControlsExpanded,
-                        enter = fadeIn() + expandVertically(),
-                        exit = fadeOut() + shrinkVertically()
-                    ) {
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = (if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFFFF)).copy(alpha = 0.96f),
-                            border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.5f)),
-                            shadowElevation = 8.dp,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Column(modifier = Modifier.padding(8.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = if (isArabic) "آيات الصفحة (اضغط للاستماع أو عرض التفسير والمعاني):" else "Page Ayat (Tap to play, view Tafsir & Meanings):",
-                                        style = TextStyle(
-                                            fontFamily = TajawalFontFamily,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF0D5C3A),
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                                    )
-                                    IconButton(
-                                        onClick = { showAyatQuickBar = false },
-                                        modifier = Modifier.size(20.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Close,
-                                            contentDescription = "Close",
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.size(14.dp)
-                                        )
-                                    }
-                                }
-                                LazyRow(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 4.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
-                                ) {
-                                    items(pageVerses) { verse ->
-                                        val isSelected = selectedAyahOnPage?.id == verse.id
-                                        val isVersePlaying = isPlayingAudio &&
-                                                currentPlayingVerse?.first == verse.surahId &&
-                                                currentPlayingVerse?.second == verse.verseNumber
-
-                                        Surface(
-                                            shape = RoundedCornerShape(10.dp),
-                                            color = when {
-                                                isVersePlaying -> EmeraldPrimary
-                                                isSelected -> IslamicGold
-                                                else -> if (isDarkMode) Color(0xFF334155) else Color(0xFFF1F5F9)
-                                            },
-                                            border = BorderStroke(
-                                                1.dp,
-                                                if (isSelected || isVersePlaying) Color.Transparent else if (isDarkMode) Color(0xFF475569) else Color(0xFFCBD5E1)
-                                            ),
-                                            modifier = Modifier.clickable {
-                                                selectedAyahOnPage = if (selectedAyahOnPage?.id == verse.id) null else verse
-                                                onVerseClick(verse)
-                                            }
-                                        ) {
-                                            Row(
-                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                            ) {
-                                                if (isVersePlaying) {
-                                                    Icon(
-                                                        imageVector = Icons.Default.VolumeUp,
-                                                        contentDescription = null,
-                                                        tint = Color.White,
-                                                        modifier = Modifier.size(14.dp)
-                                                    )
-                                                }
-                                                Text(
-                                                    text = "الآية ${toArabicDigits(verse.verseNumber)}",
-                                                    style = TextStyle(
-                                                        fontFamily = TajawalFontFamily,
-                                                        fontSize = 12.sp,
-                                                        fontWeight = FontWeight.Bold
-                                                    ),
-                                                    color = when {
-                                                        isVersePlaying || isSelected -> Color.White
-                                                        else -> if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF0F172A)
-                                                    }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Floating Bottom Controls Capsule
-                    if (isFullscreenControlsExpanded) {
-                        Surface(
-                            shape = RoundedCornerShape(26.dp),
-                            color = (if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFBF2)).copy(alpha = 0.96f),
-                            border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.6f)),
-                            shadowElevation = 8.dp,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 6.dp, vertical = 5.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                // Previous Page Quick Button
-                                IconButton(
-                                    onClick = onPreviousPage,
-                                    enabled = pageNum > 1,
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .testTag("fullscreen_bottom_prev_btn")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ChevronRight,
-                                        contentDescription = "Previous Page",
-                                        tint = if (pageNum > 1) (if (isDarkMode) IslamicGold else EmeraldPrimary) else Color.Gray,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-
-                                // Play Audio Button
-                                Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = if (isPlayingAudio) MaterialTheme.colorScheme.error.copy(alpha = 0.9f) else EmeraldPrimary,
-                                    modifier = Modifier.clickable { onPlayPageAudio() }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = if (isPlayingAudio) Icons.Default.Pause else Icons.Default.VolumeUp,
-                                            contentDescription = "Audio Recitation",
-                                            tint = Color.White,
-                                            modifier = Modifier.size(15.dp)
-                                        )
-                                        Text(
-                                            text = if (isPlayingAudio) (if (isArabic) "إيقاف" else "Stop") else (if (isArabic) "تلاوة" else "Play"),
-                                            style = TextStyle(
-                                                fontFamily = TajawalFontFamily,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = Color.White
-                                        )
-                                    }
-                                }
-
-                                // Ayat Quick Selector Button
-                                Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = if (showAyatQuickBar) EmeraldPrimary else (if (isDarkMode) Color(0xFF334155) else Color(0xFFE5DDD0)),
-                                    modifier = Modifier.clickable { showAyatQuickBar = !showAyatQuickBar }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.FormatListNumbered,
-                                            contentDescription = "Ayat",
-                                            tint = if (showAyatQuickBar) Color.White else (if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF1B5E55)),
-                                            modifier = Modifier.size(15.dp)
-                                        )
-                                        Text(
-                                            text = if (isArabic) "آيات" else "Ayat",
-                                            style = TextStyle(
-                                                fontFamily = TajawalFontFamily,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = if (showAyatQuickBar) Color.White else (if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF1B5E55))
-                                        )
-                                    }
-                                }
-
-                                // Page Tafseer Button
-                                Surface(
-                                    shape = RoundedCornerShape(16.dp),
-                                    color = IslamicGold.copy(alpha = 0.25f),
-                                    border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.7f)),
-                                    modifier = Modifier.clickable { onOpenPageTafsir() }
-                                ) {
-                                    Row(
-                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(3.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.MenuBook,
-                                            contentDescription = "Tafsir",
-                                            tint = if (isDarkMode) IslamicGold else Color(0xFF92400E),
-                                            modifier = Modifier.size(15.dp)
-                                        )
-                                        Text(
-                                            text = if (isArabic) "تفسير" else "Tafsir",
-                                            style = TextStyle(
-                                                fontFamily = TajawalFontFamily,
-                                                fontSize = 11.sp,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = if (isDarkMode) IslamicGold else Color(0xFF92400E)
-                                        )
-                                    }
-                                }
-
-                                // Next Page Quick Button
-                                IconButton(
-                                    onClick = onNextPage,
-                                    enabled = pageNum < 604,
-                                    modifier = Modifier
-                                        .size(32.dp)
-                                        .testTag("fullscreen_bottom_next_btn")
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ChevronLeft,
-                                        contentDescription = "Next Page",
-                                        tint = if (pageNum < 604) (if (isDarkMode) IslamicGold else EmeraldPrimary) else Color.Gray,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-
-                                // Minimize / Collapse Floating Bar
-                                IconButton(
-                                    onClick = { isFullscreenControlsExpanded = false },
-                                    modifier = Modifier.size(28.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.KeyboardArrowDown,
-                                        contentDescription = "Collapse Controls",
-                                        tint = if (isDarkMode) Color.LightGray else Color.Gray,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                    } else {
-                        // Collapsed Quick-Pill to Re-open Fullscreen Controls with Quick Prev/Next Navigation
-                        Surface(
-                            shape = RoundedCornerShape(20.dp),
-                            color = (if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFBF2)).copy(alpha = 0.92f),
-                            border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.6f)),
-                            shadowElevation = 6.dp
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                IconButton(
-                                    onClick = onPreviousPage,
-                                    enabled = pageNum > 1,
-                                    modifier = Modifier.size(26.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ChevronRight,
-                                        contentDescription = "Previous Page",
-                                        tint = if (pageNum > 1) IslamicGold else Color.Gray,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    modifier = Modifier.clickable { isFullscreenControlsExpanded = true }
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Tune,
-                                        contentDescription = "Show Tools",
-                                        tint = IslamicGold,
-                                        modifier = Modifier.size(15.dp)
-                                    )
-                                    Text(
-                                        text = if (isArabic) "أدوات" else "Tools",
-                                        style = TextStyle(
-                                            fontFamily = TajawalFontFamily,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        color = if (isDarkMode) Color.White else Color(0xFF1B5E55)
-                                    )
-                                }
-
-                                IconButton(
-                                    onClick = onNextPage,
-                                    enabled = pageNum < 604,
-                                    modifier = Modifier.size(26.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.ChevronLeft,
-                                        contentDescription = "Next Page",
-                                        tint = if (pageNum < 604) IslamicGold else Color.Gray,
-                                        modifier = Modifier.size(18.dp)
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Bottom Controls Bar (Visible in normal reading mode, positioned below the Quran page)
-        androidx.compose.animation.AnimatedVisibility(
-            visible = !isImmersive,
-            enter = expandVertically() + fadeIn(),
-            exit = shrinkVertically() + fadeOut(),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 12.dp, end = 12.dp, top = 2.dp, bottom = 6.dp)
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Expandable Ayat Quick Bar
-                AnimatedVisibility(visible = showAyatQuickBar && pageVerses.isNotEmpty()) {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = (if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFFFF)).copy(alpha = 0.95f),
-                        border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.4f)),
-                        shadowElevation = 6.dp,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(8.dp)) {
-                            Text(
-                                text = if (isArabic) "آيات الصفحة (اضغط لعرض التفسير وسبب النزول والمعاني):" else "Page Ayat (Tap for Tafsir, Asbab Al-Nuzul & Meanings):",
-                                style = TextStyle(
-                                    fontFamily = TajawalFontFamily,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF0D5C3A),
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
-                            LazyRow(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                items(pageVerses) { verse ->
-                                    val isSelected = selectedAyahOnPage?.id == verse.id
-                                    val isVersePlaying = isPlayingAudio &&
-                                            currentPlayingVerse?.first == verse.surahId &&
-                                            currentPlayingVerse?.second == verse.verseNumber
-
-                                    Surface(
-                                        shape = RoundedCornerShape(10.dp),
-                                        color = when {
-                                            isVersePlaying -> EmeraldPrimary
-                                            isSelected -> IslamicGold
-                                            else -> if (isDarkMode) Color(0xFF334155) else Color(0xFFF1F5F9)
-                                        },
-                                        border = BorderStroke(
-                                            1.dp,
-                                            if (isSelected || isVersePlaying) Color.Transparent else if (isDarkMode) Color(0xFF475569) else Color(0xFFCBD5E1)
-                                        ),
-                                        modifier = Modifier.clickable {
-                                            selectedAyahOnPage = if (selectedAyahOnPage?.id == verse.id) null else verse
-                                            onVerseClick(verse)
-                                        }
-                                    ) {
-                                        Text(
-                                            text = "الآية ${toArabicDigits(verse.verseNumber)}",
-                                            style = TextStyle(
-                                                fontFamily = TajawalFontFamily,
-                                                fontSize = 12.sp,
-                                                fontWeight = FontWeight.Bold
-                                            ),
-                                            color = when {
-                                                isVersePlaying || isSelected -> Color.White
-                                                else -> if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF0F172A)
-                                            },
-                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Bottom Control Capsule (Matching standard design)
-                Surface(
-                    shape = RoundedCornerShape(28.dp),
-                    color = (if (isDarkMode) Color(0xFF1E293B) else Color(0xFFFFFBF2)).copy(alpha = 0.95f),
-                    border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.5f)),
-                    shadowElevation = 8.dp,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Previous Page Button
-                        IconButton(
-                            onClick = onPreviousPage,
-                            enabled = pageNum > 1,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ChevronRight,
-                                contentDescription = "Previous Page",
-                                tint = if (pageNum > 1) (if (isDarkMode) Color.White else Color(0xFF1B5E55)) else Color.Gray,
-                                modifier = Modifier.size(22.dp)
-                            )
-                        }
-
-                        // Full Width / Fullscreen Button ("ملء العرض")
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = IslamicGold.copy(alpha = 0.25f),
-                            border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.7f)),
-                            modifier = Modifier.clickable { onToggleImmersive() }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Fullscreen,
-                                    contentDescription = null,
-                                    tint = if (isDarkMode) IslamicGold else Color(0xFF1B5E55),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = if (isArabic) "ملء العرض" else "Full Width",
-                                    style = TextStyle(
-                                        fontFamily = TajawalFontFamily,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = if (isDarkMode) IslamicGold else Color(0xFF1B5E55)
-                                )
-                            }
-                        }
-
-                        // Ayat List Toggle Button
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = if (showAyatQuickBar) EmeraldPrimary else (if (isDarkMode) Color(0xFF334155) else Color(0xFFE5DDD0)),
-                            modifier = Modifier.clickable { showAyatQuickBar = !showAyatQuickBar }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.FormatListNumbered,
-                                    contentDescription = null,
-                                    tint = if (showAyatQuickBar) Color.White else (if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF1B5E55)),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = if (isArabic) "آيات" else "Ayat",
-                                    style = TextStyle(
-                                        fontFamily = TajawalFontFamily,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = if (showAyatQuickBar) Color.White else (if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF1B5E55))
-                                )
-                            }
-                        }
-
-                        // Page Tafseer Button (Highlighted in soft gold)
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = IslamicGold.copy(alpha = 0.22f),
-                            border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.6f)),
-                            modifier = Modifier.clickable { onOpenPageTafsir() }
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.MenuBook,
-                                    contentDescription = null,
-                                    tint = if (isDarkMode) IslamicGold else Color(0xFF92400E),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                                Text(
-                                    text = if (isArabic) "تفسير الصفحة" else "Page Tafsir",
-                                    style = TextStyle(
-                                        fontFamily = TajawalFontFamily,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.Bold
-                                    ),
-                                    color = if (isDarkMode) IslamicGold else Color(0xFF92400E)
-                                )
-                            }
-                        }
-
-                        // Next Page Button
-                        IconButton(
-                            onClick = onNextPage,
-                            enabled = pageNum < 604,
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ChevronLeft,
-                                contentDescription = "Next Page",
-                                tint = if (pageNum < 604) (if (isDarkMode) Color.White else Color(0xFF1B5E55)) else Color.Gray,
-                                modifier = Modifier.size(22.dp)
-                            )
                         }
                     }
                 }

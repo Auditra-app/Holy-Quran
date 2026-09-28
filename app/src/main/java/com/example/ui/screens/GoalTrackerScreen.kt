@@ -38,6 +38,11 @@ import com.example.ui.theme.EmeraldPrimary
 import com.example.ui.theme.GoldAccent
 import com.example.ui.theme.IslamicGold
 import com.example.ui.viewmodel.QuranViewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
+import com.example.ui.theme.AmiriQuranFontFamily
+import com.example.ui.theme.TajawalFontFamily
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -109,12 +114,33 @@ fun GoalTrackerScreen(
 
     val juzList: List<Juz> = remember { QuranDataProvider.JUZ_LIST }
 
+    val context = LocalContext.current
+
+    // Dedicated Wird Parameters (Matching Khatmah app screenshot 3)
+    val wirdStartPage = userSettings.khatmahCurrentPage.coerceIn(1, 604)
+    val wirdDailyPages = userSettings.khatmahDailyGoalPages.coerceAtLeast(1)
+    val wirdEndPage = (wirdStartPage + wirdDailyPages - 1).coerceAtMost(604)
+
+    val startSurah = remember(wirdStartPage) { QuranDataProvider.getSurahByPage(wirdStartPage) }
+    val startJuz = remember(wirdStartPage) { QuranDataProvider.getJuzByPage(wirdStartPage) }
+    val startVerses = remember(wirdStartPage) { QuranDataProvider.getVersesForPage(wirdStartPage) }
+    val firstVerse = startVerses.firstOrNull()
+
+    val endSurah = remember(wirdEndPage) { QuranDataProvider.getSurahByPage(wirdEndPage) }
+    val endVerses = remember(wirdEndPage) { QuranDataProvider.getVersesForPage(wirdEndPage) }
+    val lastVerse = endVerses.lastOrNull()
+
+    val totalWirds = remember(wirdDailyPages) { ceil(604.0 / wirdDailyPages.toDouble()).toInt() }
+    val completedWirds = userSettings.khatmahCompletedWirdsCount
+    val remainingWirds = (totalWirds - completedWirds).coerceAtLeast(0)
+    val khatmahProgressPercent = ((wirdStartPage.toFloat() / 604f) * 100f).toInt().coerceIn(0, 100)
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = if (isArabic) "متابعة الختمة والهدف اليومي" else "Khatmah & Daily Goal Tracker",
+                        text = if (isArabic) "الورد الحالي والختمة" else "Daily Wird & Khatmah",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
@@ -144,6 +170,273 @@ fun GoalTrackerScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // =========================================================================
+            // 0. DEDICATED "الورد الحالي" CARD (Matching Screenshot 3 from 'ختمة')
+            // =========================================================================
+            Card(
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // Header Row: Juz title & "من قوله تعالى"
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) startJuz.nameArabic else "Juz ${startJuz.number}",
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontFamily = TajawalFontFamily,
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = EmeraldPrimary
+                        )
+                        Text(
+                            text = if (isArabic) "من قوله تعالى" else "From the Words of Allah",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontFamily = TajawalFontFamily
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // Calligraphy Snippet
+                    val snippetText = remember(firstVerse) {
+                        firstVerse?.textUthmani?.let { raw ->
+                            val clean = raw.replace(Regex("[﴿﴾0-9٠-٩]"), "").trim()
+                            val words = clean.split(" ")
+                            words.take(8).joinToString(" ")
+                        } ?: (if (isArabic) "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ" else "In the name of Allah")
+                    }
+                    Text(
+                        text = snippetText,
+                        style = TextStyle(
+                            fontFamily = AmiriQuranFontFamily,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        ),
+                        color = if (isArabic) MaterialTheme.colorScheme.onSurface else EmeraldPrimary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 10.dp)
+                    )
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                    // Start Position
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "سورة ${startSurah.nameArabic} - آية ${toArabicDigits(firstVerse?.verseNumber ?: 1)}" else "Surah ${startSurah.nameEnglish} - Ayah ${firstVerse?.verseNumber ?: 1}",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                            color = EmeraldPrimary
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = EmeraldPrimary.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = if (isArabic) "صفحة ${toArabicDigits(wirdStartPage)}" else "Page $wirdStartPage",
+                                style = MaterialTheme.typography.labelMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                                color = EmeraldPrimary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    // End Position
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "إلى سورة ${endSurah.nameArabic} - آية ${toArabicDigits(lastVerse?.verseNumber ?: 1)}" else "To Surah ${endSurah.nameEnglish} - Ayah ${lastVerse?.verseNumber ?: 1}",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                            color = EmeraldPrimary
+                        )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = EmeraldPrimary.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = if (isArabic) "صفحة ${toArabicDigits(wirdEndPage)}" else "Page $wirdEndPage",
+                                style = MaterialTheme.typography.labelMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                                color = EmeraldPrimary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(2.dp))
+
+                    // Action Buttons Row: Yellow ("أتممت القراءة >") & Green ("تابع قراءة الورد")
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        // Yellow Button
+                        Button(
+                            onClick = {
+                                viewModel.completeWirdDirectly()
+                                Toast.makeText(context, if (isArabic) "تقبل الله طاعتكم! تم إتمام الورد وحفظ تقدم الختمة." else "Wird marked as completed!", Toast.LENGTH_SHORT).show()
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFBBF24),
+                                contentColor = Color(0xFF78350F)
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1f)
+                                .height(46.dp)
+                        ) {
+                            Text(
+                                text = if (isArabic) "أتممت القراءة >" else "Done >",
+                                style = MaterialTheme.typography.titleSmall.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
+                            )
+                        }
+
+                        // Green Button
+                        Button(
+                            onClick = {
+                                viewModel.startWirdSession(wirdStartPage, wirdDailyPages)
+                                onNavigateToPage(wirdStartPage)
+                            },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = EmeraldPrimary,
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier
+                                .weight(1.3f)
+                                .height(46.dp)
+                        ) {
+                            Icon(imageVector = Icons.Outlined.MenuBook, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = if (isArabic) "تابع قراءة الورد" else "Read Wird",
+                                style = MaterialTheme.typography.titleSmall.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
+                            )
+                        }
+                    }
+                }
+            }
+
+            // =========================================================================
+            // CURRENT KHATMAH PROGRESS & STATS (Matching Screenshot 3)
+            // =========================================================================
+            Card(
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "الختمة الحالية" else "Current Khatmah",
+                            style = MaterialTheme.typography.titleMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
+                        )
+                        Text(
+                            text = "$khatmahProgressPercent%",
+                            style = MaterialTheme.typography.titleMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                            color = EmeraldPrimary
+                        )
+                    }
+
+                    LinearProgressIndicator(
+                        progress = { animatedOverallProgress },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(10.dp)
+                            .clip(CircleShape),
+                        color = EmeraldPrimary,
+                        trackColor = MaterialTheme.colorScheme.surface
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = if (isArabic) "الأوراد السابقة : ${toArabicDigits(completedWirds)}" else "Previous Wirds: $completedWirds",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = if (isArabic) "الأوراد القادمة : ${toArabicDigits(remainingWirds)}" else "Upcoming Wirds: $remainingWirds",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            // =========================================================================
+            // DAILY TARGET PAGES ADJUSTMENT CHIPS
+            // =========================================================================
+            Card(
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = if (isArabic) "الهدف اليومي لعدد الصفحات:" else "Daily Target Pages:",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
+                        )
+                        Text(
+                            text = if (isArabic) "${toArabicDigits(wirdDailyPages)} صفحات / يوم" else "$wirdDailyPages pages/day",
+                            style = MaterialTheme.typography.labelLarge.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                            color = EmeraldPrimary
+                        )
+                    }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(1, 3, 5, 10, 20).forEach { pages ->
+                            val isSelected = wirdDailyPages == pages
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.setKhatmahDailyGoalPages(pages) },
+                                label = {
+                                    Text(
+                                        text = if (pages == 20) (if (isArabic) "جزء (٢٠)" else "Juz (20)") else (if (isArabic) "${toArabicDigits(pages)} ص" else "$pages p"),
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                    )
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = EmeraldPrimary,
+                                    selectedLabelColor = Color.White
+                                )
+                            )
+                        }
+                    }
+                }
+            }
             // 1. TODAY'S DAILY GOAL CARD
             Card(
                 shape = RoundedCornerShape(20.dp),

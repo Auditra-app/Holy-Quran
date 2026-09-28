@@ -14,6 +14,12 @@ import kotlinx.coroutines.launch
 import com.example.data.audio.AyahRepeatMode
 import com.example.data.audio.QuranAudioPlayer
 
+data class ActiveWirdSession(
+    val startPage: Int,
+    val endPage: Int,
+    val targetPages: Int
+)
+
 class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
     private val db = QuranDatabase.getDatabase(application)
@@ -639,6 +645,65 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    // Dedicated Standalone Khatmah / Wird Session State
+    private val _activeWirdSession = MutableStateFlow<ActiveWirdSession?>(null)
+    val activeWirdSession: StateFlow<ActiveWirdSession?> = _activeWirdSession.asStateFlow()
+
+    fun startWirdSession(startPage: Int, targetPages: Int) {
+        val end = (startPage + targetPages - 1).coerceAtMost(604)
+        _activeWirdSession.value = ActiveWirdSession(startPage, end, targetPages)
+        jumpToPage(startPage)
+    }
+
+    fun completeCurrentWird() {
+        val session = _activeWirdSession.value
+        viewModelScope.launch {
+            val current = userSettings.value
+            val endPage = session?.endPage ?: (current.khatmahCurrentPage + current.khatmahDailyGoalPages - 1).coerceAtMost(604)
+            val nextStartPage = if (endPage >= 604) 1 else endPage + 1
+            val newCompletedCount = current.khatmahCompletedWirdsCount + 1
+            repository.saveSettings(
+                current.copy(
+                    khatmahCurrentPage = nextStartPage,
+                    khatmahCompletedWirdsCount = newCompletedCount,
+                    khatmahLastCompletedDate = System.currentTimeMillis()
+                )
+            )
+            _activeWirdSession.value = null
+        }
+    }
+
+    fun completeWirdDirectly() {
+        viewModelScope.launch {
+            val current = userSettings.value
+            val goalPages = current.khatmahDailyGoalPages.coerceAtLeast(1)
+            val endPage = (current.khatmahCurrentPage + goalPages - 1).coerceAtMost(604)
+            val nextStartPage = if (endPage >= 604) 1 else endPage + 1
+            val newCompletedCount = current.khatmahCompletedWirdsCount + 1
+            repository.saveSettings(
+                current.copy(
+                    khatmahCurrentPage = nextStartPage,
+                    khatmahCompletedWirdsCount = newCompletedCount,
+                    khatmahLastCompletedDate = System.currentTimeMillis()
+                )
+            )
+            if (_activeWirdSession.value != null) {
+                _activeWirdSession.value = null
+            }
+        }
+    }
+
+    fun exitWirdSession() {
+        _activeWirdSession.value = null
+    }
+
+    fun setKhatmahDailyGoalPages(pages: Int) {
+        viewModelScope.launch {
+            val current = userSettings.value
+            repository.saveSettings(current.copy(khatmahDailyGoalPages = pages.coerceIn(1, 604)))
+        }
+    }
+
     fun updateKhatmahTargetDays(days: Int) {
         viewModelScope.launch {
             val current = userSettings.value
@@ -648,9 +713,16 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetKhatmahProgress() {
         viewModelScope.launch {
-            repository.updateReadingProgress(1, "الفاتحة", 1)
             val current = userSettings.value
-            repository.saveSettings(current.copy(khatmahStartDate = System.currentTimeMillis()))
+            repository.saveSettings(
+                current.copy(
+                    khatmahStartDate = System.currentTimeMillis(),
+                    khatmahCurrentPage = 1,
+                    khatmahCompletedWirdsCount = 0,
+                    khatmahLastCompletedDate = 0L
+                )
+            )
+            _activeWirdSession.value = null
         }
     }
 
