@@ -6,24 +6,30 @@ import com.example.data.provider.QuranSearchIndexer
 import com.example.data.provider.UniversalSearchResult
 import com.example.domain.model.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 
 class QuranRepository(private val quranDao: QuranDao) {
 
     // Bookmarks Flow
-    val allBookmarks: Flow<List<Bookmark>> = quranDao.getAllBookmarks().map { list ->
-        list.map {
-            Bookmark(
-                id = it.id,
-                pageNumber = it.pageNumber,
-                surahName = it.surahName,
-                verseNumber = it.verseNumber,
-                dateCreated = it.dateCreated,
-                note = it.note
-            )
+    val allBookmarks: Flow<List<Bookmark>> = quranDao.getAllBookmarks()
+        .map { list ->
+            list.map {
+                Bookmark(
+                    id = it.id,
+                    pageNumber = it.pageNumber,
+                    surahName = it.surahName,
+                    verseNumber = it.verseNumber,
+                    dateCreated = it.dateCreated,
+                    note = it.note
+                )
+            }
         }
-    }
+        .catch { e ->
+            android.util.Log.e("QuranRepository", "Error in allBookmarks flow", e)
+            emit(emptyList())
+        }
 
     suspend fun addBookmark(pageNumber: Int, surahName: String, verseNumber: Int? = null, note: String = "") {
         quranDao.insertBookmark(
@@ -59,21 +65,30 @@ class QuranRepository(private val quranDao: QuranDao) {
     }
 
     // Reading Progress & History
-    val readingProgress: Flow<ReadingProgress> = quranDao.getReadingProgress().map { entity ->
-        if (entity != null) {
-            ReadingProgress(
-                lastPage = entity.lastPage,
-                lastSurahName = entity.lastSurahName,
-                lastVerseNumber = entity.lastVerseNumber,
-                readingDurationMinutes = entity.readingDurationMinutes,
-                lastReadTimestamp = entity.lastReadTimestamp
-            )
-        } else {
-            ReadingProgress()
+    val readingProgress: Flow<ReadingProgress> = quranDao.getReadingProgress()
+        .map { entity ->
+            if (entity != null) {
+                ReadingProgress(
+                    lastPage = entity.lastPage,
+                    lastSurahName = entity.lastSurahName,
+                    lastVerseNumber = entity.lastVerseNumber,
+                    readingDurationMinutes = entity.readingDurationMinutes,
+                    lastReadTimestamp = entity.lastReadTimestamp
+                )
+            } else {
+                ReadingProgress()
+            }
         }
-    }
+        .catch { e ->
+            android.util.Log.e("QuranRepository", "Error in readingProgress flow", e)
+            emit(ReadingProgress())
+        }
 
     val readingHistory: Flow<List<ReadingHistoryEntity>> = quranDao.getAllReadingHistory()
+        .catch { e ->
+            android.util.Log.e("QuranRepository", "Error in readingHistory flow", e)
+            emit(emptyList())
+        }
 
     suspend fun updateReadingProgress(pageNumber: Int, surahName: String, verseNumber: Int = 1) {
         val current = quranDao.getReadingProgress().firstOrNull()
@@ -130,20 +145,25 @@ class QuranRepository(private val quranDao: QuranDao) {
     }
 
     // User Settings with Permanent Dual-Persistence Backup across App Updates
-    val userSettings: Flow<UserSettingsEntity> = quranDao.getUserSettings().map { entity ->
-        if (entity != null) {
-            backupSettingsToPrefs(entity)
-            entity
-        } else {
-            val restored = restoreSettingsFromPrefs()
-            if (restored != null) {
-                try { quranDao.saveUserSettings(restored) } catch (_: Throwable) {}
-                restored
+    val userSettings: Flow<UserSettingsEntity> = quranDao.getUserSettings()
+        .map { entity ->
+            if (entity != null) {
+                backupSettingsToPrefs(entity)
+                entity
             } else {
-                UserSettingsEntity()
+                val restored = restoreSettingsFromPrefs()
+                if (restored != null) {
+                    try { quranDao.saveUserSettings(restored) } catch (_: Throwable) {}
+                    restored
+                } else {
+                    UserSettingsEntity()
+                }
             }
         }
-    }
+        .catch { e ->
+            android.util.Log.e("QuranRepository", "Error in userSettings flow, restoring backup", e)
+            emit(restoreSettingsFromPrefs() ?: UserSettingsEntity())
+        }
 
     suspend fun saveSettings(settings: UserSettingsEntity) {
         quranDao.saveUserSettings(settings)
@@ -483,6 +503,10 @@ class QuranRepository(private val quranDao: QuranDao) {
 
     // Favorites
     val favoriteSurahIds: Flow<List<Int>> = quranDao.getFavoriteSurahIds()
+        .catch { e ->
+            android.util.Log.e("QuranRepository", "Error in favoriteSurahIds flow", e)
+            emit(emptyList())
+        }
 
     suspend fun toggleFavoriteSurah(surahId: Int, isFavorite: Boolean) {
         if (isFavorite) {
@@ -493,6 +517,10 @@ class QuranRepository(private val quranDao: QuranDao) {
     }
 
     val favoriteAzkarIds: Flow<List<Int>> = quranDao.getFavoriteAzkarIds()
+        .catch { e ->
+            android.util.Log.e("QuranRepository", "Error in favoriteAzkarIds flow", e)
+            emit(emptyList())
+        }
 
     suspend fun toggleFavoriteAzkar(azkarId: Int, isFavorite: Boolean) {
         if (isFavorite) {
