@@ -962,7 +962,12 @@ fun QuranReaderScreen(
             }
         }
 
-        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxWidth()
+        ) {
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                 HorizontalPager(
                     state = pagerState,
                     beyondViewportPageCount = 1,
@@ -1505,104 +1510,115 @@ fun QuranReaderScreen(
             }
         }
 
-        // Dedicated Wird Mode Bottom Progress Bar (Matching Screenshot 2 from 'ختمة')
-        val session = activeWirdSession
-        if (session != null) {
-            val wirdTotalPages = (session.endPage - session.startPage + 1).coerceAtLeast(1)
-            val wirdCurrentIndex = (currentPage - session.startPage).coerceIn(0, wirdTotalPages - 1)
-            val wirdProgressFraction = if (wirdTotalPages > 1) wirdCurrentIndex.toFloat() / (wirdTotalPages - 1).toFloat() else 1f
-            val isAtLastPage = (currentPage >= session.endPage)
+            // Dedicated Wird Mode Bottom Progress Bar (Matching Screenshot 2 from 'ختمة')
+            val session = activeWirdSession
+            if (session != null) {
+                val currentWirdPage = pagerState.currentPage + 1
+                val wirdTotalPages = (session.endPage - session.startPage + 1).coerceAtLeast(1)
+                val wirdCurrentIndex = (currentWirdPage - session.startPage).coerceIn(0, wirdTotalPages - 1)
+                val wirdProgressFraction = if (wirdTotalPages > 1) (wirdCurrentIndex.toFloat() / (wirdTotalPages - 1).toFloat()).coerceIn(0.02f, 1f) else 1f
+                val isAtLastPage = (currentWirdPage >= session.endPage)
 
-            Surface(
-                color = (if (isDarkMode) Color(0xFF0F172A) else Color(0xFFFFFBF2)).copy(alpha = 0.96f),
-                border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.4f)),
-                shadowElevation = 8.dp,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 10.dp, vertical = 6.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                Surface(
+                    color = (if (isDarkMode) Color(0xFF0F172A) else Color(0xFFFFFBF2)).copy(alpha = 0.96f),
+                    border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.4f)),
+                    shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                    shadowElevation = 12.dp,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .navigationBarsPadding()
                 ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Surface(
-                                shape = RoundedCornerShape(6.dp),
-                                color = EmeraldPrimary
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
                             ) {
+                                Surface(
+                                    shape = RoundedCornerShape(6.dp),
+                                    color = EmeraldPrimary
+                                ) {
+                                    Text(
+                                        text = "خ",
+                                        style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp),
+                                        color = Color.White,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
                                 Text(
-                                    text = "خ",
-                                    style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp),
-                                    color = Color.White,
-                                    modifier = Modifier.padding(horizontal = 5.dp, vertical = 1.dp)
+                                    text = if (isArabic) "ورد اليوم: صفحة ${toArabicDigits(wirdCurrentIndex + 1)} من ${toArabicDigits(wirdTotalPages)}" else "Daily Wird: Page ${wirdCurrentIndex + 1} of $wirdTotalPages",
+                                    style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp),
+                                    color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF0D5C3A)
                                 )
                             }
-                            Text(
-                                text = if (isArabic) "ورد اليوم: صفحة ${toArabicDigits(wirdCurrentIndex + 1)} من ${toArabicDigits(wirdTotalPages)}" else "Daily Wird: Page ${wirdCurrentIndex + 1} of $wirdTotalPages",
-                                style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp),
-                                color = if (isDarkMode) Color(0xFFFDE68A) else Color(0xFF0D5C3A)
-                            )
-                        }
 
-                        if (isAtLastPage) {
-                            Button(
-                                onClick = { showWirdCompletionDialog = true },
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAB308), contentColor = Color(0xFF78350F)),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 3.dp),
-                                modifier = Modifier.height(28.dp)
-                            ) {
+                            if (isAtLastPage) {
+                                Button(
+                                    onClick = { showWirdCompletionDialog = true },
+                                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFEAB308), contentColor = Color(0xFF78350F)),
+                                    shape = RoundedCornerShape(10.dp),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                                    modifier = Modifier.height(30.dp)
+                                ) {
+                                    Text(
+                                        text = if (isArabic) "أتممت القراءة ✨" else "Mark Done ✨",
+                                        style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                                    )
+                                }
+                            } else {
+                                val remainingPages = (session.endPage - currentWirdPage).coerceAtLeast(0)
                                 Text(
-                                    text = if (isArabic) "أتممت القراءة ✨" else "Mark Done ✨",
-                                    style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold, fontSize = 11.sp)
+                                    text = if (isArabic) "باقي ${toArabicDigits(remainingPages)} صفحة" else "$remainingPages pages left",
+                                    style = TextStyle(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Normal, fontSize = 11.sp),
+                                    color = if (isDarkMode) Color(0xFF94A3B8) else Color(0xFF64748B)
                                 )
                             }
                         }
-                    }
 
-                    // Minimalist Horizontal Progress Track with Active Indicator Dot (Screenshot 2)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(16.dp),
-                        contentAlignment = Alignment.CenterStart
-                    ) {
-                        // Background Track
+                        // Minimalist Horizontal Progress Track with Active Indicator Dot (Screenshot 2)
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(3.dp)
-                                .background(if (isDarkMode) Color(0xFF334155) else Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
-                        )
-
-                        // Active Track
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(fraction = wirdProgressFraction)
-                                .height(3.dp)
-                                .background(EmeraldPrimary, RoundedCornerShape(2.dp))
-                        )
-
-                        // Indicator Dot (Thumb)
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(fraction = wirdProgressFraction)
-                                .wrapContentWidth(align = Alignment.End)
+                                .height(16.dp),
+                            contentAlignment = Alignment.CenterStart
                         ) {
+                            // Background Track
                             Box(
                                 modifier = Modifier
-                                    .size(14.dp)
-                                    .background(EmeraldPrimary, CircleShape)
-                                    .border(2.dp, Color.White, CircleShape)
+                                    .fillMaxWidth()
+                                    .height(4.dp)
+                                    .background(if (isDarkMode) Color(0xFF334155) else Color(0xFFCBD5E1), RoundedCornerShape(2.dp))
                             )
+
+                            // Active Track
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(fraction = wirdProgressFraction)
+                                    .height(4.dp)
+                                    .background(EmeraldPrimary, RoundedCornerShape(2.dp))
+                            )
+
+                            // Indicator Dot (Thumb)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(fraction = wirdProgressFraction)
+                                    .wrapContentWidth(align = Alignment.End)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(14.dp)
+                                        .background(EmeraldPrimary, CircleShape)
+                                        .border(2.dp, Color.White, CircleShape)
+                                )
+                            }
                         }
                     }
                 }
@@ -4153,14 +4169,14 @@ fun GoldenMushafPageView(
                                 val isOpeningPage = (pageNum <= 2)
                                 val isAtTawbah = (ayah1.surahNumber == 9)
                                 val frameTop = when {
-                                    isOpeningPage -> -78f
-                                    isAtTawbah -> (ayah1Top - 34f)
-                                    else -> (ayah1Top - 66f)
+                                    isOpeningPage -> -68f
+                                    isAtTawbah -> (ayah1Top - 36f)
+                                    else -> (ayah1Top - 69f)
                                 }
                                 val frameBottom = when {
-                                    isOpeningPage -> -43f
-                                    isAtTawbah -> (ayah1Top - 3.5f)
-                                    else -> (ayah1Top - 35.5f)
+                                    isOpeningPage -> -24f
+                                    isAtTawbah -> (ayah1Top - 1f)
+                                    else -> (ayah1Top - 33f)
                                 }
                                 val frameLeft = 14f
                                 val frameRight = if (isOpeningPage) 224f else 331f

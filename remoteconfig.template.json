@@ -2,19 +2,19 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "18"
+                "value": "19"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.3.4"
+                "value": "1.3.5"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.4.data"
+                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.5.data"
             },
             "description": "Direct download link for APK update"
         },
@@ -26,19 +26,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "Separate personal khatmah from free reading, fix done button responsiveness, and enable universal golden surah frame"
+                "value": "Refine golden frame vertical centering, add persistent floating daily wird progress bar, restore rich Quranic division presets"
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "Separate personal khatmah from free reading, fix done button responsiveness, and enable universal golden surah frame"
+                "value": "Refine golden frame vertical centering, add persistent floating daily wird progress bar, restore rich Quranic division presets"
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "Separate personal khatmah from free reading, fix done button responsiveness, and enable universal golden surah frame"
+                "value": "Refine golden frame vertical centering, add persistent floating daily wird progress bar, restore rich Quranic division presets"
             },
             "description": "English release notes shown in update dialog"
         }

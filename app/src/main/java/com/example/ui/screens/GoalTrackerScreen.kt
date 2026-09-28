@@ -376,15 +376,15 @@ fun GoalTrackerScreen(
             }
 
             // =========================================================================
-            // DAILY TARGET PAGES ADJUSTMENT CHIPS
+            // DAILY TARGET PAGES ADJUSTMENT CHIPS (Restored Quranic Division Presets)
             // =========================================================================
             Card(
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(20.dp),
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -394,25 +394,48 @@ fun GoalTrackerScreen(
                             text = if (isArabic) "الهدف اليومي لعدد الصفحات:" else "Daily Target Pages:",
                             style = MaterialTheme.typography.bodyMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold)
                         )
-                        Text(
-                            text = if (isArabic) "${toArabicDigits(wirdDailyPages)} صفحات / يوم" else "$wirdDailyPages pages/day",
-                            style = MaterialTheme.typography.labelLarge.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
-                            color = EmeraldPrimary
-                        )
+                        Surface(
+                            shape = RoundedCornerShape(8.dp),
+                            color = EmeraldPrimary.copy(alpha = 0.12f)
+                        ) {
+                            Text(
+                                text = if (isArabic) "${toArabicDigits(wirdDailyPages)} صفحات / يوم" else "$wirdDailyPages pages/day",
+                                style = MaterialTheme.typography.labelLarge.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
+                                color = EmeraldPrimary,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            )
+                        }
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+
+                    // Rich Quranic Division Presets Chips
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        listOf(1, 3, 5, 10, 20).forEach { pages ->
-                            val isSelected = wirdDailyPages == pages
+                        val presets = listOf(
+                            2 to if (isArabic) "2 صفحة (نحو ربع حزب)" else "2 pages (~Rub' Hizb)",
+                            5 to if (isArabic) "5 صفحات (نصف حزب / ربع جزء)" else "5 pages (Half Hizb / Quarter Juz)",
+                            10 to if (isArabic) "10 صفحات (حزب كامل)" else "10 pages (1 Hizb)",
+                            20 to if (isArabic) "20 صفحة (جزء كامل)" else "20 pages (1 Juz)",
+                            30 to if (isArabic) "30 صفحة (جزء ونصف)" else "30 pages (1.5 Juz)"
+                        )
+
+                        presets.forEach { (count, label) ->
+                            val isSelected = (wirdDailyPages == count)
                             FilterChip(
                                 selected = isSelected,
-                                onClick = { viewModel.setKhatmahDailyGoalPages(pages) },
+                                onClick = {
+                                    viewModel.setKhatmahDailyGoalPages(count)
+                                    viewModel.updateDailyPageGoal(count)
+                                },
                                 label = {
                                     Text(
-                                        text = if (pages == 20) (if (isArabic) "جزء (٢٠)" else "Juz (20)") else (if (isArabic) "${toArabicDigits(pages)} ص" else "$pages p"),
-                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal)
+                                        text = label,
+                                        style = TextStyle(
+                                            fontFamily = TajawalFontFamily,
+                                            fontSize = 12.sp,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                        )
                                     )
                                 },
                                 colors = FilterChipDefaults.filterChipColors(
@@ -422,6 +445,21 @@ fun GoalTrackerScreen(
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Slider for Custom Daily Pages Goal (1 to 60 pages)
+                    Slider(
+                        value = wirdDailyPages.toFloat(),
+                        onValueChange = {
+                            val newPages = it.toInt().coerceIn(1, 60)
+                            viewModel.setKhatmahDailyGoalPages(newPages)
+                            viewModel.updateDailyPageGoal(newPages)
+                        },
+                        valueRange = 1f..60f,
+                        steps = 59,
+                        colors = SliderDefaults.colors(thumbColor = EmeraldPrimary, activeTrackColor = EmeraldPrimary)
+                    )
                 }
             }
 
