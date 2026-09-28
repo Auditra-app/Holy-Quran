@@ -8,6 +8,19 @@
     ],
     "headers": [
       {
+        "source": "/HolyQuran_v1.3.6.data",
+        "headers": [
+          {
+            "key": "Content-Type",
+            "value": "application/vnd.android.package-archive"
+          },
+          {
+            "key": "Content-Disposition",
+            "value": "attachment; filename=\"HolyQuran_v1.3.6.apk\""
+          }
+        ]
+      },
+      {
         "source": "/HolyQuran_v1.3.5.data",
         "headers": [
           {

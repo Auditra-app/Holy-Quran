@@ -228,16 +228,19 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             val targetPage = page.coerceIn(1, 604)
             _currentPage.value = targetPage
             loadPageData(targetPage)
-            viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                try {
-                    val surahList = repository.getSurahs()
-                    val surah = surahList.lastOrNull { it.startPage <= targetPage } ?: surahList.firstOrNull()
-                    if (surah != null) {
-                        repository.updateReadingProgress(targetPage, surah.nameArabic)
-                        com.example.widget.ReadingStatsWidgetProvider.notifyWidgetUpdate(getApplication())
+            // Completely isolate Wird mode: do NOT update free reading progress/bookmark if user is in an active Wird session
+            if (_activeWirdSession.value == null) {
+                viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                    try {
+                        val surahList = repository.getSurahs()
+                        val surah = surahList.lastOrNull { it.startPage <= targetPage } ?: surahList.firstOrNull()
+                        if (surah != null) {
+                            repository.updateReadingProgress(targetPage, surah.nameArabic)
+                            com.example.widget.ReadingStatsWidgetProvider.notifyWidgetUpdate(getApplication())
+                        }
+                    } catch (e: Throwable) {
+                        android.util.Log.e("QuranViewModel", "Error updating reading progress in jumpToPage", e)
                     }
-                } catch (e: Throwable) {
-                    android.util.Log.e("QuranViewModel", "Error updating reading progress in jumpToPage", e)
                 }
             }
         } catch (e: Throwable) {
@@ -670,6 +673,10 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
                 )
             )
             _activeWirdSession.value = null
+            // Restore current reader page to user's preserved free reading bookmark
+            val lastFreePage = readingProgress.value.lastPage.coerceIn(1, 604)
+            _currentPage.value = lastFreePage
+            loadPageData(lastFreePage)
         }
     }
 
@@ -689,12 +696,20 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             )
             if (_activeWirdSession.value != null) {
                 _activeWirdSession.value = null
+                val lastFreePage = readingProgress.value.lastPage.coerceIn(1, 604)
+                _currentPage.value = lastFreePage
+                loadPageData(lastFreePage)
             }
         }
     }
 
     fun exitWirdSession() {
-        _activeWirdSession.value = null
+        if (_activeWirdSession.value != null) {
+            _activeWirdSession.value = null
+            val lastFreePage = readingProgress.value.lastPage.coerceIn(1, 604)
+            _currentPage.value = lastFreePage
+            loadPageData(lastFreePage)
+        }
     }
 
     fun setKhatmahDailyGoalPages(pages: Int) {
@@ -722,7 +737,12 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
                     khatmahLastCompletedDate = 0L
                 )
             )
-            _activeWirdSession.value = null
+            if (_activeWirdSession.value != null) {
+                _activeWirdSession.value = null
+                val lastFreePage = readingProgress.value.lastPage.coerceIn(1, 604)
+                _currentPage.value = lastFreePage
+                loadPageData(lastFreePage)
+            }
         }
     }
 

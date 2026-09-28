@@ -2,19 +2,19 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "19"
+                "value": "20"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.3.5"
+                "value": "1.3.6"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.5.data"
+                "value": "https://holy-quran-app-live.web.app/HolyQuran_v1.3.6.data"
             },
             "description": "Direct download link for APK update"
         },
@@ -26,19 +26,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "Refine golden frame vertical centering, add persistent floating daily wird progress bar, restore rich Quranic division presets"
+                "value": "Completely isolate daily wird page turns from free reading progress"
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "Refine golden frame vertical centering, add persistent floating daily wird progress bar, restore rich Quranic division presets"
+                "value": "Completely isolate daily wird page turns from free reading progress"
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "Refine golden frame vertical centering, add persistent floating daily wird progress bar, restore rich Quranic division presets"
+                "value": "Completely isolate daily wird page turns from free reading progress"
             },
             "description": "English release notes shown in update dialog"
         }
