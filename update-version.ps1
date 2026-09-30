@@ -63,15 +63,25 @@ if ($Build) {
 
 # 3. Deploy to Firebase Hosting (if requested)
 if ($Deploy) {
-    Write-Host "`n[Deploy] Deploying hosting to Firebase..." -ForegroundColor Cyan
+    Write-Host "`n[Deploy] Deploying hosting to Firebase (holyquranapp and holy-quran-app-live)..." -ForegroundColor Cyan
     Push-Location $rootDir
     try {
+        # Deploy to holyquranapp
+        (Get-Content "$rootDir\firebase.json") -replace '"site":\s*"[^"]+"', '"site": "holyquranapp"' | Set-Content "$rootDir\firebase.json"
         & firebase.cmd deploy --only hosting
         if ($LASTEXITCODE -ne 0) {
-            throw "Firebase deploy failed with code $LASTEXITCODE"
+            throw "Firebase deploy to holyquranapp failed with code $LASTEXITCODE"
         }
+        # Deploy to holy-quran-app-live (legacy domain for older client apps)
+        (Get-Content "$rootDir\firebase.json") -replace '"site":\s*"[^"]+"', '"site": "holy-quran-app-live"' | Set-Content "$rootDir\firebase.json"
+        & firebase.cmd deploy --only hosting
+        if ($LASTEXITCODE -ne 0) {
+            throw "Firebase deploy to holy-quran-app-live failed with code $LASTEXITCODE"
+        }
+        # Reset back to holyquranapp
+        (Get-Content "$rootDir\firebase.json") -replace '"site":\s*"[^"]+"', '"site": "holyquranapp"' | Set-Content "$rootDir\firebase.json"
     } finally {
         Pop-Location
     }
-    Write-Host "`n[OK] Live Deployment Complete: https://holyquranapp.web.app`n" -ForegroundColor Green
+    Write-Host "`n[OK] Live Deployment Complete: https://holyquranapp.web.app and https://holy-quran-app-live.web.app`n" -ForegroundColor Green
 }

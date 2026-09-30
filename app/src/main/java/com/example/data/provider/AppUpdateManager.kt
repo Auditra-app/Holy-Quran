@@ -54,6 +54,7 @@ object AppUpdateManager {
     private const val KEY_UPDATE_NOTES_EN = "update_notes_en"
 
     private const val STATIC_VERSION_JSON_URL = "https://holyquranapp.web.app/version.json"
+    private const val FALLBACK_STATIC_VERSION_JSON_URL = "https://holy-quran-app-live.web.app/version.json"
     private const val DEFAULT_APK_URL = "https://holyquranapp.web.app/HolyQuran_v1.1.0.data"
     private const val DEFAULT_UPDATE_NOTES = "تحديث جديد v1.2.0: تحسينات متقدمة في السرعة والأداء، دعم التحديث المباشر بضغطة واحدة، وتطوير واجهة المصحف الشريف."
 
@@ -138,45 +139,49 @@ object AppUpdateManager {
 
     fun fetchStaticVersionJson(onResult: (AppUpdateInfo?) -> Unit) {
         Thread {
-            try {
-                val url = URL(STATIC_VERSION_JSON_URL)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.connectTimeout = 3000
-                connection.readTimeout = 3000
-                connection.requestMethod = "GET"
+            val endpoints = listOf(STATIC_VERSION_JSON_URL, FALLBACK_STATIC_VERSION_JSON_URL)
+            var resolvedInfo: AppUpdateInfo? = null
 
-                if (connection.responseCode == 200) {
-                    val jsonText = connection.inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
-                    val json = JSONObject(jsonText)
-                    val remoteCode = json.optLong("latest_version_code", 4L)
-                    val remoteName = json.optString("latest_version_name", "1.2.0")
-                    val downloadUrl = json.optString("apk_download_url", DEFAULT_APK_URL)
-                    val isForce = json.optBoolean("force_update", false)
-                    val notes = json.optString("update_notes", DEFAULT_UPDATE_NOTES)
-                    val notesAr = json.optString("update_notes_ar", "").ifBlank { notes }
-                    val notesEn = json.optString("update_notes_en", "").ifBlank { notes }
+            for (endpoint in endpoints) {
+                try {
+                    val url = URL(endpoint)
+                    val connection = url.openConnection() as HttpURLConnection
+                    connection.connectTimeout = 3000
+                    connection.readTimeout = 3000
+                    connection.requestMethod = "GET"
 
-                    val currentCode = BuildConfig.VERSION_CODE.toLong()
-                    val isAvailable = remoteCode > currentCode
+                    if (connection.responseCode == 200) {
+                        val jsonText = connection.inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
+                        val json = JSONObject(jsonText)
+                        val remoteCode = json.optLong("latest_version_code", 4L)
+                        val remoteName = json.optString("latest_version_name", "1.2.0")
+                        val downloadUrl = json.optString("apk_download_url", DEFAULT_APK_URL)
+                        val isForce = json.optBoolean("force_update", false)
+                        val notes = json.optString("update_notes", DEFAULT_UPDATE_NOTES)
+                        val notesAr = json.optString("update_notes_ar", "").ifBlank { notes }
+                        val notesEn = json.optString("update_notes_en", "").ifBlank { notes }
 
-                    val info = AppUpdateInfo(
-                        latestVersionCode = remoteCode,
-                        latestVersionName = remoteName,
-                        apkDownloadUrl = downloadUrl,
-                        forceUpdate = isForce,
-                        updateNotes = notes,
-                        updateNotesAr = notesAr,
-                        updateNotesEn = notesEn,
-                        isUpdateAvailable = isAvailable
-                    )
-                    Handler(Looper.getMainLooper()).post { onResult(info) }
-                } else {
-                    Handler(Looper.getMainLooper()).post { onResult(null) }
+                        val currentCode = BuildConfig.VERSION_CODE.toLong()
+                        val isAvailable = remoteCode > currentCode
+
+                        resolvedInfo = AppUpdateInfo(
+                            latestVersionCode = remoteCode,
+                            latestVersionName = remoteName,
+                            apkDownloadUrl = downloadUrl,
+                            forceUpdate = isForce,
+                            updateNotes = notes,
+                            updateNotesAr = notesAr,
+                            updateNotesEn = notesEn,
+                            isUpdateAvailable = isAvailable
+                        )
+                        break
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed to fetch version from $endpoint: ${e.message}")
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "Failed to fetch static version.json", e)
-                Handler(Looper.getMainLooper()).post { onResult(null) }
             }
+
+            Handler(Looper.getMainLooper()).post { onResult(resolvedInfo) }
         }.start()
     }
 

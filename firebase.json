@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "site": "holyquranapp",
+    "site": "holy-quran-app-live",
     "public": "public",
     "ignore": [
       "firebase.json",
