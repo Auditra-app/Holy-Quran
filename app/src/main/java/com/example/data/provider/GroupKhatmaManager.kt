@@ -267,7 +267,7 @@ object GroupKhatmaManager {
             "نسأل الله القبول والشفاعة. لحجز جزء وتسجيل إنجازك، افتح تطبيق القرآن الكريم واستورد كود الختمة التالي:\n\n" +
             "$cleanId\n\n" +
             "رابط مباشر للفتح في التطبيق:\n" +
-            "https://holy-quran-app-live.web.app/?code=$cleanId"
+            "https://holyquranapp.web.app/?code=$cleanId"
         } else {
             "📖 *${khatma.title}* 📖\n" +
             "Join our Group Quran Khatma! ✨\n" +
@@ -278,7 +278,7 @@ object GroupKhatmaManager {
             "Open Holy Quran App and import this Khatma code to reserve your Juz:\n\n" +
             "$cleanId\n\n" +
             "Direct link:\n" +
-            "https://holy-quran-app-live.web.app/?code=$cleanId"
+            "https://holyquranapp.web.app/?code=$cleanId"
         }
     }
 

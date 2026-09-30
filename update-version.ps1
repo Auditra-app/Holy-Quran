@@ -73,5 +73,5 @@ if ($Deploy) {
     } finally {
         Pop-Location
     }
-    Write-Host "`n[OK] Live Deployment Complete: https://holy-quran-app-live.web.app`n" -ForegroundColor Green
+    Write-Host "`n[OK] Live Deployment Complete: https://holyquranapp.web.app`n" -ForegroundColor Green
 }

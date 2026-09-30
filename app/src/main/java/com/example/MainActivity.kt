@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
         if (intent == null) return null
         val uriData = intent.data
         val host = uriData?.host
-        val isAppHost = host == "holy-quran-app-live.web.app" || host == "quranapp.link" || uriData?.scheme == "holyquran"
+        val isAppHost = host == "holyquranapp.web.app" || host == "holy-quran-app-live.web.app" || host == "quranapp.link" || uriData?.scheme == "holyquran"
         val pathCode = if (uriData?.path?.startsWith("/khatma/") == true) {
             uriData.path?.substringAfter("/khatma/")?.trim()
         } else if (uriData?.scheme == "holyquran" && uriData.host == "khatma" && !uriData.path.isNullOrBlank()) {

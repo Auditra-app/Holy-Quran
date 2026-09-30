@@ -11,7 +11,7 @@ const notesEn = process.argv[5] || 'Update v1.2.4: Comprehensive word-by-word me
 const versionData = {
     latest_version_code: versionCode,
     latest_version_name: versionName,
-    apk_download_url: 'https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data',
+    apk_download_url: 'https://holyquranapp.web.app/HolyQuran_v1.1.0.data',
     force_update: false,
     update_notes: notesAr,
     update_notes_ar: notesAr,
@@ -33,7 +33,7 @@ const remoteConfigData = {
             description: 'Latest published version string'
         },
         apk_download_url: {
-            defaultValue: { value: 'https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data' },
+            defaultValue: { value: 'https://holyquranapp.web.app/HolyQuran_v1.1.0.data' },
             description: 'Direct download link for APK update'
         },
         force_update: {

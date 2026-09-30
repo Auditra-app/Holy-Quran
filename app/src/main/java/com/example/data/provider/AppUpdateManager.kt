@@ -53,8 +53,8 @@ object AppUpdateManager {
     private const val KEY_UPDATE_NOTES_AR = "update_notes_ar"
     private const val KEY_UPDATE_NOTES_EN = "update_notes_en"
 
-    private const val STATIC_VERSION_JSON_URL = "https://holy-quran-app-live.web.app/version.json"
-    private const val DEFAULT_APK_URL = "https://holy-quran-app-live.web.app/HolyQuran_v1.1.0.data"
+    private const val STATIC_VERSION_JSON_URL = "https://holyquranapp.web.app/version.json"
+    private const val DEFAULT_APK_URL = "https://holyquranapp.web.app/HolyQuran_v1.1.0.data"
     private const val DEFAULT_UPDATE_NOTES = "تحديث جديد v1.2.0: تحسينات متقدمة في السرعة والأداء، دعم التحديث المباشر بضغطة واحدة، وتطوير واجهة المصحف الشريف."
 
     private var pendingDownloadId: Long = -1L
@@ -285,7 +285,7 @@ object AppUpdateManager {
 
         // Web Fallback if DownloadManager fails
         try {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://holy-quran-app-live.web.app/")).apply {
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://holyquranapp.web.app/")).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
             }
             context.startActivity(intent)

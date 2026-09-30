@@ -31,8 +31,9 @@ class GroupKhatmaIntegrationTest {
         assertEquals(testCode, GroupKhatmaManager.extractKhatmaCode("```7M3K9P```"))
 
         // 3. URLs
+        assertEquals(testCode, GroupKhatmaManager.extractKhatmaCode("https://holyquranapp.web.app/?code=7M3K9P"))
         assertEquals(testCode, GroupKhatmaManager.extractKhatmaCode("https://holy-quran-app-live.web.app/?code=7M3K9P"))
-        assertEquals(testCode, GroupKhatmaManager.extractKhatmaCode("https://holy-quran-app-live.web.app/?code=7M3K9P&utm_source=wa"))
+        assertEquals(testCode, GroupKhatmaManager.extractKhatmaCode("https://holyquranapp.web.app/?code=7M3K9P&utm_source=wa"))
         assertEquals(testCode, GroupKhatmaManager.extractKhatmaCode("https://holy-quran-app-live.web.app/?data=7M3K9P"))
 
         // 4. Full WhatsApp share message
@@ -48,7 +49,7 @@ class GroupKhatmaIntegrationTest {
             7M3K9P
 
             رابط مباشر للفتح في التطبيق:
-            https://holy-quran-app-live.web.app/?code=7M3K9P
+            https://holyquranapp.web.app/?code=7M3K9P
         """.trimIndent()
 
         val extracted = GroupKhatmaManager.extractKhatmaCode(fullMessage)

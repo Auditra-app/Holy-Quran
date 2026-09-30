@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -404,14 +405,23 @@ fun AzkarCardItem(
 ) {
     var isExpanded by remember { mutableStateOf(false) }
 
+    val cardBgColor = if (isCompleted) {
+        EmeraldPrimary.copy(alpha = 0.035f).compositeOver(MaterialTheme.colorScheme.surface)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+
+    val cardBorderColor = if (isCompleted) {
+        EmeraldPrimary.copy(alpha = 0.25f)
+    } else {
+        MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+    }
+
     Surface(
         shape = RoundedCornerShape(20.dp),
-        color = if (isCompleted) EmeraldPrimary.copy(alpha = 0.05f) else MaterialTheme.colorScheme.surface,
-        border = BorderStroke(
-            width = if (isCompleted) 1.5.dp else 1.dp,
-            color = if (isCompleted) EmeraldPrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-        ),
-        shadowElevation = 2.dp,
+        color = cardBgColor,
+        border = BorderStroke(1.dp, cardBorderColor),
+        shadowElevation = if (isCompleted) 1.dp else 2.dp,
         modifier = Modifier
             .fillMaxWidth()
             .testTag("azkar_item_card_${zikr.id}")
@@ -583,23 +593,45 @@ fun AzkarCardItem(
                     )
                 }
 
-                // Interactive Counter Button
-                Button(
-                    onClick = onCountIncrement,
-                    enabled = !isCompleted,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isCompleted) EmeraldPrimary else EmeraldPrimary,
-                        disabledContainerColor = EmeraldPrimary.copy(alpha = 0.3f)
-                    ),
-                    shape = RoundedCornerShape(12.dp),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                    modifier = Modifier.defaultMinSize(minHeight = 42.dp)
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        if (isCompleted) {
-                            Icon(imageVector = Icons.Default.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                            Text(if (isArabic) "تم بحمد الله" else "Completed", fontFamily = TajawalFontFamily, fontSize = 13.sp, color = Color.White)
-                        } else {
+                // Interactive Counter Button or Completed Badge
+                if (isCompleted) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = EmeraldPrimary.copy(alpha = 0.12f),
+                        border = BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.25f)),
+                        modifier = Modifier.defaultMinSize(minHeight = 40.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.CheckCircle,
+                                contentDescription = null,
+                                tint = EmeraldPrimary,
+                                modifier = Modifier.size(17.dp)
+                            )
+                            Text(
+                                text = if (isArabic) "تم بحمد الله" else "Completed",
+                                fontFamily = TajawalFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp,
+                                color = EmeraldPrimary
+                            )
+                        }
+                    }
+                } else {
+                    Button(
+                        onClick = onCountIncrement,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = EmeraldPrimary
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                        modifier = Modifier.defaultMinSize(minHeight = 42.dp)
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(imageVector = Icons.Default.TouchApp, contentDescription = null, tint = IslamicGold, modifier = Modifier.size(18.dp))
                             Text(
                                 text = "${zikr.count - currentCount}",
@@ -668,11 +700,22 @@ fun QuickReadSheetContent(
                 val current = countsMap[zikr.id] ?: 0
                 val completed = current >= zikr.count
 
+                val itemBgColor = if (completed) {
+                    EmeraldPrimary.copy(alpha = 0.035f).compositeOver(MaterialTheme.colorScheme.surface)
+                } else {
+                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+                }
+                val itemBorderColor = if (completed) {
+                    EmeraldPrimary.copy(alpha = 0.25f)
+                } else {
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                }
+
                 Surface(
                     onClick = { onCountIncrement(zikr.id, zikr.count) },
                     shape = RoundedCornerShape(16.dp),
-                    color = if (completed) EmeraldPrimary.copy(alpha = 0.08f) else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
-                    border = BorderStroke(1.dp, if (completed) EmeraldPrimary else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)),
+                    color = itemBgColor,
+                    border = BorderStroke(1.dp, itemBorderColor),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(
@@ -734,23 +777,37 @@ fun QuickReadSheetContent(
                             Surface(
                                 onClick = { onCountIncrement(zikr.id, zikr.count) },
                                 shape = RoundedCornerShape(10.dp),
-                                color = if (completed) EmeraldPrimary else IslamicGold,
+                                color = if (completed) EmeraldPrimary.copy(alpha = 0.12f) else IslamicGold,
+                                border = if (completed) BorderStroke(1.dp, EmeraldPrimary.copy(alpha = 0.25f)) else null,
                                 modifier = Modifier.defaultMinSize(minWidth = 72.dp, minHeight = 36.dp)
                             ) {
                                 Box(
                                     contentAlignment = Alignment.Center,
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                                 ) {
-                                    Text(
-                                        text = if (completed) "تم ✓" else "$current / ${zikr.count}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        fontFamily = TajawalFontFamily,
-                                        color = Color.White,
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 1,
-                                        softWrap = false
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                                    ) {
+                                        if (completed) {
+                                            Icon(
+                                                imageVector = Icons.Default.CheckCircle,
+                                                contentDescription = null,
+                                                tint = EmeraldPrimary,
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                        }
+                                        Text(
+                                            text = if (completed) (if (isArabic) "تم" else "Done") else "$current / ${zikr.count}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            fontFamily = TajawalFontFamily,
+                                            color = if (completed) EmeraldPrimary else Color.White,
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 1,
+                                            softWrap = false
+                                        )
+                                    }
                                 }
                             }
                         }

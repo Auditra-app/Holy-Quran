@@ -416,10 +416,10 @@ fun HomeScreen(
                                     try {
                                         val shareText = if (isArabic) {
                                             "الْقُرْآنُ الْكَرِيمُ - تطبيق المصحف الشريف الشامل (بدون إعلانات • صدقة جارية)\n\n" +
-                                            "رابط التطبيق:\nhttps://holy-quran-app-live.web.app"
+                                            "رابط التطبيق:\nhttps://holyquranapp.web.app"
                                         } else {
                                             "The Holy Quran App - Complete Offline Quran, Prayer Times & Azkar (100% Ad-Free • Sadaqah Jariyah)\n\n" +
-                                            "Open app:\nhttps://holy-quran-app-live.web.app"
+                                            "Open app:\nhttps://holyquranapp.web.app"
                                         }
                                         val intent = Intent(Intent.ACTION_SEND).apply {
                                             type = "text/plain"

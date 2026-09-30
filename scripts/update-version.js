@@ -131,7 +131,7 @@ if (fs.existsSync(versionJsonPath)) {
 
 versionJson.latest_version_code = finalCode;
 versionJson.latest_version_name = finalName;
-versionJson.apk_download_url = `https://holy-quran-app-live.web.app/HolyQuran_v${finalName}.data`;
+versionJson.apk_download_url = `https://holyquranapp.web.app/HolyQuran_v${finalName}.data`;
 versionJson.file_size_bytes = fileBytes;
 versionJson.file_size_mb = fileMb;
 versionJson.file_size_formatted = fileFormatted;
@@ -160,7 +160,7 @@ if (fs.existsSync(remoteConfigPath)) {
                 description: 'Latest published version string'
             },
             apk_download_url: {
-                defaultValue: { value: `https://holy-quran-app-live.web.app/HolyQuran_v${finalName}.data` },
+                defaultValue: { value: `https://holyquranapp.web.app/HolyQuran_v${finalName}.data` },
                 description: 'Direct download link for APK update'
             },
             force_update: {
@@ -267,6 +267,6 @@ console.log(`  Version Name:    v${finalName}`);
 console.log(`  Version Code:    ${finalCode}`);
 console.log(`  APK File Size:   ${fileFormatted} (${fileBytes} bytes)`);
 console.log(`  APK File Target: public/HolyQuran_v${finalName}.data`);
-console.log(`  Download URL:    https://holy-quran-app-live.web.app/HolyQuran_v${finalName}.data`);
-console.log(`  Landing Page:    https://holy-quran-app-live.web.app`);
+console.log(`  Download URL:    https://holyquranapp.web.app/HolyQuran_v${finalName}.data`);
+console.log(`  Landing Page:    https://holyquranapp.web.app`);
 console.log("============================================================\n");

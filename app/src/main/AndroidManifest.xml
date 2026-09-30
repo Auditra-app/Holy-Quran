@@ -54,6 +54,10 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data
                     android:scheme="https"
+                    android:host="holyquranapp.web.app"
+                    android:pathPrefix="/" />
+            <data
+                    android:scheme="https"
                     android:host="holy-quran-app-live.web.app"
                     android:pathPrefix="/" />
             </intent-filter>
