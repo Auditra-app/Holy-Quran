@@ -1,95 +1,113 @@
 {
-  "hosting": {
-    "site": "holy-quran-app-live",
-    "public": "public",
-    "ignore": [
-      "firebase.json",
-      "!**/.well-known/**",
-      "**/node_modules/**"
-    ],
-    "headers": [
-      {
-        "source": "/HolyQuran_v1.3.9.data",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/vnd.android.package-archive"
-          },
-          {
-            "key": "Content-Disposition",
-            "value": "attachment; filename=\"HolyQuran_v1.3.9.apk\""
-          }
-        ]
-      },
-      {
-        "source": "/HolyQuran_v1.3.8.data",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/vnd.android.package-archive"
-          },
-          {
-            "key": "Content-Disposition",
-            "value": "attachment; filename=\"HolyQuran_v1.3.8.apk\""
-          }
-        ]
-      },
-      {
-        "source": "/HolyQuran_v1.3.7.data",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/vnd.android.package-archive"
-          },
-          {
-            "key": "Content-Disposition",
-            "value": "attachment; filename=\"HolyQuran_v1.3.7.apk\""
-          }
-        ]
-      },
-      {
-        "source": "/.well-known/assetlinks.json",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/json"
-          },
-          {
-            "key": "Access-Control-Allow-Origin",
-            "value": "*"
-          }
-        ]
-      },
-      {
-        "source": "/@(index.html|)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache, no-store, must-revalidate"
-          }
-        ]
-      },
-      {
-        "source": "**/*.@(jpg|jpeg|png|webp|svg)",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "public, max-age=86400"
-          },
-          {
-            "key": "Access-Control-Allow-Origin",
-            "value": "*"
-          }
-        ]
-      }
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  },
+  "hosting": [
+    {
+      "site": "holyquranapp",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "!**/.well-known/**",
+        "**/node_modules/**"
+      ],
+      "headers": [
+        {
+          "source": "/HolyQuran_v1.3.9.data",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/vnd.android.package-archive"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"HolyQuran_v1.3.9.apk\""
+            }
+          ]
+        },
+        {
+          "source": "/HolyQuran_v1.3.8.data",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/vnd.android.package-archive"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"HolyQuran_v1.3.8.apk\""
+            }
+          ]
+        },
+        {
+          "source": "/HolyQuran_v1.3.7.data",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/vnd.android.package-archive"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"HolyQuran_v1.3.7.apk\""
+            }
+          ]
+        },
+        {
+          "source": "/.well-known/assetlinks.json",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            }
+          ]
+        },
+        {
+          "source": "/@(index.html|)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache, no-store, must-revalidate"
+            }
+          ]
+        },
+        {
+          "source": "**/*.@(jpg|jpeg|png|webp|svg)",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=86400"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            }
+          ]
+        }
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "site": "holy-quran-app-live",
+      "public": "public_redirect",
+      "redirects": [
+        {
+          "source": "/",
+          "destination": "https://holyquranapp.web.app/",
+          "type": 301
+        },
+        {
+          "source": "/:path*",
+          "destination": "https://holyquranapp.web.app/:path*",
+          "type": 301
+        }
+      ]
+    }
+  ],
   "remoteconfig": {
     "template": "remoteconfig.template.json"
   },
