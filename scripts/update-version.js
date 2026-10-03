@@ -131,7 +131,9 @@ if (fs.existsSync(versionJsonPath)) {
 
 versionJson.latest_version_code = finalCode;
 versionJson.latest_version_name = finalName;
-versionJson.apk_download_url = `https://holyquranapp.web.app/HolyQuran_v${finalName}.data`;
+versionJson.apk_download_url = `https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v${finalName}.apk`;
+versionJson.cloudflare_download_url = `https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v${finalName}.apk`;
+versionJson.firebase_download_url = `https://holyquranapp.web.app/HolyQuran_v${finalName}.data`;
 versionJson.file_size_bytes = fileBytes;
 versionJson.file_size_mb = fileMb;
 versionJson.file_size_formatted = fileFormatted;
@@ -160,8 +162,12 @@ if (fs.existsSync(remoteConfigPath)) {
                 description: 'Latest published version string'
             },
             apk_download_url: {
+                defaultValue: { value: `https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v${finalName}.apk` },
+                description: 'Direct high-speed download link for APK update (Cloudflare Edge)'
+            },
+            firebase_download_url: {
                 defaultValue: { value: `https://holyquranapp.web.app/HolyQuran_v${finalName}.data` },
-                description: 'Direct download link for APK update'
+                description: 'Secondary mirror download link (Firebase Hosting)'
             },
             force_update: {
                 defaultValue: { value: 'false' },

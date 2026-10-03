@@ -75,8 +75,8 @@ if ($apkItem.LastWriteTime -lt $buildStartTime.AddSeconds(-2)) {
 
 Write-Host "       Built APK successfully: $([math]::Round($apkItem.Length / 1MB, 2)) MB (Timestamp: $($apkItem.LastWriteTime))" -ForegroundColor Green
 
-# 6. Copy APK to public/HolyQuran_v1.1.0.data
-$destData = "$rootDir\public\HolyQuran_v1.1.0.data"
+# 6. Copy APK to public/HolyQuran_v$VersionName.data
+$destData = "$rootDir\public\HolyQuran_v$VersionName.data"
 Copy-Item -Path $outputApk -Destination $destData -Force
 
 $copiedItem = Get-Item $destData
@@ -106,7 +106,7 @@ if (-not $SkipDeploy) {
 # 8. Git Commit & Push
 if (-not $SkipGitPush) {
     Write-Host "Committing and pushing changes to GitHub..." -ForegroundColor Yellow
-    git add app/build.gradle.kts public/version.json remoteconfig.template.json public/HolyQuran_v1.1.0.data scripts/
+    git add app/build.gradle.kts public/version.json remoteconfig.template.json public/HolyQuran_v$VersionName.data scripts/
     git commit -m "release: v$VersionName (Build $VersionCode) - update APK and sync version configuration"
     git push origin main
     Write-Host "Git push complete!" -ForegroundColor Green

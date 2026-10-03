@@ -14,9 +14,9 @@
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holyquranapp.web.app/HolyQuran_v1.3.9.data"
+                "value": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.3.9.apk"
             },
-            "description": "Direct download link for APK update"
+            "description": "Direct download link for APK update (Cloudflare Edge CDN)"
         },
         "force_update": {
             "defaultValue": {

@@ -3,22 +3,35 @@ const path = require('path');
 
 const rootDir = path.resolve(__dirname, '..');
 
-const versionCode = parseInt(process.argv[2] || '8', 10);
-const versionName = process.argv[3] || '1.2.4';
-const notesAr = process.argv[4] || 'تحديث v1.2.4: تحسين شامل لمعاني الكلمات باللغة العربية لكل كلمة بدقة وتفصيل وتفسير لغوي خاص.';
-const notesEn = process.argv[5] || 'Update v1.2.4: Comprehensive word-by-word meanings in Arabic with accurate linguistic definitions and tafsir enrichment.';
+const versionCode = parseInt(process.argv[2] || '23', 10);
+const versionName = process.argv[3] || '1.3.9';
+const notesAr = process.argv[4] || 'تحديث v1.3.9: تحسين شامل للأداء وسرعة التحميل ودعم خوادم Cloudflare فائق السرعة.';
+const notesEn = process.argv[5] || 'Update v1.3.9: Performance and speed improvements with high-speed Cloudflare CDN support.';
+
+const cloudflareUrl = `https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v${versionName}.apk`;
+const firebaseUrl = `https://holyquranapp.web.app/HolyQuran_v${versionName}.data`;
+
+let existingData = {};
+const versionJsonPath = path.join(rootDir, 'public', 'version.json');
+try {
+    if (fs.existsSync(versionJsonPath)) {
+        existingData = JSON.parse(fs.readFileSync(versionJsonPath, 'utf8'));
+    }
+} catch (e) {}
 
 const versionData = {
+    ...existingData,
     latest_version_code: versionCode,
     latest_version_name: versionName,
-    apk_download_url: 'https://holyquranapp.web.app/HolyQuran_v1.1.0.data',
+    apk_download_url: cloudflareUrl,
+    cloudflare_download_url: cloudflareUrl,
+    firebase_download_url: firebaseUrl,
     force_update: false,
     update_notes: notesAr,
     update_notes_ar: notesAr,
     update_notes_en: notesEn
 };
 
-const versionJsonPath = path.join(rootDir, 'public', 'version.json');
 fs.writeFileSync(versionJsonPath, JSON.stringify(versionData, null, 4), 'utf8');
 console.log(`[OK] Written ${versionJsonPath} (UTF-8)`);
 
@@ -33,8 +46,12 @@ const remoteConfigData = {
             description: 'Latest published version string'
         },
         apk_download_url: {
-            defaultValue: { value: 'https://holyquranapp.web.app/HolyQuran_v1.1.0.data' },
-            description: 'Direct download link for APK update'
+            defaultValue: { value: cloudflareUrl },
+            description: 'Direct high-speed download link for APK update (Cloudflare Edge)'
+        },
+        firebase_download_url: {
+            defaultValue: { value: firebaseUrl },
+            description: 'Secondary mirror download link (Firebase Hosting)'
         },
         force_update: {
             defaultValue: { value: 'false' },
