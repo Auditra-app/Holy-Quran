@@ -906,7 +906,7 @@
             <div class="live-counter-badge" id="liveCounterBadge">
                 <span class="live-pulse-dot"></span>
                 <span>إجمالي مرات التحميل المباشر:</span>
-                <span class="live-counter-number" id="liveCounterNumber">0</span>
+                <span class="live-counter-number" id="liveCounterNumber">١٬٢٨٥ +</span>
             </div>
 
             <h2 style="color: var(--gold-primary); font-size: 22px; margin-bottom: 8px;">تطبيق القرآن الكريم الشامل</h2>
@@ -1211,7 +1211,7 @@
         let db = null;
         let analytics = null;
         let counterDoc = null;
-        let currentDownloadCount = 0;
+        let currentDownloadCount = 1285;
 
         function fetchLiveCountDirect() {
             fetch("https://firestore.googleapis.com/v1/projects/holy-quran-app-live/databases/(default)/documents/stats/downloads?key=AIzaSyAkUKpq947M8UmFULf4qH6UUwBhH0BiDS0")
@@ -1240,22 +1240,8 @@
                 // Real-Time Live Download Counter Listener
                 counterDoc.onSnapshot((snapshot) => {
                     if (snapshot.exists && snapshot.data() && typeof snapshot.data().count === 'number') {
-                        let val = snapshot.data().count;
-                        if (val === 1280) {
-                            val = 0;
-                            counterDoc.set({
-                                count: 0,
-                                lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                            }, { merge: true }).catch(() => {});
-                        }
-                        currentDownloadCount = val;
+                        currentDownloadCount = snapshot.data().count;
                         renderCounterUI(currentDownloadCount);
-                    } else {
-                        counterDoc.set({
-                            count: currentDownloadCount || 0,
-                            lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
-                        }, { merge: true }).catch(() => {});
-                        renderCounterUI(currentDownloadCount || 0);
                     }
                 }, (err) => {
                     console.warn("Firestore snapshot notice:", err);
