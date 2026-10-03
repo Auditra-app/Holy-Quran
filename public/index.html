@@ -918,6 +918,16 @@
                 <span>📲</span>
             </a>
 
+            <!-- Multi-Server Download Selection -->
+            <div style="margin-top: 10px; margin-bottom: 6px; display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                <span style="font-size: 13px; color: var(--text-muted);">⚡ اختر سيرفر التحميل:</span>
+                <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.3.9.apk" download="HolyQuran_v1.3.9.apk" class="btn-secondary-action" id="cloudflareDownloadBtn" style="border: 1.5px solid #f6821f; color: #f6821f; font-weight: bold; padding: 8px 16px; font-size: 13.5px; border-radius: 20px; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onclick="handleDownloadClick(event, this)">
+                        <span>🚀 سيرفر 2 فائق السرعة (Cloudflare CDN)</span>
+                    </a>
+                </div>
+            </div>
+
             <!-- Secondary Actions: QR Scan & Install Guide -->
             <div class="secondary-actions-row">
                 <button type="button" class="btn-secondary-action" onclick="openModal('qrModal')">
@@ -1467,6 +1477,11 @@
                     if (modalBtn) {
                         modalBtn.href = `HolyQuran_v${data.latest_version_name}.data`;
                         modalBtn.download = `HolyQuran_v${data.latest_version_name}.apk`;
+                    }
+                    const cfBtn = document.getElementById('cloudflareDownloadBtn');
+                    if (cfBtn) {
+                        cfBtn.href = data.cloudflare_download_url || `https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v${data.latest_version_name}.apk`;
+                        cfBtn.download = `HolyQuran_v${data.latest_version_name}.apk`;
                     }
                 }
             }).catch(() => {});

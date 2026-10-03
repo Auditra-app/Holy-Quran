@@ -258,6 +258,14 @@ if (doDeploy) {
         console.error("Firebase deploy error:", e.stdout || e.message);
         throw e;
     }
+
+    console.log(`\nDeploying APK to Cloudflare R2...`);
+    try {
+        execSync(`npx.cmd wrangler r2 object put "holy-quran-releases/HolyQuran_v${finalName}.apk" --file="${targetApkPath}" --content-type="application/vnd.android.package-archive" --remote`, { cwd: rootDir, stdio: 'inherit' });
+        console.log(`  [OK] Cloudflare R2 upload complete!`);
+    } catch (e) {
+        console.warn("  [WARN] Cloudflare R2 upload warning:", e.message);
+    }
 }
 
 console.log("\n============================================================");

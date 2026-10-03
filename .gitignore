@@ -18,5 +18,6 @@ local.properties
 debug.keystore
 .idea/
 .firebase/
+.wrangler/
 public/*.data
 gradle-daemon-jvm.properties

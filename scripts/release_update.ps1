@@ -93,6 +93,12 @@ if (-not $SkipDeploy) {
         throw "Firebase deploy failed with exit code $LASTEXITCODE"
     }
     Write-Host "       Firebase deployment complete!" -ForegroundColor Green
+
+    Write-Host "       Deploying APK to Cloudflare R2 via Wrangler..." -ForegroundColor Yellow
+    npx wrangler r2 object put "holy-quran-releases/HolyQuran_v$VersionName.apk" --file="$destData" --content-type="application/vnd.android.package-archive" --remote
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "       Cloudflare R2 deployment complete!" -ForegroundColor Green
+    }
 } else {
     Write-Host "[6/6] Skipping Firebase deploy (--SkipDeploy flag set)" -ForegroundColor Gray
 }
