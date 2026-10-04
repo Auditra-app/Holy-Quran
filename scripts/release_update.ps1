@@ -47,8 +47,7 @@ $buildGradleUpdated = $buildGradle -replace 'versionCode\s*=\s*\d+', "versionCod
 $buildGradleUpdated = $buildGradleUpdated -replace 'versionName\s*=\s*"[^"]+"', "versionName = `"$VersionName`""
 Set-Content -Path "$rootDir\app\build.gradle.kts" -Value $buildGradleUpdated -NoNewline
 
-# 3. Synchronize public/version.json & remoteconfig.template.json via Node (guaranteed pure UTF-8 without corruption)
-$notesToUse = if (-not [string]::IsNullOrWhiteSpace($UpdateNotes)) { $UpdateNotes } else { "تحديث v$VersionName: تحسينات شاملة في الأداء والسرعة وتحديث واجهة التطبيق." }
+$notesToUse = if (-not [string]::IsNullOrWhiteSpace($UpdateNotes)) { $UpdateNotes } else { "Update v${VersionName}" }
 node "$rootDir\scripts\sync_release_json.js" $VersionCode "$VersionName" "$notesToUse"
 Write-Host "[2/6] Synchronized public/version.json and remoteconfig.template.json (UTF-8)" -ForegroundColor Green
 
@@ -85,7 +84,10 @@ if ($copiedItem.Length -ne $apkItem.Length) {
 }
 Write-Host "[5/6] Verified & Copied APK to $destData" -ForegroundColor Green
 
-# 7. Deploy to Firebase
+# Re-sync JSON, HTML, and Firebase headers with exact file size
+node "$rootDir\scripts\sync_release_json.js" $VersionCode "$VersionName" "$notesToUse"
+
+# 7. Deploy to Firebase & Cloudflare
 if (-not $SkipDeploy) {
     Write-Host "[6/6] Deploying to Firebase (Hosting & Remote Config)..." -ForegroundColor Yellow
     firebase deploy --only "remoteconfig,hosting"
@@ -95,9 +97,19 @@ if (-not $SkipDeploy) {
     Write-Host "       Firebase deployment complete!" -ForegroundColor Green
 
     Write-Host "       Deploying APK to Cloudflare R2 via Wrangler..." -ForegroundColor Yellow
-    npx wrangler r2 object put "holy-quran-releases/HolyQuran_v$VersionName.apk" --file="$destData" --content-type="application/vnd.android.package-archive" --remote
+    cmd.exe /c "npx --yes wrangler r2 object put `"holy-quran-releases/HolyQuran_v$VersionName.apk`" --file=`"$destData`" --content-type=`"application/vnd.android.package-archive`" --remote"
     if ($LASTEXITCODE -eq 0) {
         Write-Host "       Cloudflare R2 deployment complete!" -ForegroundColor Green
+    } else {
+        Write-Warning "Cloudflare R2 upload returned exit code $LASTEXITCODE"
+    }
+
+    Write-Host "       Deploying Cloudflare Worker via Wrangler..." -ForegroundColor Yellow
+    cmd.exe /c "npx --yes wrangler deploy --config `"$rootDir\cloudflare-download-worker\wrangler.toml`""
+    if ($LASTEXITCODE -eq 0) {
+        Write-Host "       Cloudflare Worker deployment complete!" -ForegroundColor Green
+    } else {
+        Write-Warning "Cloudflare Worker deploy returned exit code $LASTEXITCODE"
     }
 } else {
     Write-Host "[6/6] Skipping Firebase deploy (--SkipDeploy flag set)" -ForegroundColor Gray
@@ -106,7 +118,7 @@ if (-not $SkipDeploy) {
 # 8. Git Commit & Push
 if (-not $SkipGitPush) {
     Write-Host "Committing and pushing changes to GitHub..." -ForegroundColor Yellow
-    git add app/build.gradle.kts public/version.json remoteconfig.template.json public/HolyQuran_v$VersionName.data scripts/
+    git add app/build.gradle.kts public/version.json remoteconfig.template.json public/index.html firebase.json public/HolyQuran_v$VersionName.data scripts/ app/src/
     git commit -m "release: v$VersionName (Build $VersionCode) - update APK and sync version configuration"
     git push origin main
     Write-Host "Git push complete!" -ForegroundColor Green

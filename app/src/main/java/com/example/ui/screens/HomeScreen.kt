@@ -147,10 +147,66 @@ fun HomeScreen(
     var showReorderDialog by remember { mutableStateOf(false) }
     var showOverflowMenu by remember { mutableStateOf(false) }
     var showThemeSubmenu by remember { mutableStateOf(false) }
-    var showExportBackupDialog by remember { mutableStateOf(false) }
-    var showImportBackupDialog by remember { mutableStateOf(false) }
     var exportedJsonText by remember { mutableStateOf("") }
     var pendingUpdateInfo by remember { mutableStateOf<com.example.data.provider.AppUpdateInfo?>(null) }
+
+    val createDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        uri?.let {
+            try {
+                context.contentResolver.openOutputStream(it)?.use { os ->
+                    os.write(exportedJsonText.toByteArray())
+                }
+                Toast.makeText(
+                    context,
+                    if (isArabic) "تم حفظ ملف النسخة الاحتياطية بنجاح!" else "Backup file saved successfully!",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    if (isArabic) "خطأ أثناء حفظ الملف: ${e.localizedMessage}" else "Error saving file: ${e.localizedMessage}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
+
+    val openDocumentLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        uri?.let {
+            try {
+                val content = context.contentResolver.openInputStream(it)?.use { isStream ->
+                    isStream.bufferedReader().use { reader -> reader.readText() }
+                }
+                if (!content.isNullOrBlank()) {
+                    viewModel.importBackupData(content) { success ->
+                        if (success) {
+                            Toast.makeText(
+                                context,
+                                if (isArabic) "تمت استعادة النسخة الاحتياطية بنجاح!" else "Backup restored successfully!",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        } else {
+                            Toast.makeText(
+                                context,
+                                if (isArabic) "فشل استرداد البيانات! تأكد من صحة الملف." else "Import failed! Please check file.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    if (isArabic) "خطأ أثناء قراءة الملف: ${e.localizedMessage}" else "Error reading file: ${e.localizedMessage}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+    }
 
     val defaultGridItems = remember {
         listOf(
@@ -474,7 +530,8 @@ fun HomeScreen(
                                     showOverflowMenu = false
                                     viewModel.exportBackupData { json ->
                                         exportedJsonText = json
-                                        showExportBackupDialog = true
+                                        val fileName = "Quran_Backup_${java.text.SimpleDateFormat("yyyyMMdd_HHmm", java.util.Locale.US).format(java.util.Date())}.json"
+                                        createDocumentLauncher.launch(fileName)
                                     }
                                 }
                             )
@@ -492,7 +549,7 @@ fun HomeScreen(
                                 },
                                 onClick = {
                                     showOverflowMenu = false
-                                    showImportBackupDialog = true
+                                    openDocumentLauncher.launch(arrayOf("application/json", "*/*"))
                                 }
                             )
                         }
@@ -1478,30 +1535,6 @@ fun HomeScreen(
             }
         }
 
-        if (showExportBackupDialog) {
-            ExportBackupDialog(
-                isArabic = isArabic,
-                jsonText = exportedJsonText,
-                onDismiss = { showExportBackupDialog = false }
-            )
-        }
-
-        if (showImportBackupDialog) {
-            ImportBackupDialog(
-                isArabic = isArabic,
-                onImport = { json ->
-                    viewModel.importBackupData(json) { success ->
-                        showImportBackupDialog = false
-                        if (success) {
-                            Toast.makeText(context, if (isArabic) "تمت استعادة النسخة الاحتياطية بنجاح!" else "Backup restored successfully!", Toast.LENGTH_LONG).show()
-                        } else {
-                            Toast.makeText(context, if (isArabic) "فشل استرداد البيانات! تأكد من صحة الكود." else "Import failed! Please check code.", Toast.LENGTH_LONG).show()
-                        }
-                    }
-                },
-                onDismiss = { showImportBackupDialog = false }
-            )
-        }
 
         pendingUpdateInfo?.let { updateInfo ->
             AlertDialog(

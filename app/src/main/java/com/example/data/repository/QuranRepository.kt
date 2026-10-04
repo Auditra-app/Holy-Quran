@@ -339,19 +339,41 @@ class QuranRepository(private val quranDao: QuranDao) {
             json.put("readingProgress", progressObj)
         }
 
-        // 3. User Settings
-        val settings = quranDao.getUserSettingsOnce() ?: UserSettingsEntity()
+        // 3. User Settings (Complete app settings)
+        val settings = quranDao.getUserSettingsOnce() ?: restoreSettingsFromPrefs() ?: UserSettingsEntity()
         val settingsObj = org.json.JSONObject().apply {
             put("languageCode", settings.languageCode)
             put("themeMode", settings.themeMode)
             put("fontSizeSp", settings.fontSizeSp.toDouble())
-            put("preferredReciterId", settings.preferredReciterId)
+            put("enableDailyVerseNotification", settings.enableDailyVerseNotification)
+            put("enableReadingReminderNotification", settings.enableReadingReminderNotification)
+            put("enableInactivityNotification", settings.enableInactivityNotification)
+            put("enableAzkarNotification", settings.enableAzkarNotification)
+            put("enableMorningAzkar", settings.enableMorningAzkar)
+            put("enableEveningAzkar", settings.enableEveningAzkar)
+            put("morningAzkarHour", settings.morningAzkarHour)
+            put("morningAzkarMinute", settings.morningAzkarMinute)
+            put("eveningAzkarHour", settings.eveningAzkarHour)
+            put("eveningAzkarMinute", settings.eveningAzkarMinute)
+            put("notificationTimeHour", settings.notificationTimeHour)
+            put("notificationTimeMinute", settings.notificationTimeMinute)
             put("calculationMethod", settings.calculationMethod)
             put("madhhab", settings.madhhab)
+            put("preferredReciterId", settings.preferredReciterId)
+            put("showEnglishTranslation", settings.showEnglishTranslation)
+            put("enableTajweed", settings.enableTajweed)
+            put("keepScreenOn", settings.keepScreenOn)
+            put("nightModeTheme", settings.nightModeTheme)
+            put("enableNightSchedule", settings.enableNightSchedule)
+            put("nightScheduleStartHour", settings.nightScheduleStartHour)
+            put("nightScheduleStartMinute", settings.nightScheduleStartMinute)
+            put("nightScheduleEndHour", settings.nightScheduleEndHour)
+            put("nightScheduleEndMinute", settings.nightScheduleEndMinute)
             put("isSummerTime", settings.isSummerTime)
+            put("takbeerAzanOnly", settings.takbeerAzanOnly)
+            put("selectedAzanSound", settings.selectedAzanSound)
             put("enabledPrayersJson", settings.enabledPrayersJson)
             put("silentPrayersJson", settings.silentPrayersJson)
-            put("enableNightSchedule", settings.enableNightSchedule)
             put("selectedTafsirBook", settings.selectedTafsirBook)
             put("audioPlaybackSpeed", settings.audioPlaybackSpeed.toDouble())
             put("dailyPageGoal", settings.dailyPageGoal)
@@ -362,12 +384,18 @@ class QuranRepository(private val quranDao: QuranDao) {
             put("khatmahCompletedWirdsCount", settings.khatmahCompletedWirdsCount)
             put("khatmahLastCompletedDate", settings.khatmahLastCompletedDate)
             put("homeGridOrderJson", settings.homeGridOrderJson)
+            put("enableHaptic", settings.enableHaptic)
+            put("hapticType", settings.hapticType)
             put("fajrOffsetMins", settings.fajrOffsetMins)
             put("dhuhrOffsetMins", settings.dhuhrOffsetMins)
             put("asrOffsetMins", settings.asrOffsetMins)
             put("maghribOffsetMins", settings.maghribOffsetMins)
             put("ishaOffsetMins", settings.ishaOffsetMins)
             put("quranScriptType", settings.quranScriptType)
+            put("trackedPrayersJson", settings.trackedPrayersJson)
+            put("enablePrayerFollowUpNotification", settings.enablePrayerFollowUpNotification)
+            put("prayerFollowUpDelayMinutes", settings.prayerFollowUpDelayMinutes)
+            put("enableAzanOnSilent", settings.enableAzanOnSilent)
         }
         json.put("userSettings", settingsObj)
 
@@ -393,6 +421,67 @@ class QuranRepository(private val quranDao: QuranDao) {
         val favArray = org.json.JSONArray()
         favList.forEach { id -> favArray.put(id) }
         json.put("favoriteSurahs", favArray)
+
+        // 6. Favorite Azkar
+        val favAzkarList = quranDao.getFavoriteAzkarIdsOnce()
+        val favAzkarArray = org.json.JSONArray()
+        favAzkarList.forEach { id -> favAzkarArray.put(id) }
+        json.put("favoriteAzkar", favAzkarArray)
+
+        // 7. Prayer Records
+        val prayerRecords = quranDao.getAllPrayerRecordsOnce()
+        val prayerArray = org.json.JSONArray()
+        prayerRecords.forEach { pr ->
+            val obj = org.json.JSONObject().apply {
+                put("dateString", pr.dateString)
+                put("prayerKey", pr.prayerKey)
+                put("isCompleted", pr.isCompleted)
+                put("isOnTime", pr.isOnTime)
+                if (pr.completedTimestamp != null) {
+                    put("completedTimestamp", pr.completedTimestamp)
+                }
+            }
+            prayerArray.put(obj)
+        }
+        json.put("prayerRecords", prayerArray)
+
+        // 8. Location and Prayer Calculation Preferences
+        val ctx = com.example.HolyQuranApplication.instance
+        if (ctx != null) {
+            try {
+                val locData = com.example.util.LocationHelper.getSavedLocationAndSettings(ctx)
+                val locObj = org.json.JSONObject().apply {
+                    put("latitude", locData.latitude)
+                    put("longitude", locData.longitude)
+                    put("cityName", locData.cityName)
+                    put("calculationMethod", locData.calculationMethod)
+                    put("isSummerTime", locData.isSummerTime)
+                    put("fajrOffset", locData.fajrOffset)
+                    put("dhuhrOffset", locData.dhuhrOffset)
+                    put("asrOffset", locData.asrOffset)
+                    put("maghribOffset", locData.maghribOffset)
+                    put("ishaOffset", locData.ishaOffset)
+                }
+                json.put("locationSettings", locObj)
+            } catch (e: Throwable) {
+                android.util.Log.w("QuranRepository", "Error backing up location settings", e)
+            }
+
+            // 9. Group Khatmas Data
+            try {
+                val groupKhatmaPrefs = ctx.getSharedPreferences("group_khatma_prefs", android.content.Context.MODE_PRIVATE)
+                val khatmasStr = groupKhatmaPrefs.getString("khatmas_list_json", null)
+                if (!khatmasStr.isNullOrBlank()) {
+                    json.put("groupKhatmasRaw", khatmasStr)
+                }
+                val khatmaUser = groupKhatmaPrefs.getString("saved_user_name", null)
+                if (!khatmaUser.isNullOrBlank()) {
+                    json.put("groupKhatmaUserName", khatmaUser)
+                }
+            } catch (e: Throwable) {
+                android.util.Log.w("QuranRepository", "Error backing up group khatma data", e)
+            }
+        }
 
         return json.toString(2)
     }
@@ -432,21 +521,44 @@ class QuranRepository(private val quranDao: QuranDao) {
                 quranDao.saveReadingProgress(progress)
             }
 
-            // Restore Settings
+            // Restore Settings (Comprehensive)
             if (json.has("userSettings")) {
                 val obj = json.getJSONObject("userSettings")
-                val current = quranDao.getUserSettingsOnce() ?: UserSettingsEntity()
-                val settings = current.copy(
+                val current = quranDao.getUserSettingsOnce() ?: restoreSettingsFromPrefs() ?: UserSettingsEntity()
+                val settings = UserSettingsEntity(
+                    id = 1,
                     languageCode = obj.optString("languageCode", current.languageCode),
                     themeMode = obj.optString("themeMode", current.themeMode),
                     fontSizeSp = obj.optDouble("fontSizeSp", current.fontSizeSp.toDouble()).toFloat(),
-                    preferredReciterId = obj.optString("preferredReciterId", current.preferredReciterId),
+                    enableDailyVerseNotification = obj.optBoolean("enableDailyVerseNotification", current.enableDailyVerseNotification),
+                    enableReadingReminderNotification = obj.optBoolean("enableReadingReminderNotification", current.enableReadingReminderNotification),
+                    enableInactivityNotification = obj.optBoolean("enableInactivityNotification", current.enableInactivityNotification),
+                    enableAzkarNotification = obj.optBoolean("enableAzkarNotification", current.enableAzkarNotification),
+                    enableMorningAzkar = obj.optBoolean("enableMorningAzkar", current.enableMorningAzkar),
+                    enableEveningAzkar = obj.optBoolean("enableEveningAzkar", current.enableEveningAzkar),
+                    morningAzkarHour = obj.optInt("morningAzkarHour", current.morningAzkarHour),
+                    morningAzkarMinute = obj.optInt("morningAzkarMinute", current.morningAzkarMinute),
+                    eveningAzkarHour = obj.optInt("eveningAzkarHour", current.eveningAzkarHour),
+                    eveningAzkarMinute = obj.optInt("eveningAzkarMinute", current.eveningAzkarMinute),
+                    notificationTimeHour = obj.optInt("notificationTimeHour", current.notificationTimeHour),
+                    notificationTimeMinute = obj.optInt("notificationTimeMinute", current.notificationTimeMinute),
                     calculationMethod = obj.optString("calculationMethod", current.calculationMethod),
                     madhhab = obj.optString("madhhab", current.madhhab),
+                    preferredReciterId = obj.optString("preferredReciterId", current.preferredReciterId),
+                    showEnglishTranslation = obj.optBoolean("showEnglishTranslation", current.showEnglishTranslation),
+                    enableTajweed = obj.optBoolean("enableTajweed", current.enableTajweed),
+                    keepScreenOn = obj.optBoolean("keepScreenOn", current.keepScreenOn),
+                    nightModeTheme = obj.optString("nightModeTheme", current.nightModeTheme),
+                    enableNightSchedule = obj.optBoolean("enableNightSchedule", current.enableNightSchedule),
+                    nightScheduleStartHour = obj.optInt("nightScheduleStartHour", current.nightScheduleStartHour),
+                    nightScheduleStartMinute = obj.optInt("nightScheduleStartMinute", current.nightScheduleStartMinute),
+                    nightScheduleEndHour = obj.optInt("nightScheduleEndHour", current.nightScheduleEndHour),
+                    nightScheduleEndMinute = obj.optInt("nightScheduleEndMinute", current.nightScheduleEndMinute),
                     isSummerTime = obj.optBoolean("isSummerTime", current.isSummerTime),
+                    takbeerAzanOnly = obj.optBoolean("takbeerAzanOnly", current.takbeerAzanOnly),
+                    selectedAzanSound = obj.optString("selectedAzanSound", current.selectedAzanSound),
                     enabledPrayersJson = obj.optString("enabledPrayersJson", current.enabledPrayersJson),
                     silentPrayersJson = obj.optString("silentPrayersJson", current.silentPrayersJson),
-                    enableNightSchedule = obj.optBoolean("enableNightSchedule", current.enableNightSchedule),
                     selectedTafsirBook = obj.optString("selectedTafsirBook", current.selectedTafsirBook),
                     audioPlaybackSpeed = obj.optDouble("audioPlaybackSpeed", current.audioPlaybackSpeed.toDouble()).toFloat(),
                     dailyPageGoal = obj.optInt("dailyPageGoal", current.dailyPageGoal),
@@ -457,14 +569,20 @@ class QuranRepository(private val quranDao: QuranDao) {
                     khatmahCompletedWirdsCount = obj.optInt("khatmahCompletedWirdsCount", current.khatmahCompletedWirdsCount),
                     khatmahLastCompletedDate = obj.optLong("khatmahLastCompletedDate", current.khatmahLastCompletedDate),
                     homeGridOrderJson = obj.optString("homeGridOrderJson", current.homeGridOrderJson),
+                    enableHaptic = obj.optBoolean("enableHaptic", current.enableHaptic),
+                    hapticType = obj.optString("hapticType", current.hapticType),
                     fajrOffsetMins = obj.optInt("fajrOffsetMins", current.fajrOffsetMins),
                     dhuhrOffsetMins = obj.optInt("dhuhrOffsetMins", current.dhuhrOffsetMins),
                     asrOffsetMins = obj.optInt("asrOffsetMins", current.asrOffsetMins),
                     maghribOffsetMins = obj.optInt("maghribOffsetMins", current.maghribOffsetMins),
                     ishaOffsetMins = obj.optInt("ishaOffsetMins", current.ishaOffsetMins),
-                    quranScriptType = obj.optString("quranScriptType", current.quranScriptType)
+                    quranScriptType = obj.optString("quranScriptType", current.quranScriptType),
+                    trackedPrayersJson = obj.optString("trackedPrayersJson", current.trackedPrayersJson),
+                    enablePrayerFollowUpNotification = obj.optBoolean("enablePrayerFollowUpNotification", current.enablePrayerFollowUpNotification),
+                    prayerFollowUpDelayMinutes = obj.optInt("prayerFollowUpDelayMinutes", current.prayerFollowUpDelayMinutes),
+                    enableAzanOnSilent = obj.optBoolean("enableAzanOnSilent", current.enableAzanOnSilent)
                 )
-                quranDao.saveUserSettings(settings)
+                saveSettings(settings)
             }
 
             // Restore Reading History
@@ -491,6 +609,89 @@ class QuranRepository(private val quranDao: QuranDao) {
                 for (i in 0 until array.length()) {
                     val surahId = array.getInt(i)
                     quranDao.addFavoriteSurah(FavoriteSurahEntity(surahId))
+                }
+            }
+
+            // Restore Favorite Azkar
+            if (json.has("favoriteAzkar")) {
+                val array = json.getJSONArray("favoriteAzkar")
+                for (i in 0 until array.length()) {
+                    val azkarId = array.getInt(i)
+                    quranDao.addFavoriteAzkar(FavoriteAzkarEntity(azkarId))
+                }
+            }
+
+            // Restore Prayer Records
+            if (json.has("prayerRecords")) {
+                val array = json.getJSONArray("prayerRecords")
+                val records = mutableListOf<PrayerRecordEntity>()
+                for (i in 0 until array.length()) {
+                    val obj = array.getJSONObject(i)
+                    records.add(
+                        PrayerRecordEntity(
+                            id = 0,
+                            dateString = obj.getString("dateString"),
+                            prayerKey = obj.getString("prayerKey"),
+                            isCompleted = obj.optBoolean("isCompleted", false),
+                            isOnTime = obj.optBoolean("isOnTime", true),
+                            completedTimestamp = if (obj.has("completedTimestamp")) obj.optLong("completedTimestamp") else null
+                        )
+                    )
+                }
+                if (records.isNotEmpty()) {
+                    quranDao.insertPrayerRecords(records)
+                }
+            }
+
+            val ctx = com.example.HolyQuranApplication.instance
+            if (ctx != null) {
+                // Restore Location Settings
+                if (json.has("locationSettings")) {
+                    try {
+                        val locObj = json.getJSONObject("locationSettings")
+                        com.example.util.LocationHelper.saveLocationAndSettings(
+                            context = ctx,
+                            lat = locObj.optDouble("latitude", 30.0444),
+                            lng = locObj.optDouble("longitude", 31.2357),
+                            cityName = locObj.optString("cityName", "القاهرة • Cairo"),
+                            calcMethod = locObj.optString("calculationMethod", "EGYPT"),
+                            isSummerTime = locObj.optBoolean("isSummerTime", false),
+                            fajrOffset = locObj.optInt("fajrOffset", 0),
+                            dhuhrOffset = locObj.optInt("dhuhrOffset", 0),
+                            asrOffset = locObj.optInt("asrOffset", 0),
+                            maghribOffset = locObj.optInt("maghribOffset", 0),
+                            ishaOffset = locObj.optInt("ishaOffset", 0)
+                        )
+                    } catch (e: Throwable) {
+                        android.util.Log.w("QuranRepository", "Error restoring location settings", e)
+                    }
+                }
+
+                // Restore Group Khatmas Data
+                try {
+                    val groupKhatmaPrefs = ctx.getSharedPreferences("group_khatma_prefs", android.content.Context.MODE_PRIVATE)
+                    val editor = groupKhatmaPrefs.edit()
+                    if (json.has("groupKhatmasRaw")) {
+                        editor.putString("khatmas_list_json", json.getString("groupKhatmasRaw"))
+                    }
+                    if (json.has("groupKhatmaUserName")) {
+                        editor.putString("saved_user_name", json.getString("groupKhatmaUserName"))
+                    }
+                    editor.apply()
+                } catch (e: Throwable) {
+                    android.util.Log.w("QuranRepository", "Error restoring group khatmas data", e)
+                }
+
+                // Refresh Schedulers and Widgets
+                try {
+                    com.example.notification.DailyVerseScheduler.scheduleDailyVerseNotification(ctx)
+                    com.example.notification.AzkarNotificationScheduler.scheduleAllAzkarNotifications(ctx)
+                    com.example.notification.ReadingReminderScheduler.scheduleAllReadingReminders(ctx)
+                    com.example.widget.PrayerTimesWidgetProvider.sendUpdateBroadcast(ctx)
+                    com.example.widget.AzkarWidgetProvider.sendUpdateBroadcast(ctx)
+                    com.example.worker.PrayerSyncScheduler.enqueueImmediatePrayerSync(ctx)
+                } catch (e: Throwable) {
+                    android.util.Log.w("QuranRepository", "Error refreshing schedulers after import", e)
                 }
             }
 
