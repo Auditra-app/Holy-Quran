@@ -139,10 +139,21 @@ object QuranSearchIndexer {
     fun search(query: String): UniversalSearchResult {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) {
+            val surahs = QuranDataProvider.SURAHS.map { SearchResultItem.SurahResult(it) }
+            val juzs = QuranDataProvider.JUZ_LIST.map { SearchResultItem.JuzResult(it) }
+            val verses = OFFLINE_INDEXED_VERSES.map {
+                SearchResultItem.VerseResult(
+                    verse = it,
+                    highlightedSnippet = it.textUthmani,
+                    matchType = "آية مختارة"
+                )
+            }
             return UniversalSearchResult(
                 query = "",
-                totalMatches = 0,
-                surahResults = QuranDataProvider.SURAHS.map { SearchResultItem.SurahResult(it) }
+                totalMatches = surahs.size + juzs.size + verses.size,
+                surahResults = surahs,
+                verseResults = verses,
+                juzResults = juzs
             )
         }
 

@@ -202,6 +202,11 @@ fun GoalTrackerScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                     // Start Position
+                    val resumePage = remember(wirdStartPage, wirdDailyPages) {
+                        viewModel.getWirdResumePage(wirdStartPage, wirdDailyPages)
+                    }
+                    val isResuming = resumePage > wirdStartPage
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
@@ -217,7 +222,7 @@ fun GoalTrackerScreen(
                             color = EmeraldPrimary.copy(alpha = 0.12f)
                         ) {
                             Text(
-                                text = if (isArabic) "صفحة ${toArabicDigits(wirdStartPage)}" else "Page $wirdStartPage",
+                                text = if (isResuming) (if (isArabic) "استئناف: ص ${toArabicDigits(resumePage)}" else "Resume: p. $resumePage") else (if (isArabic) "صفحة ${toArabicDigits(wirdStartPage)}" else "Page $wirdStartPage"),
                                 style = MaterialTheme.typography.labelMedium.copy(fontFamily = TajawalFontFamily, fontWeight = FontWeight.Bold),
                                 color = EmeraldPrimary,
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
@@ -287,11 +292,11 @@ fun GoalTrackerScreen(
                             )
                         }
 
-                        // Green Button (Read Wird)
+                        // Green Button (Read / Resume Wird)
                         Button(
                             onClick = {
                                 viewModel.startWirdSession(wirdStartPage, wirdDailyPages)
-                                onNavigateToPage(wirdStartPage)
+                                onNavigateToPage(resumePage)
                             },
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = EmeraldPrimary,
@@ -307,7 +312,7 @@ fun GoalTrackerScreen(
                             Icon(imageVector = Icons.Outlined.MenuBook, contentDescription = null, modifier = Modifier.size(17.dp))
                             Spacer(modifier = Modifier.width(5.dp))
                             Text(
-                                text = if (isArabic) "تابع قراءة الورد" else "Read Wird",
+                                text = if (isResuming) (if (isArabic) "استئناف الورد (ص ${toArabicDigits(resumePage)})" else "Resume (p. $resumePage)") else (if (isArabic) "تابع قراءة الورد" else "Read Wird"),
                                 style = TextStyle(
                                     fontFamily = TajawalFontFamily,
                                     fontWeight = FontWeight.Bold,

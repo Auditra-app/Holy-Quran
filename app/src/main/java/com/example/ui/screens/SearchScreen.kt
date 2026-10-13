@@ -193,9 +193,8 @@ fun SearchScreen(
                 }
 
                 // Category Filter Tabs
-                ScrollableTabRow(
+                TabRow(
                     selectedTabIndex = selectedCategory.ordinal,
-                    edgePadding = 0.dp,
                     indicator = { tabPositions ->
                         if (selectedCategory.ordinal < tabPositions.size) {
                             TabRowDefaults.SecondaryIndicator(
@@ -220,8 +219,17 @@ fun SearchScreen(
                                     SearchCategory.VERSES -> searchResult.verseResults.size
                                     SearchCategory.JUZ_PAGES -> searchResult.juzResults.size + searchResult.pageResults.size
                                 }
+                                val title = when (category) {
+                                    SearchCategory.ALL -> if (isArabic) "الكل" else "All"
+                                    SearchCategory.SURAHS -> if (isArabic) "السور" else "Surahs"
+                                    SearchCategory.VERSES -> if (isArabic) "الآيات" else "Verses"
+                                    SearchCategory.JUZ_PAGES -> if (isArabic) "الأجزاء" else "Juz"
+                                }
                                 Text(
-                                    text = if (isArabic) "${category.titleArabic} ($count)" else "${category.titleEnglish} ($count)",
+                                    text = "$title ($count)",
+                                    fontSize = 12.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                     fontWeight = if (selectedCategory == category) FontWeight.Bold else FontWeight.Normal,
                                     color = if (selectedCategory == category) EmeraldPrimary else MaterialTheme.colorScheme.onSurfaceVariant
                                 )

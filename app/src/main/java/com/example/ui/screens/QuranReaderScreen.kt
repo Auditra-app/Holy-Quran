@@ -2042,6 +2042,10 @@ fun QuranReaderScreen(
                 Button(
                     onClick = {
                         val target = pageInput.toIntOrNull()?.coerceIn(1, 604) ?: currentPage
+                        val session = activeWirdSession
+                        if (session != null && (target < session.startPage || target > session.endPage)) {
+                            viewModel.exitWirdSession(revertToFreeReading = false)
+                        }
                         viewModel.jumpToPage(target)
                         showJumpDialog = false
                     },
@@ -2231,6 +2235,10 @@ fun QuranReaderScreen(
                         if (targetS != null) {
                             SuggestionChip(
                                 onClick = {
+                                    val session = activeWirdSession
+                                    if (session != null && (targetS.startPage < session.startPage || targetS.startPage > session.endPage)) {
+                                        viewModel.exitWirdSession(revertToFreeReading = false)
+                                    }
                                     viewModel.jumpToPage(targetS.startPage)
                                     showSurahPickerSheet = false
                                 },
@@ -2279,6 +2287,10 @@ fun QuranReaderScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
+                                        val session = activeWirdSession
+                                        if (session != null && (item.startPage < session.startPage || item.startPage > session.endPage)) {
+                                            viewModel.exitWirdSession(revertToFreeReading = false)
+                                        }
                                         viewModel.jumpToPage(item.startPage)
                                         showSurahPickerSheet = false
                                     }

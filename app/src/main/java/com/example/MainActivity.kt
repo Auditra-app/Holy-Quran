@@ -442,10 +442,14 @@ fun HolyQuranApp(
                 composable("surahs") {
                     SurahListScreen(
                         viewModel = viewModel,
-                        onNavigateToPage = {
+                        onNavigateToPage = { page ->
                             try {
-                                viewModel.exitWirdSession()
-                                navController.navigate("reader")
+                                viewModel.exitWirdSession(revertToFreeReading = false)
+                                viewModel.jumpToPage(page)
+                                navController.navigate("reader") {
+                                    popUpTo("home") { saveState = false }
+                                    launchSingleTop = true
+                                }
                             } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
@@ -456,10 +460,14 @@ fun HolyQuranApp(
                 composable("juz") {
                     JuzListScreen(
                         viewModel = viewModel,
-                        onNavigateToPage = {
+                        onNavigateToPage = { page ->
                             try {
-                                viewModel.exitWirdSession()
-                                navController.navigate("reader")
+                                viewModel.exitWirdSession(revertToFreeReading = false)
+                                viewModel.jumpToPage(page)
+                                navController.navigate("reader") {
+                                    popUpTo("home") { saveState = false }
+                                    launchSingleTop = true
+                                }
                             } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
@@ -472,11 +480,10 @@ fun HolyQuranApp(
                         viewModel = viewModel,
                         onNavigateToPage = {
                             try {
-                                viewModel.exitWirdSession()
+                                viewModel.exitWirdSession(revertToFreeReading = false)
                                 navController.navigate("reader") {
-                                    popUpTo("home") { saveState = true }
+                                    popUpTo("home") { saveState = false }
                                     launchSingleTop = true
-                                    restoreState = true
                                 }
                             } catch (e: Throwable) {
                                 Log.e("HolyQuranApp", "navigate reader error", e)
@@ -492,8 +499,11 @@ fun HolyQuranApp(
                         viewModel = viewModel,
                         onNavigateToPage = {
                             try {
-                                viewModel.exitWirdSession()
-                                navController.navigate("reader")
+                                viewModel.exitWirdSession(revertToFreeReading = false)
+                                navController.navigate("reader") {
+                                    popUpTo("home") { saveState = false }
+                                    launchSingleTop = true
+                                }
                             } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
@@ -504,8 +514,14 @@ fun HolyQuranApp(
                 composable("goal_tracker") {
                     GoalTrackerScreen(
                         viewModel = viewModel,
-                        onNavigateToPage = {
-                            try { navController.navigate("reader") } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
+                        onNavigateToPage = { page ->
+                            try {
+                                viewModel.jumpToPage(page)
+                                navController.navigate("reader") {
+                                    popUpTo("home") { saveState = false }
+                                    launchSingleTop = true
+                                }
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
                             try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
@@ -517,8 +533,11 @@ fun HolyQuranApp(
                         viewModel = viewModel,
                         onNavigateToPage = {
                             try {
-                                viewModel.exitWirdSession()
-                                navController.navigate("reader")
+                                viewModel.exitWirdSession(revertToFreeReading = false)
+                                navController.navigate("reader") {
+                                    popUpTo("home") { saveState = false }
+                                    launchSingleTop = true
+                                }
                             } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
@@ -529,10 +548,14 @@ fun HolyQuranApp(
                 composable("search") {
                     SearchScreen(
                         viewModel = viewModel,
-                        onNavigateToPage = {
+                        onNavigateToPage = { page ->
                             try {
-                                viewModel.exitWirdSession()
-                                navController.navigate("reader")
+                                viewModel.exitWirdSession(revertToFreeReading = false)
+                                viewModel.jumpToPage(page)
+                                navController.navigate("reader") {
+                                    popUpTo("home") { saveState = false }
+                                    launchSingleTop = true
+                                }
                             } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {
@@ -545,8 +568,11 @@ fun HolyQuranApp(
                         viewModel = viewModel,
                         onNavigateToPage = {
                             try {
-                                viewModel.exitWirdSession()
-                                navController.navigate("reader")
+                                viewModel.exitWirdSession(revertToFreeReading = false)
+                                navController.navigate("reader") {
+                                    popUpTo("home") { saveState = false }
+                                    launchSingleTop = true
+                                }
                             } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         },
                         onBack = {

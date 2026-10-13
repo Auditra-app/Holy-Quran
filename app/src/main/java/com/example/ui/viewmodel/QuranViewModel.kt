@@ -115,15 +115,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     val universalSearchResult: StateFlow<com.example.data.provider.UniversalSearchResult> = _searchQuery
         .map { query ->
             try {
-                if (query.isBlank()) {
-                    com.example.data.provider.UniversalSearchResult(
-                        query = "",
-                        totalMatches = 0,
-                        surahResults = repository.getSurahs().map { com.example.data.provider.SearchResultItem.SurahResult(it) }
-                    )
-                } else {
-                    repository.universalSearch(query)
-                }
+                repository.universalSearch(query)
             } catch (e: Throwable) {
                 android.util.Log.e("QuranViewModel", "Error in universalSearch mapping", e)
                 com.example.data.provider.UniversalSearchResult("", 0, emptyList(), emptyList(), emptyList())
@@ -133,11 +125,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = com.example.data.provider.UniversalSearchResult(
-                query = "",
-                totalMatches = 0,
-                surahResults = repository.getSurahs().map { com.example.data.provider.SearchResultItem.SurahResult(it) }
-            )
+            initialValue = com.example.data.provider.QuranSearchIndexer.search("")
         )
 
     val filteredSurahs: StateFlow<List<Surah>> = combine(
@@ -229,7 +217,9 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
             _currentPage.value = targetPage
             loadPageData(targetPage)
             // Completely isolate Wird mode: do NOT update free reading progress/bookmark if user is in an active Wird session
-            if (_activeWirdSession.value == null) {
+            if (_activeWirdSession.value != null) {
+                updateWirdProgressPage(targetPage)
+            } else {
                 viewModelScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                     try {
                         val surahList = repository.getSurahs()
@@ -652,15 +642,45 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     private val _activeWirdSession = MutableStateFlow<ActiveWirdSession?>(null)
     val activeWirdSession: StateFlow<ActiveWirdSession?> = _activeWirdSession.asStateFlow()
 
+    private val wirdPrefs by lazy {
+        getApplication<Application>().getSharedPreferences("wird_session_prefs", Context.MODE_PRIVATE)
+    }
+
+    fun getWirdResumePage(startPage: Int, targetPages: Int): Int {
+        val savedStart = wirdPrefs.getInt("wird_start_page", -1)
+        val savedCurrent = wirdPrefs.getInt("wird_current_page", -1)
+        val endPage = (startPage + targetPages - 1).coerceAtMost(604)
+        if (savedStart == startPage && savedCurrent in startPage..endPage) {
+            return savedCurrent
+        }
+        return startPage
+    }
+
     fun startWirdSession(startPage: Int, targetPages: Int) {
         val end = (startPage + targetPages - 1).coerceAtMost(604)
+        val resumePage = getWirdResumePage(startPage, targetPages)
         _activeWirdSession.value = ActiveWirdSession(startPage, end, targetPages)
-        jumpToPage(startPage)
+        jumpToPage(resumePage)
+    }
+
+    fun updateWirdProgressPage(page: Int) {
+        val session = _activeWirdSession.value ?: return
+        if (page in session.startPage..session.endPage) {
+            wirdPrefs.edit()
+                .putInt("wird_start_page", session.startPage)
+                .putInt("wird_current_page", page)
+                .apply()
+        }
+    }
+
+    fun clearSavedWirdProgress() {
+        wirdPrefs.edit().clear().apply()
     }
 
     fun completeCurrentWird() {
         val session = _activeWirdSession.value
         viewModelScope.launch {
+            clearSavedWirdProgress()
             val current = userSettings.value
             val endPage = session?.endPage ?: (current.khatmahCurrentPage + current.khatmahDailyGoalPages - 1).coerceAtMost(604)
             val nextStartPage = if (endPage >= 604) 1 else endPage + 1
@@ -682,6 +702,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
     fun completeWirdDirectly() {
         viewModelScope.launch {
+            clearSavedWirdProgress()
             val current = userSettings.value
             val goalPages = current.khatmahDailyGoalPages.coerceAtLeast(1)
             val endPage = (current.khatmahCurrentPage + goalPages - 1).coerceAtMost(604)
@@ -703,12 +724,14 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun exitWirdSession() {
+    fun exitWirdSession(revertToFreeReading: Boolean = true) {
         if (_activeWirdSession.value != null) {
             _activeWirdSession.value = null
-            val lastFreePage = readingProgress.value.lastPage.coerceIn(1, 604)
-            _currentPage.value = lastFreePage
-            loadPageData(lastFreePage)
+            if (revertToFreeReading) {
+                val lastFreePage = readingProgress.value.lastPage.coerceIn(1, 604)
+                _currentPage.value = lastFreePage
+                loadPageData(lastFreePage)
+            }
         }
     }
 
@@ -728,6 +751,7 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resetKhatmahProgress() {
         viewModelScope.launch {
+            clearSavedWirdProgress()
             val current = userSettings.value
             repository.saveSettings(
                 current.copy(
