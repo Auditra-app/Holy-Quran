@@ -178,7 +178,8 @@ object NotificationHelper {
             canvas.drawCircle(radius, radius, radius - 4f, borderPaint)
 
             // 3. Render Holy Quran Foreground Icon in Center
-            val fgDrawable = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_launcher_foreground)
+            val fgDrawable = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.app_logo)
+                ?: androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_launcher_foreground)
                 ?: androidx.core.content.ContextCompat.getDrawable(context, R.mipmap.ic_launcher)
 
             if (fgDrawable != null) {

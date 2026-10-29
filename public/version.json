@@ -1,14 +1,14 @@
 {
-    "latest_version_code": 25,
-    "latest_version_name": "1.4.1",
-    "apk_download_url": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.1.apk",
-    "cloudflare_download_url": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.1.apk",
-    "firebase_download_url": "https://holyquranapp.web.app/HolyQuran_v1.4.1.data",
-    "file_size_bytes": 66951789,
-    "file_size_mb": 63.9,
-    "file_size_formatted": "63.9 MB",
+    "latest_version_code": 26,
+    "latest_version_name": "1.4.2",
+    "apk_download_url": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.2.apk",
+    "cloudflare_download_url": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.2.apk",
+    "firebase_download_url": "https://holyquranapp.web.app/HolyQuran_v1.4.2.data",
+    "file_size_bytes": 41261462,
+    "file_size_mb": 39.3,
+    "file_size_formatted": "39.3 MB",
     "force_update": false,
-    "update_notes": "إصلاح البحث السريع والذكي والانتقال للسور، واستئناف الورد اليومي من مكان التوقف",
-    "update_notes_ar": "إصلاح البحث السريع والذكي والانتقال للسور، واستئناف الورد اليومي من مكان التوقف",
-    "update_notes_en": "Update v1.4.1: Full app backup and restore for all settings, and direct file picker support."
+    "update_notes": "تحديث شعار وهوية التطبيق بأيقونة بيضاء واضحة تبرز اسم التطبيق كاملاً، مع تحسينات في الأداء والتوافق",
+    "update_notes_ar": "تحديث شعار وهوية التطبيق بأيقونة بيضاء واضحة تبرز اسم التطبيق كاملاً، مع تحسينات في الأداء والتوافق",
+    "update_notes_en": "تحديث شعار وهوية التطبيق بأيقونة بيضاء واضحة تبرز اسم التطبيق كاملاً، مع تحسينات في الأداء والتوافق"
 }

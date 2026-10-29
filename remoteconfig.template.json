@@ -2,25 +2,25 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "25"
+                "value": "26"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.4.1"
+                "value": "1.4.2"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.1.apk"
+                "value": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.2.apk"
             },
             "description": "Direct high-speed download link for APK update (Cloudflare Edge)"
         },
         "firebase_download_url": {
             "defaultValue": {
-                "value": "https://holyquranapp.web.app/HolyQuran_v1.4.1.data"
+                "value": "https://holyquranapp.web.app/HolyQuran_v1.4.2.data"
             },
             "description": "Secondary mirror download link (Firebase Hosting)"
         },
@@ -32,19 +32,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "إصلاح البحث السريع والذكي والانتقال للسور، واستئناف الورد اليومي من مكان التوقف"
+                "value": "تحديث شعار وهوية التطبيق بأيقونة بيضاء واضحة تبرز اسم التطبيق كاملاً، مع تحسينات في الأداء والتوافق"
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "إصلاح البحث السريع والذكي والانتقال للسور، واستئناف الورد اليومي من مكان التوقف"
+                "value": "تحديث شعار وهوية التطبيق بأيقونة بيضاء واضحة تبرز اسم التطبيق كاملاً، مع تحسينات في الأداء والتوافق"
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "Update v1.4.1: Full app backup and restore for all settings, and direct file picker support."
+                "value": "تحديث شعار وهوية التطبيق بأيقونة بيضاء واضحة تبرز اسم التطبيق كاملاً، مع تحسينات في الأداء والتوافق"
             },
             "description": "English release notes shown in update dialog"
         }

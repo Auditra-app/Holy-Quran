@@ -228,17 +228,17 @@ fun SplashScreen(
                 // Central App Launcher Logo
                 Surface(
                     shape = CircleShape,
-                    color = Color(0xFF06291E),
+                    color = Color.White,
                     shadowElevation = 12.dp,
                     border = androidx.compose.foundation.BorderStroke(1.5.dp, IslamicGold),
                     modifier = Modifier.size(112.dp)
                 ) {
                     Box(
                         contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize().padding(6.dp)
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.app_logo),
                             contentDescription = "Holy Quran Logo",
                             modifier = Modifier
                                 .size(92.dp)
