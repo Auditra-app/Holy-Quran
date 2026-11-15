@@ -2029,7 +2029,7 @@ fun SettingsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        com.example.data.provider.AppUpdateManager.startApkDownload(context, info.apkDownloadUrl)
+                        com.example.data.provider.AppUpdateManager.startApkDownload(context, info.apkDownloadUrl, info.latestVersionName)
                         updateDialogInfo = null
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary)

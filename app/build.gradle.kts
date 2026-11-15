@@ -17,8 +17,8 @@ android {
     applicationId = "com.holyquran.app"
     minSdk = 24
     targetSdk = 35
-    versionCode = 26
-    versionName = "1.4.2"
+    versionCode = 31
+    versionName = "1.4.7"
 
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
@@ -141,6 +141,7 @@ dependencies {
   implementation(libs.androidx.media3.exoplayer)
   implementation(libs.androidx.media3.session)
   implementation(libs.androidx.media3.datasource)
+  implementation("androidx.media:media:1.7.0")
   testImplementation(libs.androidx.compose.ui.test.junit4)
   testImplementation(libs.androidx.core)
   testImplementation(libs.androidx.junit)

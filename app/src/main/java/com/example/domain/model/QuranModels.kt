@@ -112,6 +112,49 @@ data class Reciter(
     val style: String
 )
 
+enum class AudioListeningScope(val titleAr: String, val titleEn: String) {
+    SURAH("سورة", "Surah"),
+    JUZ("جزء", "Juz'"),
+    PAGE("صفحة", "Page"),
+    QUARTER("ربع", "Quarter"),
+    AYAH_RANGE("نطاق آيات", "Ayah Range")
+}
+
+data class PlayableVerseItem(
+    val surahNumber: Int,
+    val verseNumber: Int,
+    val surahName: String = "",
+    val verseText: String = "",
+    val pageNumber: Int = 1
+)
+
+data class QuranQuarter(
+    val id: Int,             // 1..240
+    val juzNumber: Int,      // 1..30
+    val hizbNumber: Int,     // 1..60
+    val quarterInHizb: Int,  // 1..4
+    val quarterInJuz: Int,   // 1..8
+    val surahId: Int,
+    val surahNameArabic: String,
+    val startAyah: Int,
+    val startPage: Int,
+    val firstWords: String
+)
+
+data class AudioPlaybackState(
+    val scope: AudioListeningScope = AudioListeningScope.SURAH,
+    val titleAr: String = "سورة الفاتحة",
+    val titleEn: String = "Al-Fatihah",
+    val reciterName: String = "مشاري راشد العفاسي",
+    val currentPositionMs: Long = 0L,
+    val durationMs: Long = 0L,
+    val isPlaying: Boolean = false,
+    val isBuffering: Boolean = false,
+    val currentItemIndex: Int = 0,
+    val totalItems: Int = 1,
+    val currentVerseInfo: String? = null
+)
+
 enum class GroupKhatmaJuzStatus {
     UNASSIGNED,
     BOOKED,

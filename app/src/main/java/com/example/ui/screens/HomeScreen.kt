@@ -211,6 +211,7 @@ fun HomeScreen(
     val defaultGridItems = remember {
         listOf(
             HomeGridItem("قراءة القرآن", "Read Quran", Icons.AutoMirrored.Filled.MenuBook, "reader", EmeraldPrimary),
+            HomeGridItem("الاستماع للقرآن", "Listen to Quran", Icons.Default.GraphicEq, "quran_audio", IslamicGold),
             HomeGridItem("ملخص وإحصائيات القراءة", "Reading Summary & Stats", Icons.Default.BarChart, "reading_analytics", IslamicGold),
             HomeGridItem("هدف القراءة والختمة", "Khatmah Goal", Icons.Outlined.EmojiEvents, "goal_tracker", IslamicGold),
             HomeGridItem("الختمة الجماعية", "Group Khatma", Icons.Default.Groups, "group_khatma", EmeraldPrimary),
@@ -1578,7 +1579,7 @@ fun HomeScreen(
                 confirmButton = {
                     Button(
                         onClick = {
-                            com.example.data.provider.AppUpdateManager.startApkDownload(context, updateInfo.apkDownloadUrl)
+                            com.example.data.provider.AppUpdateManager.startApkDownload(context, updateInfo.apkDownloadUrl, updateInfo.latestVersionName)
                             if (!updateInfo.forceUpdate) {
                                 pendingUpdateInfo = null
                             }

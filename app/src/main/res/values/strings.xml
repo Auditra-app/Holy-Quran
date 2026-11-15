@@ -10,4 +10,6 @@
     <string name="widget_reading_stats_description">إحصائيات القراءة والورد اليومي والسلسلة</string>
     <string name="widget_azkar_description">أذكار الصباح والمساء وأدعية متجددة مع إمكانية القراءة السريعة</string>
     <string name="widget_prayer_tracker_description">متابع الصلوات اليومية وتسجيل الصلوات بنقرة واحدة</string>
+    <string name="widget_quran_audio_name">الاستماع للقرآن</string>
+    <string name="widget_quran_audio_description">التحكم في تشغيل واستماع القرآن الكريم من الشاشة الرئيسية</string>
 </resources>

@@ -60,6 +60,9 @@ class BootReceiver : BroadcastReceiver() {
                     // Schedule Reading Reminder
                     ReadingReminderScheduler.scheduleAllReadingReminders(context)
 
+                    // Schedule Periodic Voice Duaa
+                    PeriodicDuaaManager.scheduleNext(context)
+
                     // Schedule Auto Location Check
                     AutoLocationScheduler.scheduleAutoLocationCheck(context)
 

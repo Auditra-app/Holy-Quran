@@ -68,7 +68,7 @@ if ($Deploy) {
     try {
         # Deploy to holyquranapp
         (Get-Content "$rootDir\firebase.json") -replace '"site":\s*"[^"]+"', '"site": "holyquranapp"' | Set-Content "$rootDir\firebase.json"
-        & firebase.cmd deploy --only hosting
+        & firebase.cmd deploy --only hosting,remoteconfig
         if ($LASTEXITCODE -ne 0) {
             throw "Firebase deploy to holyquranapp failed with code $LASTEXITCODE"
         }
@@ -80,6 +80,19 @@ if ($Deploy) {
         }
         # Reset back to holyquranapp
         (Get-Content "$rootDir\firebase.json") -replace '"site":\s*"[^"]+"', '"site": "holyquranapp"' | Set-Content "$rootDir\firebase.json"
+
+        # Upload APK to Cloudflare R2
+        $targetName = if (![string]::IsNullOrWhiteSpace($VersionName)) { $VersionName.TrimStart('v') } else { "1.4.5" }
+        $publicApk = "$rootDir\public\HolyQuran_v$targetName.data"
+        if (Test-Path $publicApk) {
+            Write-Host "`n[Deploy] Uploading APK to Cloudflare R2..." -ForegroundColor Cyan
+            try {
+                & npx.cmd wrangler r2 object put "holy-quran-releases/HolyQuran_v$targetName.apk" --file="$publicApk" --content-type="application/vnd.android.package-archive" --remote
+                Write-Host "  [OK] Cloudflare R2 upload complete!" -ForegroundColor Green
+            } catch {
+                Write-Warning "Cloudflare R2 upload: $_"
+            }
+        }
     } finally {
         Pop-Location
     }

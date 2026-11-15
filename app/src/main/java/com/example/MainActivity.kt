@@ -329,7 +329,7 @@ fun HolyQuranApp(
                     confirmButton = {
                         Button(
                             onClick = {
-                                com.example.data.provider.AppUpdateManager.startApkDownload(context, updateInfo.apkDownloadUrl)
+                                com.example.data.provider.AppUpdateManager.startApkDownload(context, updateInfo.apkDownloadUrl, updateInfo.latestVersionName)
                                 if (!updateInfo.forceUpdate) {
                                     pendingUpdateInfo = null
                                 }
@@ -422,6 +422,22 @@ fun HolyQuranApp(
                             } catch (e: Throwable) {
                                 Log.e("HolyQuranApp", "Navigation error to $route", e)
                             }
+                        }
+                    )
+                }
+                composable("quran_audio") {
+                    QuranAudioListeningScreen(
+                        viewModel = viewModel,
+                        onBack = {
+                            try { navController.popBackStack() } catch (e: Throwable) { Log.e("HolyQuranApp", "popBackStack error", e) }
+                        },
+                        onNavigateToPage = { page ->
+                            try {
+                                viewModel.jumpToPage(page)
+                                navController.navigate("reader") {
+                                    launchSingleTop = true
+                                }
+                            } catch (e: Throwable) { Log.e("HolyQuranApp", "navigate reader error", e) }
                         }
                     )
                 }

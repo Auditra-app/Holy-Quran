@@ -27,6 +27,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.BuildConfig
 import com.example.ui.theme.EmeraldPrimary
 import com.example.ui.theme.IslamicGold
 import com.example.ui.theme.TajawalFontFamily
@@ -46,7 +47,7 @@ fun DonationScreen(
     val feedbackEmail = "aelsheikh1987@gmail.com"
     val whatsappNumber = "+201092892892"
     val whatsappClean = "201092892892"
-    val appVersion = "v1.0.0 (Build 1)"
+    val appVersion = "v${BuildConfig.VERSION_NAME} (Build ${BuildConfig.VERSION_CODE})"
 
     fun copyToClipboard(label: String, text: String) {
         val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager

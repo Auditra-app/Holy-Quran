@@ -14,6 +14,7 @@ param (
 )
 
 $ErrorActionPreference = "Stop"
+if (Test-Path "C:\\Program Files\\Git\\cmd") { $env:PATH = "C:\\Program Files\\Git\\cmd;$env:PATH" }
 
 $rootDir = Split-Path -Parent $PSScriptRoot
 Set-Location $rootDir
@@ -118,7 +119,7 @@ if (-not $SkipDeploy) {
 # 8. Git Commit & Push
 if (-not $SkipGitPush) {
     Write-Host "Committing and pushing changes to GitHub..." -ForegroundColor Yellow
-    git add app/build.gradle.kts public/version.json remoteconfig.template.json public/index.html firebase.json public/HolyQuran_v$VersionName.data scripts/ app/src/
+    git add -A
     git commit -m "release: v$VersionName (Build $VersionCode) - update APK and sync version configuration"
     git push origin main
     Write-Host "Git push complete!" -ForegroundColor Green

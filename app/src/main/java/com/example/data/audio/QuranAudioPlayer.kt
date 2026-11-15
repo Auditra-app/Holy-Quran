@@ -20,9 +20,14 @@ import androidx.media3.datasource.cache.SimpleCache
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.session.MediaSession
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.example.domain.model.AudioListeningScope
+import com.example.domain.model.PlayableVerseItem
+import com.example.notification.QuranAudioPlaybackService
+import com.example.widget.QuranAudioPlayerWidgetProvider
 import java.io.File
 import java.util.Locale
 
@@ -62,6 +67,10 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
     private var tts: TextToSpeech? = null
     private var ttsReady = false
 
+    private val playerScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var progressUpdateJob: Job? = null
+    private var sleepTimerJob: Job? = null
+
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
@@ -76,6 +85,41 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
 
     private val _repeatMode = MutableStateFlow(AyahRepeatMode.ONCE)
     val repeatMode: StateFlow<AyahRepeatMode> = _repeatMode.asStateFlow()
+
+    private val _currentPosition = MutableStateFlow(0L)
+    val currentPosition: StateFlow<Long> = _currentPosition.asStateFlow()
+
+    private val _duration = MutableStateFlow(0L)
+    val duration: StateFlow<Long> = _duration.asStateFlow()
+
+    private val _activeTitle = MutableStateFlow("سورة الفاتحة")
+    val activeTitle: StateFlow<String> = _activeTitle.asStateFlow()
+
+    private val _activeSubtitle = MutableStateFlow("مشاري راشد العفاسي")
+    val activeSubtitle: StateFlow<String> = _activeSubtitle.asStateFlow()
+
+    private val _activeScope = MutableStateFlow(AudioListeningScope.SURAH)
+    val activeScope: StateFlow<AudioListeningScope> = _activeScope.asStateFlow()
+
+    private val _currentQueueIndex = MutableStateFlow(0)
+    val currentQueueIndex: StateFlow<Int> = _currentQueueIndex.asStateFlow()
+
+    private val _totalQueueCount = MutableStateFlow(1)
+    val totalQueueCount: StateFlow<Int> = _totalQueueCount.asStateFlow()
+
+    private val _sleepTimerRemainingSeconds = MutableStateFlow<Int?>(null)
+    val sleepTimerRemainingSeconds: StateFlow<Int?> = _sleepTimerRemainingSeconds.asStateFlow()
+
+    private val _sessionProgressFraction = MutableStateFlow(0f)
+    val sessionProgressFraction: StateFlow<Float> = _sessionProgressFraction.asStateFlow()
+
+    private val _sessionElapsedMs = MutableStateFlow(0L)
+    val sessionElapsedMs: StateFlow<Long> = _sessionElapsedMs.asStateFlow()
+
+    private val _sessionTotalMs = MutableStateFlow(0L)
+    val sessionTotalMs: StateFlow<Long> = _sessionTotalMs.asStateFlow()
+
+    private var currentQueueVerses: List<PlayableVerseItem> = emptyList()
 
     private var currentPlaybackSpeed: Float = 1.0f
     private var remainingLoops = 1
@@ -105,6 +149,10 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         } catch (e: Exception) {
             Log.e(TAG, "TTS initialization error", e)
         }
+        QuranAudioPlaybackService.onTogglePlayPause = { togglePlayPause() }
+        QuranAudioPlaybackService.onNextTrack = { skipToNext() }
+        QuranAudioPlaybackService.onPrevTrack = { skipToPrevious() }
+        QuranAudioPlaybackService.onStopPlayback = { stopAudio(stopService = false) }
     }
 
     private fun getOrCreatePlayer(): ExoPlayer {
@@ -125,6 +173,20 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
                     _isBuffering.value = isLoading && !player.isPlaying
                 }
 
+                override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+                    exoPlayer?.let { p ->
+                        val idx = p.currentMediaItemIndex
+                        _currentQueueIndex.value = idx
+                        if (idx in currentQueueVerses.indices) {
+                            val v = currentQueueVerses[idx]
+                            _currentPlayingVerse.value = Pair(v.surahNumber, v.verseNumber)
+                            _currentPlayingSurah.value = v.surahNumber
+                            _activeTitle.value = "سورة ${v.surahName.ifBlank { v.surahNumber.toString() }} - آية ${v.verseNumber}"
+                            notifyPlaybackStateChanged(_isPlaying.value)
+                        }
+                    }
+                }
+
                 override fun onPlaybackStateChanged(playbackState: Int) {
                     when (playbackState) {
                         Player.STATE_BUFFERING -> {
@@ -133,10 +195,18 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
                         Player.STATE_READY -> {
                             _isBuffering.value = false
                             _isPlaying.value = player.isPlaying
+                            val d = player.duration
+                            if (d > 0) {
+                                _duration.value = d
+                            }
+                            startProgressUpdates()
                         }
                         Player.STATE_ENDED -> {
                             _isBuffering.value = false
                             _isPlaying.value = false
+                            stopProgressUpdates()
+                            _currentPosition.value = _duration.value
+                            notifyPlaybackStateChanged(false)
                             val callback = activeCompletionCallback
                             activeCompletionCallback = null
                             callback?.invoke()
@@ -144,14 +214,20 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
                         Player.STATE_IDLE -> {
                             _isBuffering.value = false
                             _isPlaying.value = false
+                            stopProgressUpdates()
+                            notifyPlaybackStateChanged(false)
                         }
                     }
                 }
 
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     _isPlaying.value = isPlaying
+                    notifyPlaybackStateChanged(isPlaying)
                     if (isPlaying) {
                         _isBuffering.value = false
+                        startProgressUpdates()
+                    } else {
+                        stopProgressUpdates()
                     }
                 }
 
@@ -159,6 +235,7 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
                     Log.w(TAG, "ExoPlayer playback error: ${error.message}")
                     _isBuffering.value = false
                     _isPlaying.value = false
+                    stopProgressUpdates()
                     val errCb = activeErrorCallback
                     activeErrorCallback = null
                     errCb?.invoke()
@@ -185,8 +262,244 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         }
     }
 
+    private fun startProgressUpdates() {
+        progressUpdateJob?.cancel()
+        progressUpdateJob = playerScope.launch {
+            while (isActive) {
+                exoPlayer?.let { p ->
+                    val pos = p.currentPosition.coerceAtLeast(0L)
+                    _currentPosition.value = pos
+                    val d = p.duration
+                    if (d > 0) {
+                        _duration.value = d
+                    }
+
+                    // Update Cumulative Session Progress (Full Reading Time)
+                    if (_activeScope.value == AudioListeningScope.SURAH || currentQueueVerses.isEmpty()) {
+                        val surahDur = if (d > 0) d else _duration.value
+                        _sessionTotalMs.value = surahDur
+                        _sessionElapsedMs.value = pos
+                        if (surahDur > 0) {
+                            _sessionProgressFraction.value = (pos.toFloat() / surahDur.toFloat()).coerceIn(0f, 1f)
+                        } else {
+                            _sessionProgressFraction.value = 0f
+                        }
+                    } else {
+                        val totalCount = currentQueueVerses.size.coerceAtLeast(1)
+                        val currIdx = p.currentMediaItemIndex.coerceIn(0, totalCount - 1)
+                        _currentQueueIndex.value = currIdx
+
+                        val vDur = if (d > 0) d else 6000L
+                        val vFrac = if (vDur > 0) (pos.toFloat() / vDur.toFloat()).coerceIn(0f, 1f) else 0f
+                        val overallFrac = ((currIdx.toFloat() + vFrac) / totalCount.toFloat()).coerceIn(0f, 1f)
+                        _sessionProgressFraction.value = overallFrac
+
+                        val estTotalMs = totalCount * 6500L
+                        _sessionTotalMs.value = estTotalMs
+                        _sessionElapsedMs.value = (overallFrac * estTotalMs).toLong()
+                    }
+                }
+                delay(300)
+            }
+        }
+    }
+
+    private fun stopProgressUpdates() {
+        progressUpdateJob?.cancel()
+        progressUpdateJob = null
+    }
+
+    fun seekToSessionFraction(fraction: Float) {
+        val safeFrac = fraction.coerceIn(0f, 1f)
+        _sessionProgressFraction.value = safeFrac
+        if (_activeScope.value == AudioListeningScope.SURAH || currentQueueVerses.isEmpty()) {
+            val d = if (exoPlayer?.duration != null && exoPlayer!!.duration > 0) exoPlayer!!.duration else _duration.value
+            if (d > 0) {
+                val targetMs = (safeFrac * d).toLong()
+                seekTo(targetMs)
+            }
+        } else {
+            val totalCount = currentQueueVerses.size.coerceAtLeast(1)
+            val targetIndex = (safeFrac * totalCount).toInt().coerceIn(0, totalCount - 1)
+            try {
+                exoPlayer?.seekTo(targetIndex, 0L)
+                _currentQueueIndex.value = targetIndex
+            } catch (e: Exception) {
+                Log.e(TAG, "Error seeking to session fraction in queue", e)
+            }
+        }
+    }
+
+    fun rewind10Seconds() {
+        try {
+            exoPlayer?.let { p ->
+                val current = p.currentPosition
+                val newPos = (current - 10000L).coerceAtLeast(0L)
+                p.seekTo(newPos)
+                _currentPosition.value = newPos
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error rewinding 10 seconds", e)
+        }
+    }
+
+    fun forward10Seconds() {
+        try {
+            exoPlayer?.let { p ->
+                val current = p.currentPosition
+                val maxDur = if (p.duration > 0) p.duration else Long.MAX_VALUE
+                val newPos = (current + 10000L).coerceAtMost(maxDur)
+                p.seekTo(newPos)
+                _currentPosition.value = newPos
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error forwarding 10 seconds", e)
+        }
+    }
+
+    fun hasActiveTrack(): Boolean {
+        val p = exoPlayer ?: return false
+        return p.playbackState != Player.STATE_IDLE && p.currentMediaItem != null
+    }
+
+    fun isPaused(): Boolean {
+        val p = exoPlayer ?: return false
+        return hasActiveTrack() && !p.isPlaying && p.playbackState != Player.STATE_ENDED
+    }
+
+    fun pauseAudio() {
+        try {
+            exoPlayer?.let { p ->
+                if (p.isPlaying) {
+                    p.pause()
+                    _isPlaying.value = false
+                    stopProgressUpdates()
+                    notifyPlaybackStateChanged(false)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error pausing audio", e)
+        }
+    }
+
+    fun resumeAudio() {
+        try {
+            exoPlayer?.let { p ->
+                if (p.playbackState == Player.STATE_ENDED) {
+                    p.seekTo(0L)
+                }
+                p.play()
+                _isPlaying.value = true
+                startProgressUpdates()
+                notifyPlaybackStateChanged(true)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error resuming audio", e)
+        }
+    }
+
+    private fun notifyPlaybackStateChanged(isPlaying: Boolean) {
+        val statusText = if (_activeScope.value == AudioListeningScope.SURAH || currentQueueVerses.isEmpty()) {
+            if (isPlaying) "تلاوة كاملة • جاري الاستماع" else "تلاوة كاملة • متوقف مؤقتاً"
+        } else {
+            "الآية ${_currentQueueIndex.value + 1} من ${currentQueueVerses.size}"
+        }
+        if (isPlaying) {
+            QuranAudioPlaybackService.start(context.applicationContext, _activeTitle.value, _activeSubtitle.value, true)
+        } else {
+            if (QuranAudioPlaybackService.isServiceRunning.value) {
+                QuranAudioPlaybackService.start(context.applicationContext, _activeTitle.value, _activeSubtitle.value, false)
+            }
+        }
+        val progressPercent = (_sessionProgressFraction.value * 100).toInt().coerceIn(0, 100)
+        QuranAudioPlayerWidgetProvider.notifyWidgetUpdate(
+            context = context.applicationContext,
+            title = _activeTitle.value,
+            subtitle = _activeSubtitle.value,
+            status = statusText,
+            badge = _activeScope.value.titleAr,
+            isPlaying = isPlaying,
+            progressPercent = progressPercent
+        )
+    }
+
+    fun seekTo(positionMs: Long) {
+        try {
+            exoPlayer?.seekTo(positionMs)
+            _currentPosition.value = positionMs
+        } catch (e: Exception) {
+            Log.e(TAG, "Error seeking ExoPlayer", e)
+        }
+    }
+
+    fun hasNextItem(): Boolean {
+        return exoPlayer?.hasNextMediaItem() == true
+    }
+
+    fun hasPreviousItem(): Boolean {
+        return exoPlayer?.hasPreviousMediaItem() == true
+    }
+
+    fun skipToNext() {
+        try {
+            exoPlayer?.let { p ->
+                if (p.hasNextMediaItem()) {
+                    p.seekToNextMediaItem()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error skipping to next", e)
+        }
+    }
+
+    fun skipToPrevious() {
+        try {
+            exoPlayer?.let { p ->
+                if (p.currentPosition > 3000L) {
+                    p.seekTo(0L)
+                } else if (p.hasPreviousMediaItem()) {
+                    p.seekToPreviousMediaItem()
+                } else {
+                    p.seekTo(0L)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error skipping to previous", e)
+        }
+    }
+
+    fun setSleepTimer(minutes: Int) {
+        sleepTimerJob?.cancel()
+        if (minutes <= 0) {
+            _sleepTimerRemainingSeconds.value = null
+            return
+        }
+        _sleepTimerRemainingSeconds.value = minutes * 60
+        sleepTimerJob = playerScope.launch {
+            var remaining = minutes * 60
+            while (isActive && remaining > 0) {
+                delay(1000)
+                remaining--
+                _sleepTimerRemainingSeconds.value = remaining
+            }
+            _sleepTimerRemainingSeconds.value = null
+            stopAudio()
+        }
+    }
+
+    fun cancelSleepTimer() {
+        sleepTimerJob?.cancel()
+        _sleepTimerRemainingSeconds.value = null
+    }
+
     fun setRepeatMode(mode: AyahRepeatMode) {
         _repeatMode.value = mode
+        exoPlayer?.let { player ->
+            when (mode) {
+                AyahRepeatMode.LOOP -> player.repeatMode = Player.REPEAT_MODE_ALL
+                else -> player.repeatMode = Player.REPEAT_MODE_OFF
+            }
+        }
     }
 
     fun setPlaybackSpeed(speed: Float) {
@@ -216,9 +529,11 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         val reciterKey = normalizeReciterKey(reciterId)
         return when (reciterKey) {
             "abdulbasit" -> listOf(
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.abdulbasitmurattal/$surahNumber.mp3",
                 "https://server7.mp3quran.net/basit/$surahStr.mp3"
             )
             "husary" -> listOf(
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.husary/$surahNumber.mp3",
                 "https://server13.mp3quran.net/husr/$surahStr.mp3"
             )
             "minshawi" -> listOf(
@@ -240,8 +555,9 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
                 "https://server10.mp3quran.net/ajm/$surahStr.mp3"
             )
             else -> listOf(
-                "https://server8.mp3quran.net/afs/$surahStr.mp3",
-                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/$surahNumber.mp3"
+                "https://cdn.islamic.network/quran/audio-surah/128/ar.alafasy/$surahNumber.mp3",
+                "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/$surahStr.mp3",
+                "https://server8.mp3quran.net/afs/$surahStr.mp3"
             )
         }
     }
@@ -306,7 +622,7 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         }
 
         val audioUrl = candidates[candidateIndex]
-        stopAudio()
+        stopAudio(stopService = false)
         _isBuffering.value = true
         _currentPlayingVerse.value = Pair(surahNumber, verseNumber)
 
@@ -378,9 +694,127 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         }
     }
 
-    fun playSurahAudio(surahNumber: Int, reciterId: String, onComplete: () -> Unit = {}) {
+    fun playDirectAudioUrl(
+        url: String,
+        title: String,
+        subtitle: String,
+        onComplete: () -> Unit = {}
+    ) {
+        stopAudio(stopService = false)
+        _activeScope.value = AudioListeningScope.SURAH
+        _activeTitle.value = title
+        _activeSubtitle.value = subtitle
+        _currentQueueIndex.value = 0
+        _totalQueueCount.value = 1
+        currentQueueVerses = emptyList()
+
+        try {
+            val player = getOrCreatePlayer()
+            val mediaItem = MediaItem.Builder()
+                .setUri(url)
+                .setMediaMetadata(
+                    MediaMetadata.Builder()
+                        .setTitle(title)
+                        .setArtist(subtitle)
+                        .build()
+                )
+                .build()
+
+            player.setMediaItem(mediaItem)
+            player.prepare()
+            player.play()
+            startProgressUpdates()
+            notifyPlaybackStateChanged(true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error playing direct audio URL", e)
+        }
+    }
+
+    fun playSurahAudio(
+        surahNumber: Int,
+        reciterId: String,
+        surahName: String = "",
+        reciterDisplayName: String = "",
+        onComplete: () -> Unit = {}
+    ) {
+        _activeScope.value = AudioListeningScope.SURAH
+        _activeTitle.value = if (surahName.isNotBlank()) "سورة $surahName" else "سورة $surahNumber"
+        _activeSubtitle.value = reciterDisplayName.ifBlank { normalizeReciterKey(reciterId) }
+        _currentQueueIndex.value = 0
+        _totalQueueCount.value = 1
+        currentQueueVerses = emptyList()
+
         val candidates = getSurahAudioCandidates(reciterId, surahNumber)
         playSurahCandidate(surahNumber, reciterId, candidates, 0, onComplete)
+    }
+
+    fun playVerseQueue(
+        verses: List<PlayableVerseItem>,
+        reciterId: String,
+        title: String,
+        subtitle: String,
+        scope: AudioListeningScope,
+        startIndex: Int = 0,
+        mode: AyahRepeatMode = _repeatMode.value,
+        onComplete: () -> Unit = {}
+    ) {
+        if (verses.isEmpty()) return
+        stopAudio(stopService = false)
+        _isBuffering.value = true
+        _activeScope.value = scope
+        _activeTitle.value = title
+        _activeSubtitle.value = subtitle
+        _repeatMode.value = mode
+        currentQueueVerses = verses
+        _totalQueueCount.value = verses.size
+        val safeIndex = startIndex.coerceIn(0, verses.lastIndex)
+        _currentQueueIndex.value = safeIndex
+
+        val firstVerse = verses[safeIndex]
+        _currentPlayingVerse.value = Pair(firstVerse.surahNumber, firstVerse.verseNumber)
+        _currentPlayingSurah.value = firstVerse.surahNumber
+
+        try {
+            val player = getOrCreatePlayer()
+            when (mode) {
+                AyahRepeatMode.LOOP -> player.repeatMode = Player.REPEAT_MODE_ALL
+                else -> player.repeatMode = Player.REPEAT_MODE_OFF
+            }
+
+            val mediaItems = verses.map { v ->
+                val urls = getAyahAudioCandidates(reciterId, v.surahNumber, v.verseNumber)
+                val uri = urls.first()
+                val metadata = MediaMetadata.Builder()
+                    .setTitle("سورة ${v.surahName.ifBlank { v.surahNumber.toString() }} - آية ${v.verseNumber}")
+                    .setArtist(subtitle)
+                    .build()
+                MediaItem.Builder()
+                    .setUri(uri)
+                    .setMediaId("${v.surahNumber}:${v.verseNumber}")
+                    .setMediaMetadata(metadata)
+                    .build()
+            }
+
+            activeCompletionCallback = {
+                _isPlaying.value = false
+                _isBuffering.value = false
+                _currentPlayingVerse.value = null
+                stopProgressUpdates()
+                onComplete()
+            }
+
+            player.setMediaItems(mediaItems, safeIndex, 0L)
+            player.playbackParameters = PlaybackParameters(currentPlaybackSpeed)
+            player.prepare()
+            player.playWhenReady = true
+            player.play()
+            startProgressUpdates()
+            notifyPlaybackStateChanged(true)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error playing verse queue", e)
+            _isBuffering.value = false
+            _isPlaying.value = false
+        }
     }
 
     private fun playSurahCandidate(
@@ -400,7 +834,7 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
 
         val audioUrl = candidates[candidateIndex]
         try {
-            stopAudio()
+            stopAudio(stopService = false)
             _isBuffering.value = true
             _currentPlayingSurah.value = surahNumber
 
@@ -442,14 +876,9 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         try {
             exoPlayer?.let { player ->
                 if (player.isPlaying) {
-                    player.pause()
-                    _isPlaying.value = false
-                } else {
-                    if (player.playbackState == Player.STATE_ENDED) {
-                        player.seekTo(0)
-                    }
-                    player.play()
-                    _isPlaying.value = true
+                    pauseAudio()
+                } else if (hasActiveTrack()) {
+                    resumeAudio()
                 }
             } ?: run {
                 if (tts?.isSpeaking == true) {
@@ -463,9 +892,20 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
         }
     }
 
-    fun stopAudio() {
+    fun stopAudio(stopService: Boolean = true) {
         activeCompletionCallback = null
         activeErrorCallback = null
+        stopProgressUpdates()
+        _currentPosition.value = 0L
+        _sessionProgressFraction.value = 0f
+        _sessionElapsedMs.value = 0L
+        if (stopService) {
+            QuranAudioPlaybackService.stop(context.applicationContext)
+        }
+        QuranAudioPlayerWidgetProvider.notifyWidgetUpdate(
+            context = context.applicationContext,
+            isPlaying = false
+        )
         try {
             exoPlayer?.let { player ->
                 if (player.isPlaying || player.playbackState != Player.STATE_IDLE) {
@@ -500,6 +940,13 @@ class QuranAudioPlayer(private val context: Context) : TextToSpeech.OnInitListen
     }
 
     fun release() {
+        stopProgressUpdates()
+        sleepTimerJob?.cancel()
+        try {
+            playerScope.cancel()
+        } catch (e: Exception) {
+            Log.w(TAG, "Error cancelling player scope", e)
+        }
         stopAudio()
         try {
             mediaSession?.release()

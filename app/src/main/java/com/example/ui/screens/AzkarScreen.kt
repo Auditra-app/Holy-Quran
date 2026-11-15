@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.example.data.provider.AzkarDataProvider
 import com.example.domain.model.AzkarCategory
 import com.example.domain.model.AzkarItem
+import com.example.notification.PeriodicDuaaManager
 import com.example.ui.theme.EmeraldPrimary
 import com.example.ui.theme.IslamicGold
 import com.example.ui.theme.ScheherazadeFontFamily
@@ -62,6 +63,7 @@ fun AzkarScreen(
     var selectedCategoryId by remember { mutableStateOf(initialCategory) }
     var searchQuery by remember { mutableStateOf("") }
     var showQuickReadSheet by remember { mutableStateOf(initialQuickRead) }
+    var showPeriodicDuaaDialog by remember { mutableStateOf(false) }
     var selectedVirtueZikr by remember { mutableStateOf<AzkarItem?>(null) }
 
     LaunchedEffect(initialCategory) {
@@ -120,6 +122,16 @@ fun AzkarScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = { showPeriodicDuaaDialog = true },
+                        modifier = Modifier.testTag("periodic_duaa_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.NotificationsActive,
+                            contentDescription = if (isArabic) "الأدعية الدورية" else "Periodic Duaa",
+                            tint = IslamicGold
+                        )
+                    }
                     IconButton(
                         onClick = { showQuickReadSheet = true },
                         modifier = Modifier.testTag("quick_read_azkar_btn")
@@ -262,6 +274,17 @@ fun AzkarScreen(
                 }
             }
 
+            // Recited Audio Banner for Morning & Evening Azkar (Sheikh Mishary Al-Afasy)
+            if (selectedCategoryId == "morning" || selectedCategoryId == "evening") {
+                val isMorning = selectedCategoryId == "morning"
+                AzkarAudioPlayerBanner(
+                    isMorning = isMorning,
+                    viewModel = viewModel,
+                    isArabic = isArabic,
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                )
+            }
+
             Spacer(modifier = Modifier.height(8.dp))
 
             // Azkar Items List
@@ -385,6 +408,13 @@ fun AzkarScreen(
             zikr = zikr,
             isArabic = isArabic,
             onDismiss = { selectedVirtueZikr = null }
+        )
+    }
+
+    if (showPeriodicDuaaDialog) {
+        PeriodicDuaaSettingsDialog(
+            isArabic = isArabic,
+            onDismiss = { showPeriodicDuaaDialog = false }
         )
     }
 }
@@ -1040,4 +1070,420 @@ fun AzkarVirtueBottomSheet(
             Spacer(modifier = Modifier.height(10.dp))
         }
     }
+}
+
+// -------------------------------------------------------------
+// RECITATIONS AUDIO BANNER (SHEIKH MISHARY AL-AFASY)
+// -------------------------------------------------------------
+@Composable
+private fun AzkarAudioPlayerBanner(
+    isMorning: Boolean,
+    viewModel: QuranViewModel,
+    isArabic: Boolean,
+    modifier: Modifier = Modifier
+) {
+    val isPlaying by viewModel.isPlayingAudio.collectAsState()
+    val isBuffering by viewModel.isBufferingAudio.collectAsState()
+    val activeTitle by viewModel.audioActiveTitle.collectAsState()
+    val progressFraction by viewModel.audioSessionProgressFraction.collectAsState()
+    val elapsedMs by viewModel.audioSessionElapsedMs.collectAsState()
+    val totalMs by viewModel.audioSessionTotalMs.collectAsState()
+
+    val targetTitle = if (isMorning) "أذكار الصباح بصوت الشيخ مشاري العفاسي" else "أذكار المساء بصوت الشيخ مشاري العفاسي"
+    val isThisTrackActive = activeTitle == targetTitle
+
+    Card(
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        border = BorderStroke(1.dp, IslamicGold.copy(alpha = 0.4f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(
+                            EmeraldPrimary.copy(alpha = 0.08f),
+                            IslamicGold.copy(alpha = 0.04f)
+                        )
+                    )
+                )
+                .padding(14.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            // Header Info
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = EmeraldPrimary,
+                    modifier = Modifier.size(42.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        if (isThisTrackActive && isBuffering) {
+                            CircularProgressIndicator(
+                                color = Color.White,
+                                strokeWidth = 2.dp,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = if (isThisTrackActive && isPlaying) Icons.Default.GraphicEq else Icons.Default.Headphones,
+                                contentDescription = null,
+                                tint = IslamicGold,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = targetTitle,
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = if (isArabic) "الشيخ مشاري راشد العفاسي • تسجيل متقن" else "Sheikh Mishary Al-Afasy • Studio Audio",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = EmeraldPrimary.copy(alpha = 0.15f),
+                    contentColor = EmeraldPrimary
+                ) {
+                    Text(
+                        text = if (isThisTrackActive && isPlaying) "جاري الاستماع" else "تلاوة صوتية",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                    )
+                }
+            }
+
+            // If active and playing/paused: show seek slider and controls
+            if (isThisTrackActive) {
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    Slider(
+                        value = progressFraction,
+                        onValueChange = { viewModel.seekAudioSessionFraction(it) },
+                        colors = SliderDefaults.colors(
+                            thumbColor = EmeraldPrimary,
+                            activeTrackColor = EmeraldPrimary,
+                            inactiveTrackColor = EmeraldPrimary.copy(alpha = 0.2f)
+                        ),
+                        modifier = Modifier.fillMaxWidth().height(24.dp)
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        val elapsedSecs = (elapsedMs / 1000).toInt()
+                        val totalSecs = (totalMs / 1000).toInt()
+                        Text(
+                            text = String.format("%02d:%02d", elapsedSecs / 60, elapsedSecs % 60),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Text(
+                            text = if (totalSecs > 0) String.format("%02d:%02d", totalSecs / 60, totalSecs % 60) else "--:--",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    IconButton(onClick = {
+                        val newFrac = (progressFraction - 0.03f).coerceAtLeast(0f)
+                        viewModel.seekAudioSessionFraction(newFrac)
+                    }) {
+                        Icon(imageVector = Icons.Default.Replay10, contentDescription = "Rewind 10s")
+                    }
+
+                    FilledTonalIconButton(
+                        onClick = { viewModel.toggleAudioPlayback() },
+                        colors = IconButtonDefaults.filledTonalIconButtonColors(
+                            containerColor = EmeraldPrimary,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier.size(46.dp)
+                    ) {
+                        Icon(
+                            imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                            contentDescription = if (isPlaying) "Pause" else "Play",
+                            modifier = Modifier.size(26.dp)
+                        )
+                    }
+
+                    IconButton(onClick = {
+                        val newFrac = (progressFraction + 0.03f).coerceAtMost(1f)
+                        viewModel.seekAudioSessionFraction(newFrac)
+                    }) {
+                        Icon(imageVector = Icons.Default.Forward10, contentDescription = "Forward 10s")
+                    }
+
+                    IconButton(onClick = { viewModel.stopAudioPlayback() }) {
+                        Icon(imageVector = Icons.Default.Stop, contentDescription = "Stop", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
+            } else {
+                // If not currently playing, show prominent one-tap play button
+                Button(
+                    onClick = { viewModel.playAzkarAudio(isMorning) },
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = EmeraldPrimary),
+                    modifier = Modifier.fillMaxWidth().height(42.dp)
+                ) {
+                    Icon(imageVector = Icons.Default.PlayArrow, contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text(
+                        text = if (isArabic) "استماع للأذكار بصوت الشيخ مشاري العفاسي" else "Listen to Audio by Mishary Al-Afasy",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------
+// PERIODIC DUAA SETTINGS DIALOG (التذكير الصوتي بالأدعية والأذكار)
+// -------------------------------------------------------------
+@Composable
+private fun PeriodicDuaaSettingsDialog(
+    isArabic: Boolean,
+    onDismiss: () -> Unit
+) {
+    val context = LocalContext.current
+    var isEnabled by remember { mutableStateOf(PeriodicDuaaManager.isEnabled(context)) }
+    var voiceSource by remember { mutableStateOf(PeriodicDuaaManager.getVoiceSource(context)) }
+    var intervalMinutes by remember { mutableIntStateOf(PeriodicDuaaManager.getIntervalMinutes(context)) }
+    var quietHoursEnabled by remember { mutableStateOf(PeriodicDuaaManager.isQuietHoursEnabled(context)) }
+    var isTestingVoice by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Surface(
+                    shape = CircleShape,
+                    color = EmeraldPrimary.copy(alpha = 0.15f),
+                    modifier = Modifier.size(34.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            imageVector = Icons.Default.NotificationsActive,
+                            contentDescription = null,
+                            tint = EmeraldPrimary,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+                Text(
+                    text = if (isArabic) "التذكير الصوتي بالأدعية" else "Periodic Voice Supplications",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 17.sp,
+                    fontFamily = TajawalFontFamily
+                )
+            }
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                Text(
+                    text = if (isArabic)
+                        "تشغيل أدعية وأذكار صوتية مباركة تلقائياً كل فترة (مثل الصلاة على النبي ﷺ والتسبيح والاستغفار)."
+                    else
+                        "Automatically play voice supplications and dhikr at chosen intervals.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Master Toggle
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = if (isArabic) "تفعيل التذكير الصوتي" else "Enable Voice Reminders",
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp
+                    )
+                    Switch(
+                        checked = isEnabled,
+                        onCheckedChange = {
+                            isEnabled = it
+                            PeriodicDuaaManager.setEnabled(context, it)
+                        },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = EmeraldPrimary,
+                            checkedTrackColor = EmeraldPrimary.copy(alpha = 0.3f)
+                        )
+                    )
+                }
+
+                if (isEnabled) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                    Text(
+                        text = if (isArabic) "صوت التذكير بالأدعية (أصوات شيوخ معروفين):" else "Supplication Voice (Renowned Sheikhs):",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    LazyRow(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(PeriodicDuaaManager.VOICE_OPTIONS) { opt ->
+                            val isSel = voiceSource == opt.id
+                            FilterChip(
+                                selected = isSel,
+                                onClick = {
+                                    voiceSource = opt.id
+                                    PeriodicDuaaManager.setVoiceSource(context, opt.id)
+                                },
+                                label = {
+                                    Text(
+                                        text = if (isArabic) opt.nameArabic else opt.nameEnglish,
+                                        fontSize = 12.sp,
+                                        fontWeight = if (isSel) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Mic, contentDescription = null, modifier = Modifier.size(16.dp))
+                                },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = EmeraldPrimary,
+                                    selectedLabelColor = Color.White,
+                                    selectedLeadingIconColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+
+                    Text(
+                        text = if (isArabic) "التكرار كل:" else "Repeat Every:",
+                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+
+                    // Interval options
+                    val intervals = listOf(15, 30, 45, 60, 120)
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        items(intervals) { mins ->
+                            val isSel = mins == intervalMinutes
+                            val label = when (mins) {
+                                15 -> if (isArabic) "١٥ دقيقة" else "15m"
+                                30 -> if (isArabic) "٣٠ دقيقة" else "30m"
+                                45 -> if (isArabic) "٤٥ دقيقة" else "45m"
+                                60 -> if (isArabic) "ساعة" else "1h"
+                                else -> if (isArabic) "ساعتان" else "2h"
+                            }
+                            FilterChip(
+                                selected = isSel,
+                                onClick = {
+                                    intervalMinutes = mins
+                                    PeriodicDuaaManager.setIntervalMinutes(context, mins)
+                                },
+                                label = { Text(label, fontSize = 12.sp) },
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = EmeraldPrimary,
+                                    selectedLabelColor = Color.White
+                                ),
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                        }
+                    }
+
+                    // Quiet Hours toggle
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = if (isArabic) "ساعات الهدوء ليلاً" else "Quiet Hours (Night)",
+                                fontWeight = FontWeight.SemiBold,
+                                fontSize = 13.sp
+                            )
+                            Text(
+                                text = if (isArabic) "إيقاف الصوت من ١١:٠٠ م إلى ٦:٣٠ ص" else "Pause voice between 11 PM and 6:30 AM",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Switch(
+                            checked = quietHoursEnabled,
+                            onCheckedChange = {
+                                quietHoursEnabled = it
+                                PeriodicDuaaManager.setQuietHoursEnabled(context, it)
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = EmeraldPrimary,
+                                checkedTrackColor = EmeraldPrimary.copy(alpha = 0.3f)
+                            )
+                        )
+                    }
+
+                    // Test Voice Button
+                    OutlinedButton(
+                        onClick = {
+                            isTestingVoice = true
+                            PeriodicDuaaManager.testVoiceNow(context) {
+                                isTestingVoice = false
+                            }
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Icon(imageVector = Icons.Default.VolumeUp, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = if (isTestingVoice) (if (isArabic) "جاري تشغيل الصوت..." else "Playing voice...") else (if (isArabic) "🔊 تجربة الصوت الآن" else "Test Voice Now"),
+                            fontSize = 13.sp
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    text = if (isArabic) "تم" else "Done",
+                    fontWeight = FontWeight.Bold,
+                    color = EmeraldPrimary
+                )
+            }
+        }
+    )
 }

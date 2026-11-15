@@ -76,6 +76,12 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <service
+            android:name="com.example.notification.QuranAudioPlaybackService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
         <receiver
             android:name="com.example.notification.AzanMuteReceiver"
             android:enabled="true"
@@ -115,6 +121,15 @@
             android:name="com.example.notification.ReadingReminderReceiver"
             android:enabled="true"
             android:exported="false" />
+
+        <receiver
+            android:name="com.example.notification.PeriodicDuaaReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.ACTION_PERIODIC_DUAA_ALARM" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name="com.example.notification.AutoLocationReceiver"
@@ -210,6 +225,23 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/azkar_widget_info" />
+        </receiver>
+
+        <receiver
+            android:name="com.example.widget.QuranAudioPlayerWidgetProvider"
+            android:label="@string/widget_quran_audio_name"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+                <action android:name="com.example.ACTION_UPDATE_QURAN_AUDIO_WIDGET" />
+                <action android:name="com.example.ACTION_WIDGET_AUDIO_PLAY_PAUSE" />
+                <action android:name="com.example.ACTION_WIDGET_AUDIO_NEXT" />
+                <action android:name="com.example.ACTION_WIDGET_AUDIO_PREV" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/quran_audio_widget_info" />
         </receiver>
 
         <service

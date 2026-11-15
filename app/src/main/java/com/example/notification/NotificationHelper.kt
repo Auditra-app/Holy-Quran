@@ -24,6 +24,7 @@ object NotificationHelper {
     const val CHANNEL_AZKAR_REMINDER = "AZKAR_REMINDER_NOTIFICATION_CHANNEL"
     const val CHANNEL_READING_REMINDER = "READING_REMINDER_NOTIFICATION_CHANNEL"
     const val CHANNEL_PRAYER_FOLLOWUP = "PRAYER_FOLLOWUP_NOTIFICATION_CHANNEL"
+    const val CHANNEL_APP_UPDATE = "APP_UPDATE_NOTIFICATION_CHANNEL"
 
     fun getAzanChannelId(selectedAzanSound: String, isSilent: Boolean): String {
         return if (isSilent || selectedAzanSound == "silent_tone" || selectedAzanSound == "silent") {
@@ -135,7 +136,23 @@ object NotificationHelper {
             notificationManager.createNotificationChannel(dailyVerseChannel)
             notificationManager.createNotificationChannel(azkarChannel)
             notificationManager.createNotificationChannel(readingReminderChannel)
+            // 7. App Update Notification Channel (High-Priority Alert with Red visual indicator)
+            val appUpdateChannel = NotificationChannel(
+                CHANNEL_APP_UPDATE,
+                "تحديثات التطبيق الهامة (App Updates)",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "إشعارات هامة بوجود تحديثات جديدة للتطبيق وإرشادات التثبيت"
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 200, 500)
+                enableLights(true)
+                lightColor = android.graphics.Color.RED
+                setShowBadge(true)
+                lockscreenVisibility = NotificationCompat.VISIBILITY_PUBLIC
+            }
+
             notificationManager.createNotificationChannel(followUpChannel)
+            notificationManager.createNotificationChannel(appUpdateChannel)
 
             Log.d(TAG, "Notification channels successfully created and registered.")
         } catch (e: Exception) {
@@ -611,6 +628,90 @@ object NotificationHelper {
                 NotificationCompat.BigTextStyle()
                     .setBigContentTitle("✨ خير الأعمال.. الصلاة على وقتها")
                     .bigText("«سُئِلَ النبيُّ ﷺ: أيُّ العَمَلِ أحَبُّ إلى اللَّهِ؟ قالَ: الصَّلاةُ علَى وقْتِها»\n\nبارك الله فيك، لا تؤخر صلاة $prayerNameAr وبادر لأدائها الآن 🕋.")
+            )
+    }
+
+    fun buildAppUpdateNotification(
+        context: Context,
+        versionName: String,
+        versionCode: Long,
+        apkDownloadUrl: String,
+        isArabic: Boolean
+    ): NotificationCompat.Builder {
+        val mainIntent = Intent(context, MainActivity::class.java).apply {
+            action = "com.example.ACTION_SHOW_UPDATE_DIALOG"
+            data = Uri.parse("holyquran://update?version=$versionName")
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra("navigate_to", "home")
+            putExtra("show_update_dialog", true)
+        }
+
+        val contentPendingIntent = PendingIntent.getActivity(
+            context,
+            9701,
+            mainIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val downloadIntent = Intent(Intent.ACTION_VIEW, Uri.parse(apkDownloadUrl.ifBlank { "https://holyquranapp.web.app/" })).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        val downloadPendingIntent = PendingIntent.getActivity(
+            context,
+            9702,
+            downloadIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        val title = if (isArabic) {
+            "🚨 تحديث هام متاح (v$versionName) - يرجى قراءة التعليمات"
+        } else {
+            "🚨 Important App Update (v$versionName) - Action Required"
+        }
+
+        val shortWarning = if (isArabic) {
+            "⚠️ تنبيه: يرجى إلغاء تثبيت الإصدار الحالي أولاً ثم تثبيت الإصدار الجديد بعد اكتمال التنزيل ليعمل بنجاح!"
+        } else {
+            "⚠️ Note: Please uninstall current version first, then install this new version after download completes!"
+        }
+
+        val fullWarning = if (isArabic) {
+            "🚨 يتوفر تحديث جديد لتطبيق القرآن الكريم (v$versionName)\n\n" +
+            "⚠️ تنبيه عاجل وهام لجميع المستخدمين:\n" +
+            "نظراً للتحديثات البنيوية الجديدة، يرجى إلغاء تثبيت (Uninstall) هذا الإصدار الحالي من هاتفك أولاً، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل لضمان نجاح التثبيت وتجنب تعارض الحزم.\n\n" +
+            "اضغط على زر التنزيل لبدء تحميل الإصدار الجديد فوراً 📥"
+        } else {
+            "🚨 A new version of Holy Quran app is available (v$versionName)\n\n" +
+            "⚠️ Urgent notice for all users:\n" +
+            "Please uninstall the current version from your device first, then install the new version after downloading to ensure a clean installation and avoid package conflicts.\n\n" +
+            "Tap Download to get the latest version now 📥"
+        }
+
+        val appLogoBitmap = getAppLogoBitmap(context)
+
+        return NotificationCompat.Builder(context, CHANNEL_APP_UPDATE)
+            .setSmallIcon(R.drawable.ic_stat_quran)
+            .apply {
+                if (appLogoBitmap != null) setLargeIcon(appLogoBitmap)
+            }
+            .setColor(android.graphics.Color.parseColor("#D32F2F"))
+            .setContentTitle(title)
+            .setContentText(shortWarning)
+            .setSubText(if (isArabic) "تحديث عاجل" else "Urgent Update")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_STATUS)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setAutoCancel(true)
+            .setContentIntent(contentPendingIntent)
+            .setStyle(
+                NotificationCompat.BigTextStyle()
+                    .setBigContentTitle(title)
+                    .bigText(fullWarning)
+            )
+            .addAction(
+                R.drawable.ic_stat_quran,
+                if (isArabic) "📥 تنزيل الإصدار الجديد" else "📥 Download New Version",
+                downloadPendingIntent
             )
     }
 }

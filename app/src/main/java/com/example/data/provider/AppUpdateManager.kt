@@ -59,6 +59,7 @@ object AppUpdateManager {
     private const val DEFAULT_UPDATE_NOTES = "تحديث جديد v1.2.0: تحسينات متقدمة في السرعة والأداء، دعم التحديث المباشر بضغطة واحدة، وتطوير واجهة المصحف الشريف."
 
     private var pendingDownloadId: Long = -1L
+    private var pendingDownloadFileName: String? = null
     private var isReceiverRegistered = false
 
     private val downloadReceiver = object : BroadcastReceiver() {
@@ -93,35 +94,71 @@ object AppUpdateManager {
     private fun promptInstallDownloadedApk(context: Context, downloadId: Long) {
         try {
             val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
-            val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val apkFile = File(downloadsDir, "HolyQuran_Update.apk")
+            var resolvedUri: Uri? = null
 
-            val installIntent = Intent(Intent.ACTION_VIEW).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
-
-                if (apkFile.exists()) {
-                    val apkUri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        apkFile
-                    )
-                    setDataAndType(apkUri, "application/vnd.android.package-archive")
-                } else {
-                    val uri = downloadManager?.getUriForDownloadedFile(downloadId)
-                    if (uri != null) {
-                        setDataAndType(uri, "application/vnd.android.package-archive")
-                    } else {
-                        Toast.makeText(context, "اكتمل التنزيل! افتح ملف HolyQuran_Update.apk من المجلد 📥", Toast.LENGTH_LONG).show()
-                        return
+            // 1. First priority: Query DownloadManager cursor for exact local file path of this downloadId
+            if (downloadManager != null) {
+                try {
+                    val query = DownloadManager.Query().setFilterById(downloadId)
+                    downloadManager.query(query)?.use { cursor ->
+                        if (cursor.moveToFirst()) {
+                            val uriIndex = cursor.getColumnIndex(DownloadManager.COLUMN_LOCAL_URI)
+                            if (uriIndex != -1) {
+                                val localUriStr = cursor.getString(uriIndex)
+                                if (!localUriStr.isNullOrBlank()) {
+                                    val localUri = Uri.parse(localUriStr)
+                                    val path = localUri.path
+                                    if (path != null) {
+                                        val downloadedFile = File(path)
+                                        if (downloadedFile.exists() && downloadedFile.length() > 0) {
+                                            resolvedUri = FileProvider.getUriForFile(
+                                                context,
+                                                "${context.packageName}.fileprovider",
+                                                downloadedFile
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
+                } catch (e: Exception) {
+                    Log.w(TAG, "Failed resolving downloaded file via query cursor", e)
                 }
             }
 
-            context.startActivity(installIntent)
-            Toast.makeText(context, "اكتمل تنزيل التحديث! جاري فتح معالج التثبيت 🚀", Toast.LENGTH_LONG).show()
+            // 2. Second priority: Check specific pendingDownloadFileName in Downloads
+            if (resolvedUri == null && !pendingDownloadFileName.isNullOrBlank()) {
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val targetFile = File(downloadsDir, pendingDownloadFileName!!)
+                if (targetFile.exists() && targetFile.length() > 0) {
+                    resolvedUri = FileProvider.getUriForFile(
+                        context,
+                        "${context.packageName}.fileprovider",
+                        targetFile
+                    )
+                }
+            }
+
+            // 3. Third priority: downloadManager.getUriForDownloadedFile
+            if (resolvedUri == null && downloadManager != null) {
+                resolvedUri = downloadManager.getUriForDownloadedFile(downloadId)
+            }
+
+                        if (resolvedUri != null) {
+                val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    setDataAndType(resolvedUri, "application/vnd.android.package-archive")
+                }
+                context.startActivity(installIntent)
+                Toast.makeText(context, "اكتمل التنزيل! ⚠️ تذكير: يرجى إلغاء تثبيت الإصدار القديم أولاً ثم تثبيت هذا التحديث لتجنب تعارض الحزم 🚀", Toast.LENGTH_LONG).show()
+            } else {
+                val targetName = pendingDownloadFileName ?: "ملف التحديث"
+                Toast.makeText(context, "اكتمل التنزيل! ⚠️ احذف الإصدار القديم وافتح $targetName من التنزيلات 📥", Toast.LENGTH_LONG).show()
+            }
         } catch (e: Exception) {
             Log.e(TAG, "Error prompting APK installation", e)
-            Toast.makeText(context, "اكتمل التنزيل! تفقد مجلد التنزيلات (Downloads) لتثبيت HolyQuran_Update.apk", Toast.LENGTH_LONG).show()
+            Toast.makeText(context, "اكتمل التنزيل! تفقد مجلد التنزيلات (Downloads) لتثبيت ملف التحديث 📥", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -144,11 +181,15 @@ object AppUpdateManager {
 
             for (endpoint in endpoints) {
                 try {
-                    val url = URL(endpoint)
+                    val cacheBusterUrl = if (endpoint.contains("?")) "$endpoint&_t=${System.currentTimeMillis()}" else "$endpoint?_t=${System.currentTimeMillis()}"
+                    val url = URL(cacheBusterUrl)
                     val connection = url.openConnection() as HttpURLConnection
-                    connection.connectTimeout = 3000
-                    connection.readTimeout = 3000
+                    connection.connectTimeout = 4000
+                    connection.readTimeout = 4000
                     connection.requestMethod = "GET"
+                    connection.setRequestProperty("Cache-Control", "no-cache, no-store, must-revalidate")
+                    connection.setRequestProperty("Pragma", "no-cache")
+                    connection.useCaches = false
 
                     if (connection.responseCode == 200) {
                         val jsonText = connection.inputStream.bufferedReader(java.nio.charset.StandardCharsets.UTF_8).use { it.readText() }
@@ -250,9 +291,25 @@ object AppUpdateManager {
         }
     }
 
-    fun startApkDownload(context: Context, downloadUrl: String) {
+    fun startApkDownload(context: Context, downloadUrl: String, targetVersionName: String = "") {
         val url = downloadUrl.ifBlank { DEFAULT_APK_URL }
         registerDownloadReceiver(context)
+
+        // Derive version-specific filename from downloadUrl or targetVersionName
+        val resolvedFileName = try {
+            val lastSegment = Uri.parse(url).lastPathSegment
+            if (!lastSegment.isNullOrBlank() && (lastSegment.endsWith(".apk", ignoreCase = true) || lastSegment.endsWith(".data", ignoreCase = true))) {
+                lastSegment.substringBeforeLast(".") + ".apk"
+            } else if (targetVersionName.isNotBlank()) {
+                "HolyQuran_v${targetVersionName.trimStart('v')}.apk"
+            } else {
+                "HolyQuran_Update_${System.currentTimeMillis()}.apk"
+            }
+        } catch (e: Exception) {
+            if (targetVersionName.isNotBlank()) "HolyQuran_v${targetVersionName.trimStart('v')}.apk" else "HolyQuran_Update.apk"
+        }
+
+        pendingDownloadFileName = resolvedFileName
 
         try {
             val downloadManager = context.getSystemService(Context.DOWNLOAD_SERVICE) as? DownloadManager
@@ -260,21 +317,20 @@ object AppUpdateManager {
                 // Remove stale previous download file if exists
                 try {
                     val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                    val oldApk = File(downloadsDir, "HolyQuran_Update.apk")
+                    val oldApk = File(downloadsDir, resolvedFileName)
                     if (oldApk.exists()) {
                         oldApk.delete()
                     }
                 } catch (e: Exception) {
-                    Log.w(TAG, "Could not delete old update APK file", e)
+                    Log.w(TAG, "Could not delete old update APK file: ${e.message}")
                 }
 
                 val uri = Uri.parse(url)
-                val fileName = "HolyQuran_Update.apk"
                 val request = DownloadManager.Request(uri).apply {
                     setTitle("تحديث تطبيق القرآن الكريم 🚀")
-                    setDescription("جاري تنزيل أحدث إصدار من التطبيق...")
+                    setDescription("جاري تنزيل أحدث إصدار ($resolvedFileName)...")
                     setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+                    setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, resolvedFileName)
                     setMimeType("application/vnd.android.package-archive")
                     setAllowedOverMetered(true)
                     setAllowedOverRoaming(true)
@@ -343,4 +399,23 @@ object AppUpdateManager {
             }
         }.start()
     }
+
+    fun showUpdateAvailableNotification(context: Context, updateInfo: AppUpdateInfo, isArabic: Boolean = true) {
+        try {
+            com.example.notification.NotificationHelper.createNotificationChannels(context)
+            val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager ?: return
+            val builder = com.example.notification.NotificationHelper.buildAppUpdateNotification(
+                context = context,
+                versionName = updateInfo.latestVersionName,
+                versionCode = updateInfo.latestVersionCode,
+                apkDownloadUrl = updateInfo.apkDownloadUrl,
+                isArabic = isArabic
+            )
+            nm.notify(9701, builder.build())
+            Log.d(TAG, "Posted red app update notification for v${updateInfo.latestVersionName}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error posting update notification", e)
+        }
+    }
+
 }

@@ -8,6 +8,7 @@ import com.example.data.local.QuranDatabase
 import com.example.data.local.UserSettingsEntity
 import com.example.data.repository.QuranRepository
 import com.example.domain.model.*
+import com.example.data.provider.QuranQuartersProvider
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,18 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     val currentPlayingVerse: StateFlow<Pair<Int, Int>?> = audioPlayer.currentPlayingVerse
     val currentPlayingSurah: StateFlow<Int?> = audioPlayer.currentPlayingSurah
     val repeatMode: StateFlow<AyahRepeatMode> = audioPlayer.repeatMode
+
+    val audioCurrentPosition: StateFlow<Long> = audioPlayer.currentPosition
+    val audioDuration: StateFlow<Long> = audioPlayer.duration
+    val audioSessionProgressFraction: StateFlow<Float> = audioPlayer.sessionProgressFraction
+    val audioSessionElapsedMs: StateFlow<Long> = audioPlayer.sessionElapsedMs
+    val audioSessionTotalMs: StateFlow<Long> = audioPlayer.sessionTotalMs
+    val audioActiveTitle: StateFlow<String> = audioPlayer.activeTitle
+    val audioActiveSubtitle: StateFlow<String> = audioPlayer.activeSubtitle
+    val audioActiveScope: StateFlow<AudioListeningScope> = audioPlayer.activeScope
+    val audioCurrentQueueIndex: StateFlow<Int> = audioPlayer.currentQueueIndex
+    val audioTotalQueueCount: StateFlow<Int> = audioPlayer.totalQueueCount
+    val audioSleepTimerRemainingSeconds: StateFlow<Int?> = audioPlayer.sleepTimerRemainingSeconds
 
     val userSettings: StateFlow<UserSettingsEntity> = repository.userSettings
         .stateIn(
@@ -340,17 +353,232 @@ class QuranViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun toggleAudioPlayback() {
-        if (isPlayingAudio.value) {
+        if (audioPlayer.hasActiveTrack()) {
             audioPlayer.togglePlayPause()
         } else {
             val surah = repository.getSurahs().lastOrNull { it.startPage <= _currentPage.value } ?: repository.getSurahs().first()
-            audioPlayer.playSurahAudio(surah.id, _selectedReciter.value.id)
+            playSurahAudioDetailed(surah.id, _selectedReciter.value.id)
         }
     }
 
-    fun playSpecificSurahAudio(surahId: Int) {
-        audioPlayer.playSurahAudio(surahId, _selectedReciter.value.id)
+    fun hasActiveAudio(): Boolean = audioPlayer.hasActiveTrack()
+    fun isAudioPaused(): Boolean = audioPlayer.isPaused()
+
+    fun resumeAudioPlayback() {
+        audioPlayer.resumeAudio()
     }
+
+    fun pauseAudioPlayback() {
+        audioPlayer.pauseAudio()
+    }
+
+    fun playSpecificSurahAudio(surahId: Int) {
+        val surah = repository.getSurahs().firstOrNull { it.id == surahId } ?: repository.getSurahs().first()
+        audioPlayer.playSurahAudio(
+            surahNumber = surahId,
+            reciterId = _selectedReciter.value.id,
+            surahName = surah.nameArabic,
+            reciterDisplayName = _selectedReciter.value.nameArabic
+        )
+    }
+
+    fun playSurahAudioDetailed(surahId: Int, reciterId: String? = null) {
+        val reciter = reciterId?.let { id -> reciters.firstOrNull { it.id == id } } ?: _selectedReciter.value
+        val surah = repository.getSurahs().firstOrNull { it.id == surahId } ?: repository.getSurahs().first()
+        audioPlayer.playSurahAudio(
+            surahNumber = surah.id,
+            reciterId = reciter.id,
+            surahName = surah.nameArabic,
+            reciterDisplayName = reciter.nameArabic
+        )
+    }
+
+    fun playJuzAudioDetailed(juzNumber: Int, reciterId: String? = null) {
+        val reciter = reciterId?.let { id -> reciters.firstOrNull { it.id == id } } ?: _selectedReciter.value
+        val juz = repository.getJuzList().firstOrNull { it.number == juzNumber } ?: repository.getJuzList().first()
+        val nextJuz = repository.getJuzList().firstOrNull { it.number == juzNumber + 1 }
+        val startPage = juz.startPage
+        val endPage = nextJuz?.let { it.startPage - 1 } ?: 604
+        val allVerses = mutableListOf<PlayableVerseItem>()
+        for (p in startPage..endPage) {
+            val pageVerses = repository.getVersesForPage(p)
+            pageVerses.forEach { v ->
+                if (allVerses.none { it.surahNumber == v.surahId && it.verseNumber == v.verseNumber }) {
+                    allVerses.add(PlayableVerseItem(v.surahId, v.verseNumber, v.surahNameArabic, v.textUthmani, v.pageNumber))
+                }
+            }
+        }
+        audioPlayer.playVerseQueue(
+            verses = allVerses,
+            reciterId = reciter.id,
+            title = juz.nameArabic,
+            subtitle = reciter.nameArabic,
+            scope = AudioListeningScope.JUZ
+        )
+    }
+
+    fun playPageAudioDetailed(pageNumber: Int, reciterId: String? = null) {
+        val reciter = reciterId?.let { id -> reciters.firstOrNull { it.id == id } } ?: _selectedReciter.value
+        val page = pageNumber.coerceIn(1, 604)
+        val verses = repository.getVersesForPage(page).map {
+            PlayableVerseItem(it.surahId, it.verseNumber, it.surahNameArabic, it.textUthmani, it.pageNumber)
+        }
+        val surah = repository.getSurahs().lastOrNull { it.startPage <= page }
+        audioPlayer.playVerseQueue(
+            verses = verses,
+            reciterId = reciter.id,
+            title = "صفحة $page ${surah?.let { "(${it.nameArabic})" } ?: ""}",
+            subtitle = reciter.nameArabic,
+            scope = AudioListeningScope.PAGE
+        )
+    }
+
+    fun playQuarterAudioDetailed(quarterId: Int, reciterId: String? = null) {
+        val reciter = reciterId?.let { id -> reciters.firstOrNull { it.id == id } } ?: _selectedReciter.value
+        val quarter = QuranQuartersProvider.getQuarterById(quarterId) ?: QuranQuartersProvider.QUARTERS.first()
+        val nextQuarter = QuranQuartersProvider.getQuarterById(quarterId + 1)
+
+        val surahs = repository.getSurahs()
+        val verses = mutableListOf<PlayableVerseItem>()
+
+        val startSurah = quarter.surahId
+        val startAyah = quarter.startAyah
+        val endSurah = nextQuarter?.surahId ?: 114
+        val endAyah = nextQuarter?.let {
+            if (it.startAyah > 1) it.startAyah - 1
+            else {
+                surahs.firstOrNull { s -> s.id == it.surahId - 1 }?.versesCount ?: 1
+            }
+        } ?: 6
+
+        if (startSurah == endSurah) {
+            val s = surahs.firstOrNull { it.id == startSurah }
+            val sName = s?.nameArabic ?: quarter.surahNameArabic
+            for (a in startAyah..endAyah.coerceAtLeast(startAyah)) {
+                verses.add(PlayableVerseItem(startSurah, a, sName))
+            }
+        } else {
+            val s1 = surahs.firstOrNull { it.id == startSurah }
+            val count1 = s1?.versesCount ?: startAyah
+            for (a in startAyah..count1) {
+                verses.add(PlayableVerseItem(startSurah, a, s1?.nameArabic ?: quarter.surahNameArabic))
+            }
+            for (sid in (startSurah + 1) until endSurah) {
+                val smid = surahs.firstOrNull { it.id == sid }
+                if (smid != null) {
+                    for (a in 1..smid.versesCount) {
+                        verses.add(PlayableVerseItem(sid, a, smid.nameArabic))
+                    }
+                }
+            }
+            val sEnd = surahs.firstOrNull { it.id == endSurah }
+            if (sEnd != null) {
+                for (a in 1..endAyah.coerceAtMost(sEnd.versesCount)) {
+                    verses.add(PlayableVerseItem(endSurah, a, sEnd.nameArabic))
+                }
+            }
+        }
+
+        val title = "ربع ${quarter.id}: ${quarter.firstWords}"
+        audioPlayer.playVerseQueue(
+            verses = verses,
+            reciterId = reciter.id,
+            title = title,
+            subtitle = reciter.nameArabic,
+            scope = AudioListeningScope.QUARTER
+        )
+    }
+
+    fun playAyahRangeAudioDetailed(
+        surahId: Int,
+        startAyah: Int,
+        endAyah: Int,
+        reciterId: String? = null
+    ) {
+        val reciter = reciterId?.let { id -> reciters.firstOrNull { it.id == id } } ?: _selectedReciter.value
+        val surah = repository.getSurahs().firstOrNull { it.id == surahId } ?: repository.getSurahs().first()
+        val sAyah = startAyah.coerceIn(1, surah.versesCount)
+        val eAyah = endAyah.coerceIn(sAyah, surah.versesCount)
+
+        val verses = (sAyah..eAyah).map { a ->
+            PlayableVerseItem(surah.id, a, surah.nameArabic)
+        }
+
+        val title = "سورة ${surah.nameArabic} (الآيات $sAyah - $eAyah)"
+        audioPlayer.playVerseQueue(
+            verses = verses,
+            reciterId = reciter.id,
+            title = title,
+            subtitle = reciter.nameArabic,
+            scope = AudioListeningScope.AYAH_RANGE
+        )
+    }
+
+    fun playAzkarAudio(isMorning: Boolean) {
+        val url = if (isMorning) {
+            "https://archive.org/download/sheikh-mishary-rashid-alafasy-azkar/Sheikh%20Mishary%20Rashid%20Alafasy%20-%20%D8%A3%D8%B0%D9%83%D8%A7%D8%B1%20%D8%A7%D9%84%D8%B5%D8%A8%D8%A7%D8%AD.mp3"
+        } else {
+            "https://archive.org/download/sheikh-mishary-rashid-alafasy-azkar/Sheikh%20Mishary%20Rashid%20Alafasy%20-%20%D8%A3%D8%B0%D9%83%D8%A7%D8%B1%20%D8%A7%D9%84%D9%85%D8%B3%D8%A7%D8%A1.mp3"
+        }
+        val title = if (isMorning) "أذكار الصباح بصوت الشيخ مشاري العفاسي" else "أذكار المساء بصوت الشيخ مشاري العفاسي"
+        val subtitle = "الشيخ مشاري راشد العفاسي"
+        audioPlayer.playDirectAudioUrl(url, title, subtitle)
+    }
+
+    fun seekAudio(positionMs: Long) {
+        audioPlayer.seekTo(positionMs)
+    }
+
+    fun seekAudioSessionFraction(fraction: Float) {
+        audioPlayer.seekToSessionFraction(fraction)
+    }
+
+    fun rewind10Seconds() {
+        audioPlayer.rewind10Seconds()
+    }
+
+    fun forward10Seconds() {
+        audioPlayer.forward10Seconds()
+    }
+
+    fun skipNextTrack() {
+        if (audioPlayer.hasNextItem()) {
+            audioPlayer.skipToNext()
+        } else if (audioPlayer.activeScope.value == AudioListeningScope.SURAH || audioPlayer.totalQueueCount.value <= 1) {
+            val currentSurah = audioPlayer.currentPlayingSurah.value ?: 1
+            val nextSurah = if (currentSurah < 114) currentSurah + 1 else 1
+            playSurahAudioDetailed(nextSurah, _selectedReciter.value.id)
+        } else {
+            audioPlayer.skipToNext()
+        }
+    }
+
+    fun skipPreviousTrack() {
+        if (audioPlayer.hasPreviousItem()) {
+            audioPlayer.skipToPrevious()
+        } else if (audioPlayer.activeScope.value == AudioListeningScope.SURAH || audioPlayer.totalQueueCount.value <= 1) {
+            val pos = audioPlayer.currentPosition.value
+            if (pos > 3000L) {
+                audioPlayer.seekTo(0L)
+            } else {
+                val currentSurah = audioPlayer.currentPlayingSurah.value ?: 1
+                val prevSurah = if (currentSurah > 1) currentSurah - 1 else 114
+                playSurahAudioDetailed(prevSurah, _selectedReciter.value.id)
+            }
+        } else {
+            audioPlayer.skipToPrevious()
+        }
+    }
+
+    fun setSleepTimer(minutes: Int) {
+        audioPlayer.setSleepTimer(minutes)
+    }
+
+    fun cancelSleepTimer() {
+        audioPlayer.cancelSleepTimer()
+    }
+
+    fun getQuartersList(): List<QuranQuarter> = QuranQuartersProvider.QUARTERS
 
     fun stopAudioPlayback() {
         audioPlayer.stopAudio()
