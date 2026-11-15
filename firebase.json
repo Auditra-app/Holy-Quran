@@ -10,6 +10,27 @@
       ],
       "headers": [
         {
+          "source": "/HolyQuran_v1.4.8.data",
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/vnd.android.package-archive"
+            },
+            {
+              "key": "Content-Disposition",
+              "value": "attachment; filename=\"HolyQuran_v1.4.8.apk\""
+            },
+            {
+              "key": "Cache-Control",
+              "value": "public, max-age=31536000, immutable"
+            },
+            {
+              "key": "Access-Control-Allow-Origin",
+              "value": "*"
+            }
+          ]
+        },
+        {
           "source": "/HolyQuran_v1.4.7.data",
           "headers": [
             {

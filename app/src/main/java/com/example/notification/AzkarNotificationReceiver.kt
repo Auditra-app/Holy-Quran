@@ -96,9 +96,18 @@ class AzkarNotificationReceiver : BroadcastReceiver() {
             }
 
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            val mediaVol = try { audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0 } catch (e: Exception) { 0 }
+            val notifVol = try { audioManager?.getStreamVolume(AudioManager.STREAM_NOTIFICATION) ?: 0 } catch (e: Exception) { 0 }
+
+            val (usageType, streamType) = if (mediaVol > 0 || notifVol == 0) {
+                Pair(AudioAttributes.USAGE_MEDIA, AudioManager.STREAM_MUSIC)
+            } else {
+                Pair(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION, AudioManager.STREAM_NOTIFICATION)
+            }
+
             val audioAttributes = AudioAttributes.Builder()
                 .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
-                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setUsage(usageType)
                 .build()
 
             var focusRequest: AudioFocusRequest? = null
@@ -107,12 +116,20 @@ class AzkarNotificationReceiver : BroadcastReceiver() {
                     .setAudioAttributes(audioAttributes)
                     .build()
                 audioManager?.requestAudioFocus(focusRequest)
+            } else {
+                @Suppress("DEPRECATION")
+                audioManager?.requestAudioFocus(
+                    null,
+                    streamType,
+                    AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
+                )
             }
 
             fun playLocalFallback() {
                 try {
                     MediaPlayer.create(context, R.raw.takbeer)?.apply {
                         setAudioAttributes(audioAttributes)
+                        setVolume(1.0f, 1.0f)
                         setOnCompletionListener {
                             it.release()
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && focusRequest != null) {
@@ -135,6 +152,7 @@ class AzkarNotificationReceiver : BroadcastReceiver() {
 
             MediaPlayer().apply {
                 setAudioAttributes(audioAttributes)
+                setVolume(1.0f, 1.0f)
                 setWakeMode(context, PowerManager.PARTIAL_WAKE_LOCK)
                 setDataSource(audioUrl)
                 setOnPreparedListener { mp ->

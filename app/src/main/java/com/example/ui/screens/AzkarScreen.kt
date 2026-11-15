@@ -385,10 +385,13 @@ fun AzkarScreen(
             onDismissRequest = { showQuickReadSheet = false },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         ) {
+            val isMorningQuick = selectedCategoryId == "morning" || (!selectedCategoryId.contains("evening"))
             QuickReadSheetContent(
                 azkarList = sheetAzkar,
                 isArabic = isArabic,
                 countsMap = countsMap,
+                viewModel = viewModel,
+                isMorning = isMorningQuick,
                 onClose = { showQuickReadSheet = false },
                 onShowVirtue = { zikr -> selectedVirtueZikr = zikr },
                 onCountIncrement = { id, maxCount ->
@@ -683,6 +686,8 @@ fun QuickReadSheetContent(
     azkarList: List<AzkarItem>,
     isArabic: Boolean,
     countsMap: Map<Int, Int>,
+    viewModel: QuranViewModel? = null,
+    isMorning: Boolean = true,
     onClose: () -> Unit,
     onShowVirtue: (AzkarItem) -> Unit = {},
     onCountIncrement: (id: Int, maxCount: Int) -> Unit
@@ -690,7 +695,7 @@ fun QuickReadSheetContent(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.85f)
+            .fillMaxHeight(0.88f)
             .padding(16.dp)
     ) {
         Row(
@@ -720,7 +725,19 @@ fun QuickReadSheetContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(10.dp))
+
+        // Prominent Button & Audio Player for Sheikh Mishary Al-Afasy inside Quick Azkar View
+        if (viewModel != null) {
+            AzkarAudioPlayerBanner(
+                isMorning = isMorning,
+                viewModel = viewModel,
+                isArabic = isArabic,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 10.dp)
+            )
+        }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(16.dp),

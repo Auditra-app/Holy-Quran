@@ -10,19 +10,23 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.example.notification.AzanPlaybackService
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -278,6 +282,8 @@ fun HolyQuranApp(
         com.example.data.provider.AppUpdateManager.checkForUpdate { updateInfo ->
             if (updateInfo != null && updateInfo.isUpdateAvailable) {
                 pendingUpdateInfo = updateInfo
+                val isAr = userSettings.languageCode.startsWith("ar", ignoreCase = true)
+                com.example.data.provider.AppUpdateManager.showUpdateAvailableNotification(context, updateInfo, isAr)
             }
         }
     }
@@ -288,6 +294,7 @@ fun HolyQuranApp(
             val navController = rememberNavController()
 
             pendingUpdateInfo?.let { updateInfo ->
+                val isAr = userSettings.languageCode.startsWith("ar", ignoreCase = true)
                 AlertDialog(
                     onDismissRequest = {
                         if (!updateInfo.forceUpdate) {
@@ -303,24 +310,64 @@ fun HolyQuranApp(
                     },
                     title = {
                         Text(
-                            text = if (userSettings.languageCode == "ar") "يتوفر تحديث جديد لـ تطبيق القرآن الكريم 🚀" else "New App Update Available 🚀",
+                            text = if (isAr) "يتوفر تحديث جديد لـ تطبيق القرآن الكريم 🚀" else "New App Update Available 🚀",
                             fontFamily = com.example.ui.theme.TajawalFontFamily,
                             fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
                         )
                     },
                     text = {
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            // High-contrast Urgent Red Warning Card for uninstalling previous version
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFD32F2F).copy(alpha = 0.12f)
+                                ),
+                                border = BorderStroke(1.5.dp, Color(0xFFD32F2F)),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = androidx.compose.material.icons.Icons.Default.Warning,
+                                        contentDescription = null,
+                                        tint = Color(0xFFD32F2F),
+                                        modifier = Modifier.size(28.dp)
+                                    )
+                                    Column {
+                                        Text(
+                                            text = if (isAr) "⚠️ تنبيه عاجل وهام جداً:" else "⚠️ Urgent & Important:",
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                            fontSize = 13.sp,
+                                            color = Color(0xFFD32F2F)
+                                        )
+                                        Text(
+                                            text = if (isAr)
+                                                "يرجى إلغاء تثبيت (Uninstall) هذا الإصدار الحالي أولاً من هاتفك، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل لتجنب تعارض الحزم والشهادات."
+                                            else
+                                                "Please uninstall the current version first from your phone, then install this new version after download completes to prevent package conflicts.",
+                                            fontSize = 12.sp,
+                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                                            color = Color(0xFFB71C1C)
+                                        )
+                                    }
+                                }
+                            }
+
                             Text(
-                                text = if (userSettings.languageCode == "ar") "الإصدار الحالي: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nالإصدار الجديد: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})" else "Current: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nNew: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})",
+                                text = if (isAr) "الإصدار الحالي: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nالإصدار الجديد: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})" else "Current: v${com.example.BuildConfig.VERSION_NAME} (Build ${com.example.BuildConfig.VERSION_CODE})\nNew: v${updateInfo.latestVersionName} (Build ${updateInfo.latestVersionCode})",
                                 fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.primary
                             )
                             Text(
-                                text = updateInfo.getLocalizedNotes(userSettings.languageCode.startsWith("ar", ignoreCase = true)),
+                                text = updateInfo.getLocalizedNotes(isAr),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                text = if (userSettings.languageCode == "ar") "اضغط على زر 'تحديث الآن' لتنزيل وتثبيت التحديث مباشرة." else "Click 'Update Now' to download and install directly.",
+                                text = if (isAr) "اضغط على زر 'تحديث الآن' لبدء تنزيل ملف التحديث مباشرة." else "Click 'Update Now' to download the update package directly.",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

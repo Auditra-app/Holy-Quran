@@ -47,23 +47,23 @@ object AzanAudioPlayer {
             return true
         }
 
-        // 2. Check stream volumes: if notification, ring, or media volume is 0
+        // 2. Check stream volumes: only silent if ALL audio streams are 0
         val ringVol = try { am.getStreamVolume(AudioManager.STREAM_RING) } catch (e: Exception) { 0 }
         val notifVol = try { am.getStreamVolume(AudioManager.STREAM_NOTIFICATION) } catch (e: Exception) { 0 }
         val musicVol = try { am.getStreamVolume(AudioManager.STREAM_MUSIC) } catch (e: Exception) { 0 }
 
-        if (ringVol == 0 || notifVol == 0 || musicVol == 0) {
-            Log.d(TAG, "Stream volume is 0 (ring=$ringVol, notif=$notifVol, music=$musicVol). Device is silent/muted.")
+        if (ringVol == 0 && notifVol == 0 && musicVol == 0) {
+            Log.d(TAG, "All audio stream volumes are 0 (ring=$ringVol, notif=$notifVol, music=$musicVol). Device is silent/muted.")
             return true
         }
 
         // 3. Check Stream Mute state (API 23+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
-                if (am.isStreamMute(AudioManager.STREAM_NOTIFICATION) ||
-                    am.isStreamMute(AudioManager.STREAM_RING) ||
+                if (am.isStreamMute(AudioManager.STREAM_NOTIFICATION) &&
+                    am.isStreamMute(AudioManager.STREAM_RING) &&
                     am.isStreamMute(AudioManager.STREAM_MUSIC)) {
-                    Log.d(TAG, "Stream is explicitly muted in AudioManager.")
+                    Log.d(TAG, "All audio streams are explicitly muted in AudioManager.")
                     return true
                 }
             } catch (e: Exception) {}

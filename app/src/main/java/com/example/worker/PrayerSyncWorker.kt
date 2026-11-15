@@ -86,6 +86,18 @@ class PrayerSyncWorker(
             ReadingStatsWidgetProvider.notifyWidgetUpdate(applicationContext)
             com.example.widget.AzkarWidgetProvider.sendUpdateBroadcast(applicationContext)
 
+            // 4. Background check for new app releases and post high-priority update notification
+            try {
+                com.example.data.provider.AppUpdateManager.checkForUpdate { updateInfo ->
+                    if (updateInfo != null && updateInfo.isUpdateAvailable) {
+                        val isAr = settings?.languageCode?.startsWith("ar", ignoreCase = true) ?: true
+                        com.example.data.provider.AppUpdateManager.showUpdateAvailableNotification(applicationContext, updateInfo, isAr)
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Background update check error in PrayerSyncWorker", e)
+            }
+
             Log.d(TAG, "Background prayer sync completed successfully for city: $cityName ($latitude, $longitude)")
             Result.success()
         } catch (e: CancellationException) {

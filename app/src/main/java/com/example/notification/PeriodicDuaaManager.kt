@@ -400,8 +400,18 @@ object PeriodicDuaaManager {
         var focusRequest: AudioFocusRequest? = null
         val audioFocusChangeListener = AudioManager.OnAudioFocusChangeListener { }
 
+        val mediaVol = try { audioManager?.getStreamVolume(AudioManager.STREAM_MUSIC) ?: 0 } catch (e: Exception) { 0 }
+        val notifVol = try { audioManager?.getStreamVolume(AudioManager.STREAM_NOTIFICATION) ?: 0 } catch (e: Exception) { 0 }
+
+        // Use active mobile media volume, falling back to notification volume if media is muted
+        val (usageType, streamType) = if (mediaVol > 0 || notifVol == 0) {
+            Pair(AudioAttributes.USAGE_MEDIA, AudioManager.STREAM_MUSIC)
+        } else {
+            Pair(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION, AudioManager.STREAM_NOTIFICATION)
+        }
+
         val audioAttributes = AudioAttributes.Builder()
-            .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+            .setUsage(usageType)
             .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
             .build()
 
@@ -415,7 +425,7 @@ object PeriodicDuaaManager {
             @Suppress("DEPRECATION")
             audioManager?.requestAudioFocus(
                 audioFocusChangeListener,
-                AudioManager.STREAM_NOTIFICATION,
+                streamType,
                 AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK
             )
         }
@@ -444,6 +454,7 @@ object PeriodicDuaaManager {
                 activeMediaPlayer?.release()
                 activeMediaPlayer = MediaPlayer.create(appContext, R.raw.takbeer)?.apply {
                     setAudioAttributes(audioAttributes)
+                    setVolume(1.0f, 1.0f)
                     setOnCompletionListener { cleanup() }
                     setOnErrorListener { _, _, _ -> cleanup(); true }
                     start()
@@ -461,6 +472,7 @@ object PeriodicDuaaManager {
             activeMediaPlayer?.release()
             activeMediaPlayer = MediaPlayer().apply {
                 setAudioAttributes(audioAttributes)
+                setVolume(1.0f, 1.0f)
                 setWakeMode(appContext, android.os.PowerManager.PARTIAL_WAKE_LOCK)
                 setDataSource(audioUrl)
                 setOnPreparedListener { mp ->
