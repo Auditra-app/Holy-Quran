@@ -14,7 +14,7 @@
 
     <!-- SEO & Standard Meta Tags -->
     <meta name="title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta name="description" content="تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة بالرسم العثماني، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، ختمات جماعية، ومواقيت الصلاة. صدقة جارية وبدون إعلانات.">
+    <meta name="description" content="تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة وتفاسير وأذكار ومواقيت بدون إنترنت، واستماع لكبار القراء وختمات جماعية عبر الإنترنت. صدقة جارية وبدون إعلانات.">
     <meta name="keywords" content="قرآن كريم, مصحف, استماع قرآن, أذكار الصباح والمساء, تذكير بالدعاء, مواقيت الصلاة, ختمة جماعية, تطبيق أندرويد, Holy Quran App, APK">
     <meta name="author" content="Holy Quran App">
     <meta name="robots" content="index, follow">
@@ -25,7 +25,7 @@
     <meta property="og:site_name" content="تطبيق القرآن الكريم">
     <meta property="og:locale" content="ar_AR">
     <meta property="og:title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta property="og:description" content="المصحف الشريف كاملاً بالرسم العثماني، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، والختمات الجماعية. صدقة جارية وبدون إعلانات.">
+    <meta property="og:description" content="المصحف الشريف كاملاً وتفاسير وأذكار ومواقيت بدون إنترنت، واستماع لكبار القراء وختمات جماعية عبر الإنترنت. صدقة جارية وبدون إعلانات.">
     <meta property="og:url" content="https://holyquranapp.web.app/">
     
     <!-- Primary App Logo (Square 512x512 PNG, 11KB) - WhatsApp Thumbnails & Link Previews -->
@@ -47,7 +47,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta name="twitter:description" content="المصحف الشريف كاملاً بالرسم العثماني، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، والختمات الجماعية. صدقة جارية وبدون إعلانات.">
+    <meta name="twitter:description" content="المصحف الشريف كاملاً وتفاسير وأذكار ومواقيت بدون إنترنت، واستماع لكبار القراء وختمات جماعية عبر الإنترنت. صدقة جارية وبدون إعلانات.">
     <meta name="twitter:image" content="https://holyquranapp.web.app/share_preview.jpg">
 
     <!-- Structured Data (JSON-LD) for Search Engines and Social Preview Parsers -->
@@ -942,7 +942,6 @@
             color: var(--gold-primary);
             border: 1px solid var(--border-gold);
             box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
-            margin-inline-start: auto;
             letter-spacing: 0.3px;
             flex-shrink: 0;
             transition: all 0.3s ease;
@@ -956,6 +955,85 @@
             box-shadow: 0 0 6px var(--emerald-glow);
             animation: livePulse 1.8s infinite ease-in-out;
             display: inline-block;
+        }
+
+        /* Connectivity Status Badges */
+        .feature-badge-connectivity {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+            flex-shrink: 0;
+            margin-inline-start: auto;
+        }
+
+        .feature-badge-offline {
+            background: rgba(16, 185, 129, 0.14);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.38);
+        }
+
+        .feature-badge-online {
+            background: rgba(59, 130, 246, 0.14);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.38);
+        }
+
+        .feature-badge-hybrid {
+            background: rgba(245, 158, 11, 0.14);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.38);
+        }
+
+        .connectivity-clarification-banner {
+            background: linear-gradient(135deg, rgba(15, 56, 44, 0.75) 0%, rgba(20, 32, 48, 0.75) 100%);
+            border: 1px solid var(--border-gold);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin: 20px 0 25px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+            text-align: start;
+        }
+
+        .clarification-title {
+            color: var(--gold-primary);
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .clarification-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .clarification-box {
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .box-offline {
+            background: rgba(16, 185, 129, 0.08);
+            border: 1px solid rgba(16, 185, 129, 0.28);
+            color: var(--text-main);
+        }
+
+        .box-online {
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.28);
+            color: var(--text-main);
         }
 
         .feature-desc {
@@ -1071,8 +1149,12 @@
                     <span>بدون إعلانات</span>
                 </div>
                 <div class="trust-badge-item">
-                    <span>⚡</span>
-                    <span>يعمل بالكامل بدون إنترنت</span>
+                    <span>📖</span>
+                    <span>المصحف والتفاسير والأذكار بدون إنترنت</span>
+                </div>
+                <div class="trust-badge-item">
+                    <span>🎧</span>
+                    <span>الاستماع الصوتي المباشر عبر الإنترنت</span>
                 </div>
                 <div class="trust-badge-item">
                     <span>❤️</span>
@@ -1083,6 +1165,24 @@
 
         <!-- Comprehensive Features Grid Header -->
         <div class="section-header">جميع مميزات وإمكانيات التطبيق الشاملة</div>
+
+        <!-- Connectivity Clarification Banner -->
+        <div class="connectivity-clarification-banner">
+            <div class="clarification-title">
+                <span>ℹ️</span>
+                <span>توضيح حالة الاتصال بالإنترنت لكل خاصية (شفافية كاملة للمستخدمين):</span>
+            </div>
+            <div class="clarification-grid">
+                <div class="clarification-box box-offline">
+                    <strong style="color: #34d399; display: block; margin-bottom: 5px;">📴 يعمل بالكامل بدون إنترنت (Offline):</strong>
+                    قراءة المصحف كاملاً (604 صفحة بالرسم العثماني)، مصحف التجويد الملون، كتب التفسير (السعدي والميسر)، معاني الكلمات كلمة بكلمة، موسوعة الأذكار والتسبيح، مواقيت الصلاة والأذان، بوصلة القبلة، البحث القرآني الفوري، والأحاديث النبوية.
+                </div>
+                <div class="clarification-box box-online">
+                    <strong style="color: #93c5fd; display: block; margin-bottom: 5px;">📶 يتطلب اتصالاً بالإنترنت (Online):</strong>
+                    الاستماع لتلاوات القرآن الكريم لكبار القراء، الاستماع الصوتي لأذكار الصباح والمساء بصوت الشيخ مشاري العفاسي (بث صوتي عالي النقاء لتوفير مساحة الهاتف)، والتزامن السحابي للختمات الجماعية عبر Firestore.
+                </div>
+            </div>
+        </div>
 
         <!-- Comprehensive Features Grid -->
         <div class="features-grid">
@@ -1095,8 +1195,9 @@
                         <span class="badge-pulse-dot"></span>
                         جديد
                     </span>
+                    <span class="feature-badge-connectivity feature-badge-online">📶 يتطلب إنترنت</span>
                 </div>
-                <div class="feature-desc">مشغل صوتي قرآني متطور للاستماع لسور وآيات القرآن الكريم بأصوات كبار القراء (مشاري العفاسي، محمود خليل الحصري، عبد الباسط عبد الصمد، سعود الشريم، أحمد العجمي) مع التشغيل بالخلفية والتحكم في سرعة التلاوة والتكرار.</div>
+                <div class="feature-desc">مشغل صوتي قرآني متطور للبث المباشر عالي النقاء لسور وآيات القرآن الكريم بأصوات كبار القراء (مشاري العفاسي، محمود خليل الحصري، عبد الباسط عبد الصمد، سعود الشريم، أحمد العجمي) عبر الإنترنت لتوفير مساحة الهاتف، مع التشغيل بالخلفية والتحكم في سرعة التلاوة والتكرار.</div>
             </div>
 
             <div class="feature-card highlight-new">
@@ -1107,8 +1208,9 @@
                         <span class="badge-pulse-dot"></span>
                         جديد
                     </span>
+                    <span class="feature-badge-connectivity feature-badge-online">📶 يتطلب إنترنت</span>
                 </div>
-                <div class="feature-desc">استماع صوتي خاشع ونقي لأذكار الصباح والمساء بصوت الشيخ مشاري راشد العفاسي، مع دعم وضع القراءة السريعة التلقائية وتزامن الصوت والتحكم بمستوى الصوت.</div>
+                <div class="feature-desc">استماع صوتي خاشع ونقي لأذكار الصباح والمساء بصوت الشيخ مشاري راشد العفاسي عبر البث الصوتي المباشر (يتطلب إنترنت)، مع دعم وضع القراءة السريعة التلقائية وتزامن الصوت والتحكم بمستوى الصوت. (نصوص الأذكار والتسبيح تعمل بدون إنترنت).</div>
             </div>
 
             <div class="feature-card highlight-new">
@@ -1119,8 +1221,9 @@
                         <span class="badge-pulse-dot"></span>
                         جديد
                     </span>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">نظام تنبيهات ذكي ومجدول لتذكيرك بالأدعية النبوية المأثورة والأذكار على مدار اليوم بفترات قابلة للتخصيص، مع تشغيل صوتي للأدعية بمستوى صوت متوافق مع هاتفك لتعطير لسانك بذكر الله.</div>
+                <div class="feature-desc">نظام تنبيهات ذكي ومجدول لتذكيرك بالأدعية النبوية المأثورة والأذكار على مدار اليوم بفترات قابلة للتخصيص، مع تشغيل صوتي للأدعية بمستوى صوت متوافق مع هاتفك يعمل محلياً بالكامل بدون إنترنت لتعطير لسانك بذكر الله.</div>
             </div>
 
             <div class="feature-card highlight-new">
@@ -1131,112 +1234,126 @@
                         <span class="badge-pulse-dot"></span>
                         جديد
                     </span>
+                    <span class="feature-badge-connectivity feature-badge-hybrid">⚡ هجين</span>
                 </div>
-                <div class="feature-desc">عناصر ودجت تفاعلية حديثة للشاشة الرئيسية: مشغل صوتي مخصص للقرآن الكريم يتيح التحكم بالتشغيل والتنقل بين السور بنقرة واحدة، بالإضافة لودجت مواقيت الصلاة والصلوات اليومية.</div>
+                <div class="feature-desc">عناصر ودجت تفاعلية حديثة للشاشة الرئيسية: مشغل صوتي مخصص للقرآن الكريم (يتطلب إنترنت للبث الصوتي)، بالإضافة لودجت مواقيت الصلاة والصلوات اليومية (يعمل بدون إنترنت).</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">📖</div>
                     <div class="feature-title">المصحف الشريف الكامل</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">قراءة واضحة برواية حفص عن عاصم لجميع الصفحات الـ 604، مع تقسيم الأجزاء والسور والأحزاب والبحث الشامل الفوري.</div>
+                <div class="feature-desc">قراءة واضحة برواية حفص عن عاصم لجميع الصفحات الـ 604 بدون الحاجة لأي اتصال بالإنترنت، مع تقسيم الأجزاء والسور والأحزاب والبحث الشامل الفوري وحفظ موضع القراءة تلقائياً.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">👥</div>
                     <div class="feature-title">الختمة الجماعية المباشرة</div>
+                    <span class="feature-badge-connectivity feature-badge-online">📶 يتطلب إنترنت</span>
                 </div>
-                <div class="feature-desc">إنشاء ومشاركة الختمات وحجز الأجزاء مع الأصدقاء والتزامن السحابي المباشر عبر Firestore مع دعم العمل بدون إنترنت.</div>
+                <div class="feature-desc">إنشاء ومشاركة الختمات وحجز الأجزاء مع الأصدقاء والعائلة، ومتابعة القراءة لحظة بلحظة مع التزامن السحابي المباشر عبر Firestore (يتطلب اتصالاً بالإنترنت لتحديث وحجز الأجزاء بين المشتركين، مع إمكانية قراءة الأجزاء المحجوزة أوفلاين).</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">🕌</div>
                     <div class="feature-title">مواقيت الصلاة والأذان</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">حساب دقيق لمواقيت الصلاة حسب الموقع الجغرافي أو التحديد اليدوي، اختيار أصوات الأذان وكتمه بأزرار الصوت.</div>
+                <div class="feature-desc">حساب فلكي دقيق لمواقيت الصلاة حسب الموقع الجغرافي أو التحديد اليدوي، اختيار أصوات الأذان وكتمه بأزرار الصوت، يعمل محلياً بالكامل بدون إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">📊</div>
                     <div class="feature-title">تتبع الصلاة والقراءة</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">جدول يومي لتسجيل الصلوات الخمس ومتابعة نسبة الالتزام اليومية والأسبوعية والشهرية مع إحصائيات القراءة.</div>
+                <div class="feature-desc">جدول يومي لتسجيل الصلوات الخمس ومتابعة نسبة الالتزام اليومية والأسبوعية والشهرية مع إحصائيات القراءة مخزنة محلياً بأمان على هاتفك بدون إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">📿</div>
                     <div class="feature-title">الأذكار وحصن المسلم</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">أذكار الصباح والمساء، أذكار الصلاة والنوم مع التنبيهات التلقائية المخصصة لحفظ الوراد اليومي وعداد التسبيح.</div>
+                <div class="feature-desc">موسوعة الأذكار المكتوبة (الصباح والمساء، الصلاة، النوم) مع التنبيهات المجدولة لحفظ الورد اليومي وعداد التسبيح الإلكتروني الذكي، تعمل بالكامل بدون إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">📚</div>
                     <div class="feature-title">التفسير وأسباب النزول</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">تفسير السعدي والتفسير الميسر وأسباب النزول لكل آية، بالإضافة للترجمة الإنجليزية المقارنة.</div>
+                <div class="feature-desc">تفسير السعدي والتفسير الميسر وأسباب النزول لكل آية مخزنة محلياً بالكامل، بالإضافة للترجمة الإنجليزية المقارنة دون استهلاك أي باقة إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">📜</div>
                     <div class="feature-title">موسوعة الأحاديث النبوية</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">500 حديث شريف صحيح مصنفة ومبوبة في 25 موضوعاً وباباً علمياً للتعلم والمشاركة.</div>
+                <div class="feature-desc">500 حديث شريف صحيح مصنفة ومبوبة في 25 موضوعاً وباباً علمياً للتعلم والمشاركة، مدمجة محلياً وتعمل بدون إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">🧭</div>
                     <div class="feature-title">بوصلة اتجاه القبلة</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">تحديد دقيق لاتجاه الكعبة المشرفة وموقع القبلة ببوصلة تفاعلية دقيقة من أي مكان في العالم.</div>
+                <div class="feature-desc">تحديد دقيق لاتجاه الكعبة المشرفة وموقع القبلة ببوصلة تفاعلية رقمية تعتمد على مستشعرات جهازك وموقعك دون الحاجة لشبكة إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">🎨</div>
                     <div class="feature-title">مصحف التجويد الملون</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">تلوين أحكام التجويد تلقائياً بالرسم العثماني (المدود، الغنن، القلقلة، الإخفاء) مع دليل توضيحي كامل للمساعدة على التلاوة الصحيحة.</div>
+                <div class="feature-desc">تلوين أحكام التجويد تلقائياً بالرسم العثماني (المدود، الغنن، القلقلة، الإخفاء) مع دليل توضيحي كامل للمساعدة على التلاوة الصحيحة، يعمل بدون إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">💡</div>
                     <div class="feature-title">معاني الكلمات (كلمة بكلمة)</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">الضغط المباشر على أي كلمة داخل الآية لعرض معناها اللغوي وتفسيرها الميسر فوراً دون مغادرة صفحة القراءة.</div>
+                <div class="feature-desc">الضغط المباشر على أي كلمة داخل الآية لعرض معناها اللغوي وتفسيرها الميسر فوراً ومحلياً دون مغادرة صفحة القراءة وبدون إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">🎯</div>
                     <div class="feature-title">مخطط الورد وحاسبة الختمة</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">تحديد هدف القراءة اليومي بالصفحات، مع حاسبة ذكية لتاريخ إتمام الختمة المتوقع وتتبع دقيق للورد صفحة بصفحة.</div>
+                <div class="feature-desc">تحديد هدف القراءة اليومي بالصفحات، مع حاسبة ذكية لتاريخ إتمام الختمة المتوقع وتتبع دقيق للورد صفحة بصفحة محفوظ محلياً بدون إنترنت.</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">🌟</div>
                     <div class="feature-title">آية اليوم وتدبر القرآن</div>
+                    <span class="feature-badge-connectivity feature-badge-hybrid">⚡ هجين</span>
                 </div>
-                <div class="feature-desc">إشعار يومي بآية مختارة للتدبر مع الاستماع الصوتي والتفسير، وتوليد بطاقات إسلامية أنيقة ومشاركتها مع الأحباب.</div>
+                <div class="feature-desc">إشعار يومي بآية مختارة للتدبر وتفسيرها المكتوب وبطاقاتها الأنيقة (بدون إنترنت)، مع إمكانية الاستماع الصوتي للتلاوة (يتطلب إنترنت).</div>
             </div>
 
             <div class="feature-card">
                 <div class="feature-header">
                     <div class="feature-icon-badge">💾</div>
                     <div class="feature-title">النسخ والاسترجاع الاحتياطي</div>
+                    <span class="feature-badge-connectivity feature-badge-offline">📴 بدون إنترنت</span>
                 </div>
-                <div class="feature-desc">تصدير واستيراد جميع البيانات والعلامات المرجعية والإعدادات بسهولة للنسخ الاحتياطي بأي وقت.</div>
+                <div class="feature-desc">تصدير واستيراد جميع البيانات والعلامات المرجعية والختمات والإعدادات بسهولة للنسخ الاحتياطي بأي وقت بدون إنترنت.</div>
             </div>
 
         </div>
@@ -1274,7 +1391,7 @@
                     <div class="step-number">3</div>
                     <div class="step-content">
                         <h4>التثبيت والبدء</h4>
-                        <p>اضغط على زر <strong>"تثبيت" (Install)</strong>، وسيتم تثبيت التطبيق فوراً ليصبح جاهزاً للعمل بدون إنترنت وبدون أي إعلانات.</p>
+                        <p>اضغط على زر <strong>"تثبيت" (Install)</strong>، وسيتم تثبيت التطبيق فوراً لتصفح المصحف وقراءة التفاسير والأذكار ومتابعة الصلاة بدون إنترنت، مع إمكانية الاستماع الصوتي والختمات عبر الإنترنت وبدون أي إعلانات.</p>
                         <span class="step-note-badge">✨ مبارك عليك المصحف الشريف كاملاً</span>
                     </div>
                 </div>
