@@ -2,25 +2,25 @@
     "parameters": {
         "latest_version_code": {
             "defaultValue": {
-                "value": "32"
+                "value": "33"
             },
             "description": "Latest published app version code"
         },
         "latest_version_name": {
             "defaultValue": {
-                "value": "1.4.8"
+                "value": "1.4.9"
             },
             "description": "Latest published version string"
         },
         "apk_download_url": {
             "defaultValue": {
-                "value": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.8.apk"
+                "value": "https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.9.apk"
             },
             "description": "Direct high-speed download link for APK update (Cloudflare Edge)"
         },
         "firebase_download_url": {
             "defaultValue": {
-                "value": "https://holyquranapp.web.app/HolyQuran_v1.4.8.data"
+                "value": "https://holyquranapp.web.app/HolyQuran_v1.4.9.data"
             },
             "description": "Secondary mirror download link (Firebase Hosting)"
         },
@@ -32,19 +32,19 @@
         },
         "update_notes": {
             "defaultValue": {
-                "value": "⚠️ تنبيه عاجل وهام: يرجى إلغاء تثبيت الإصدار الحالي أولاً من جهازك، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل ليعمل التطبيق بنجاح دون أي تعارض في الحزم. تم ضبط الأدعية الصوتية لتعتمد مستوى صوت الموبايل الفعلي، وإضافة زر الاستماع لأذكار مشاري العفاسي في القراءة السريعة."
+                "value": "⚠️ تنبيه عاجل وهام: يرجى إلغاء تثبيت الإصدار الحالي أولاً من جهازك، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل ليعمل التطبيق بنجاح دون أي تعارض في الحزم. تم إزالة أي تقييد زمني لمدد الأدعية الصوتية الدورية وتشغيل الدعاء كاملاً حتى نهايته عبر خدمة خلفية مخصصة."
             },
             "description": "Release notes shown in update dialog"
         },
         "update_notes_ar": {
             "defaultValue": {
-                "value": "⚠️ تنبيه عاجل وهام: يرجى إلغاء تثبيت الإصدار الحالي أولاً من جهازك، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل ليعمل التطبيق بنجاح دون أي تعارض في الحزم. تم ضبط الأدعية الصوتية لتعتمد مستوى صوت الموبايل الفعلي، وإضافة زر الاستماع لأذكار مشاري العفاسي في القراءة السريعة."
+                "value": "⚠️ تنبيه عاجل وهام: يرجى إلغاء تثبيت الإصدار الحالي أولاً من جهازك، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل ليعمل التطبيق بنجاح دون أي تعارض في الحزم. تم إزالة أي تقييد زمني لمدد الأدعية الصوتية الدورية وتشغيل الدعاء كاملاً حتى نهايته عبر خدمة خلفية مخصصة."
             },
             "description": "Arabic release notes shown in update dialog"
         },
         "update_notes_en": {
             "defaultValue": {
-                "value": "Update v1.4.8: Full app backup and restore for all settings, and direct file picker support."
+                "value": "Update v1.4.9: Full app backup and restore for all settings, and direct file picker support."
             },
             "description": "English release notes shown in update dialog"
         }

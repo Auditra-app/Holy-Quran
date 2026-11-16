@@ -11,6 +11,7 @@ import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.MediaPlayer
 import android.os.Build
+import android.os.PowerManager
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.MainActivity
@@ -312,7 +313,8 @@ object PeriodicDuaaManager {
                 return
             }
 
-            playNextDuaa(context, isTest = false, onCompleted = onCompleted)
+            PeriodicDuaaService.start(context, isTest = false)
+            onCompleted?.invoke()
         } catch (e: Exception) {
             Log.e(TAG, "Error executing onAlarmFired", e)
             onCompleted?.invoke()
@@ -430,10 +432,22 @@ object PeriodicDuaaManager {
             )
         }
 
+        val powerManager = appContext.getSystemService(Context.POWER_SERVICE) as? PowerManager
+        val wakeLock = powerManager?.newWakeLock(
+            PowerManager.PARTIAL_WAKE_LOCK,
+            "HolyQuran::PeriodicDuaaDirectWakeLock"
+        )?.apply {
+            setReferenceCounted(false)
+            try { acquire(10 * 60 * 1000L) } catch (e: Exception) {}
+        }
+
         var isFinished = false
         fun cleanup() {
             if (isFinished) return
             isFinished = true
+            try {
+                if (wakeLock?.isHeld == true) wakeLock.release()
+            } catch (e: Exception) {}
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && focusRequest != null) {
                     audioManager?.abandonAudioFocusRequest(focusRequest)
