@@ -14,8 +14,8 @@
 
     <!-- SEO & Standard Meta Tags -->
     <meta name="title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta name="description" content="تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة كاملة بالرسم العثماني، ختمات جماعية مباشرة، مواقيت الصلاة والأذان، الأذكار والتفاسير. صدقة جارية وبدون إعلانات.">
-    <meta name="keywords" content="قرآن كريم, مصحف, مواقيت الصلاة, أذكار, ختمة جماعية, تطبيق أندرويد, Holy Quran App, APK">
+    <meta name="description" content="تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة بالرسم العثماني، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، ختمات جماعية، ومواقيت الصلاة. صدقة جارية وبدون إعلانات.">
+    <meta name="keywords" content="قرآن كريم, مصحف, استماع قرآن, أذكار الصباح والمساء, تذكير بالدعاء, مواقيت الصلاة, ختمة جماعية, تطبيق أندرويد, Holy Quran App, APK">
     <meta name="author" content="Holy Quran App">
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#02120b" id="metaThemeColor">
@@ -25,7 +25,7 @@
     <meta property="og:site_name" content="تطبيق القرآن الكريم">
     <meta property="og:locale" content="ar_AR">
     <meta property="og:title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta property="og:description" content="المصحف الشريف كاملاً بالرسم العثماني، الختمات الجماعية المباشرة، مواقيت الصلاة، والتفسير. صدقة جارية وبدون إعلانات.">
+    <meta property="og:description" content="المصحف الشريف كاملاً بالرسم العثماني، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، والختمات الجماعية. صدقة جارية وبدون إعلانات.">
     <meta property="og:url" content="https://holyquranapp.web.app/">
     
     <!-- Primary App Logo (Square 512x512 PNG, 11KB) - WhatsApp Thumbnails & Link Previews -->
@@ -47,7 +47,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="تطبيق القرآن الكريم - Holy Quran App">
-    <meta name="twitter:description" content="المصحف الشريف كاملاً بالرسم العثماني، الختمات الجماعية، مواقيت الصلاة، والتفسير. صدقة جارية وبدون إعلانات.">
+    <meta name="twitter:description" content="المصحف الشريف كاملاً بالرسم العثماني، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، والختمات الجماعية. صدقة جارية وبدون إعلانات.">
     <meta name="twitter:image" content="https://holyquranapp.web.app/share_preview.jpg">
 
     <!-- Structured Data (JSON-LD) for Search Engines and Social Preview Parsers -->
@@ -59,7 +59,7 @@
       "alternateName": "Holy Quran App",
       "applicationCategory": "BooksApplication",
       "operatingSystem": "Android",
-      "description": "تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة كاملة بالرسم العثماني، ختمات جماعية، ومواقيت الصلاة.",
+      "description": "تحميل تطبيق القرآن الكريم الشامل لنظام أندرويد. قراءة بالرسم العثماني، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، ختمات جماعية ومواقيت الصلاة.",
       "url": "https://holyquranapp.web.app/",
       "image": "https://holyquranapp.web.app/app_logo.png",
       "offers": {
@@ -881,6 +881,7 @@
             display: flex;
             flex-direction: column;
             backdrop-filter: blur(8px);
+            position: relative;
         }
 
         .feature-card:hover {
@@ -889,11 +890,24 @@
             border-color: var(--gold-primary);
         }
 
+        .feature-card.highlight-new {
+            border: 1.5px solid var(--gold-primary);
+            background: linear-gradient(180deg, var(--bg-card-hover) 0%, var(--bg-card) 100%);
+            box-shadow: 0 6px 20px var(--shadow-color), 0 0 16px rgba(255, 215, 0, 0.12);
+        }
+
+        .feature-card.highlight-new:hover {
+            border-color: var(--gold-primary);
+            box-shadow: 0 8px 24px var(--shadow-color), 0 0 20px var(--border-glow);
+            transform: translateY(-4px);
+        }
+
         .feature-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
         }
 
         .feature-icon-badge {
@@ -913,6 +927,35 @@
             color: var(--gold-primary);
             font-size: 17px;
             font-weight: 700;
+        }
+
+        /* Elegant "New" Feature Badge */
+        .feature-badge-new {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            background: rgba(255, 215, 0, 0.16);
+            color: var(--gold-primary);
+            border: 1px solid var(--border-gold);
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.15);
+            margin-inline-start: auto;
+            letter-spacing: 0.3px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .feature-badge-new .badge-pulse-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--emerald-glow);
+            box-shadow: 0 0 6px var(--emerald-glow);
+            animation: livePulse 1.8s infinite ease-in-out;
+            display: inline-block;
         }
 
         .feature-desc {
@@ -988,7 +1031,7 @@
 
             <h2 style="color: var(--gold-primary); font-size: 22px; margin-bottom: 8px;">تطبيق القرآن الكريم الشامل</h2>
             <p style="color: var(--text-muted); font-size: 14.5px; margin-bottom: 18px; line-height: 1.6;">
-                تحميل مباشر لأحدث نسخة رسمية من التطبيق بالرسم العثماني كامل، الختمات الجماعية، التفسير والأحاديث، ومواقيت الصلاة.
+                تحميل مباشر لأحدث نسخة رسمية من التطبيق بالرسم العثماني كامل، الاستماع لكبار القراء، أذكار الصباح والمساء، التذكير بالدعاء، الختمات الجماعية، ومواقيت الصلاة.
             </p>
             <a href="https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v1.4.8.apk" download="HolyQuran_v1.4.8.apk" class="download-btn-main" id="mainDownloadBtn" onclick="handleDownloadClick(event, this)">
                 <span id="mainDownloadBtnText">تحميل التطبيق المباشر (APK) v1.4.8 - سيرفر 1 (يُنصح به ⚡)</span>
@@ -1038,11 +1081,59 @@
             </div>
         </div>
 
-        <!-- Comprehensive 12 Features Grid Header -->
+        <!-- Comprehensive Features Grid Header -->
         <div class="section-header">جميع مميزات وإمكانيات التطبيق الشاملة</div>
 
-        <!-- Comprehensive 12 Features Grid -->
+        <!-- Comprehensive Features Grid -->
         <div class="features-grid">
+
+            <div class="feature-card highlight-new">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">🎧</div>
+                    <div class="feature-title">الاستماع للقرآن الكريم لكبار القراء</div>
+                    <span class="feature-badge-new">
+                        <span class="badge-pulse-dot"></span>
+                        جديد
+                    </span>
+                </div>
+                <div class="feature-desc">مشغل صوتي قرآني متطور للاستماع لسور وآيات القرآن الكريم بأصوات كبار القراء (مشاري العفاسي، محمود خليل الحصري، عبد الباسط عبد الصمد، سعود الشريم، أحمد العجمي) مع التشغيل بالخلفية والتحكم في سرعة التلاوة والتكرار.</div>
+            </div>
+
+            <div class="feature-card highlight-new">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">🔊</div>
+                    <div class="feature-title">الاستماع لأذكار الصباح والمساء</div>
+                    <span class="feature-badge-new">
+                        <span class="badge-pulse-dot"></span>
+                        جديد
+                    </span>
+                </div>
+                <div class="feature-desc">استماع صوتي خاشع ونقي لأذكار الصباح والمساء بصوت الشيخ مشاري راشد العفاسي، مع دعم وضع القراءة السريعة التلقائية وتزامن الصوت والتحكم بمستوى الصوت.</div>
+            </div>
+
+            <div class="feature-card highlight-new">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">🤲</div>
+                    <div class="feature-title">التذكير بالدعاء والأدعية الدورية</div>
+                    <span class="feature-badge-new">
+                        <span class="badge-pulse-dot"></span>
+                        جديد
+                    </span>
+                </div>
+                <div class="feature-desc">نظام تنبيهات ذكي ومجدول لتذكيرك بالأدعية النبوية المأثورة والأذكار على مدار اليوم بفترات قابلة للتخصيص، مع تشغيل صوتي للأدعية بمستوى صوت متوافق مع هاتفك لتعطير لسانك بذكر الله.</div>
+            </div>
+
+            <div class="feature-card highlight-new">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">📱</div>
+                    <div class="feature-title">ودجت مشغل الصوتيات بالشاشة الرئيسية</div>
+                    <span class="feature-badge-new">
+                        <span class="badge-pulse-dot"></span>
+                        جديد
+                    </span>
+                </div>
+                <div class="feature-desc">عناصر ودجت تفاعلية حديثة للشاشة الرئيسية: مشغل صوتي مخصص للقرآن الكريم يتيح التحكم بالتشغيل والتنقل بين السور بنقرة واحدة، بالإضافة لودجت مواقيت الصلاة والصلوات اليومية.</div>
+            </div>
 
             <div class="feature-card">
                 <div class="feature-header">
@@ -1081,7 +1172,7 @@
                     <div class="feature-icon-badge">📿</div>
                     <div class="feature-title">الأذكار وحصن المسلم</div>
                 </div>
-                <div class="feature-desc">أذكار الصباح والمساء، أذكار الصلاة والنوم مع التنبيهات التلقائية المخصصة لحفظ الوراد اليومي.</div>
+                <div class="feature-desc">أذكار الصباح والمساء، أذكار الصلاة والنوم مع التنبيهات التلقائية المخصصة لحفظ الوراد اليومي وعداد التسبيح.</div>
             </div>
 
             <div class="feature-card">
@@ -1106,30 +1197,6 @@
                     <div class="feature-title">بوصلة اتجاه القبلة</div>
                 </div>
                 <div class="feature-desc">تحديد دقيق لاتجاه الكعبة المشرفة وموقع القبلة ببوصلة تفاعلية دقيقة من أي مكان في العالم.</div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-header">
-                    <div class="feature-icon-badge">🎧</div>
-                    <div class="feature-title">الاستماع لكبار القراء</div>
-                </div>
-                <div class="feature-desc">استماع صوتي نقي لأشهر القراء (العفاسي، الحصري، عبد الباسط، الشريم، العجمي) مع التحكم بالسرعة والتكرار.</div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-header">
-                    <div class="feature-icon-badge">📱</div>
-                    <div class="feature-title">ودجت الشاشة الرئيسية</div>
-                </div>
-                <div class="feature-desc">عناصر ودجت تفاعلية لمواقيت الصلاة التالية، تتبع الصلوات، والآية اليومية مباشرة على الشاشة الرئيسية.</div>
-            </div>
-
-            <div class="feature-card">
-                <div class="feature-header">
-                    <div class="feature-icon-badge">💾</div>
-                    <div class="feature-title">النسخ والاسترجاع الاحتياطي</div>
-                </div>
-                <div class="feature-desc">تصدير واستيراد جميع البيانات والعلامات المرجعية والإعدادات بسهولة للنسخ الاحتياطي بأي وقت.</div>
             </div>
 
             <div class="feature-card">
@@ -1162,6 +1229,14 @@
                     <div class="feature-title">آية اليوم وتدبر القرآن</div>
                 </div>
                 <div class="feature-desc">إشعار يومي بآية مختارة للتدبر مع الاستماع الصوتي والتفسير، وتوليد بطاقات إسلامية أنيقة ومشاركتها مع الأحباب.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-header">
+                    <div class="feature-icon-badge">💾</div>
+                    <div class="feature-title">النسخ والاسترجاع الاحتياطي</div>
+                </div>
+                <div class="feature-desc">تصدير واستيراد جميع البيانات والعلامات المرجعية والإعدادات بسهولة للنسخ الاحتياطي بأي وقت.</div>
             </div>
 
         </div>
