@@ -317,42 +317,44 @@ fun HolyQuranApp(
                     },
                     text = {
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                            // High-contrast Urgent Red Warning Card for uninstalling previous version
-                            Card(
-                                colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFD32F2F).copy(alpha = 0.12f)
-                                ),
-                                border = BorderStroke(1.5.dp, Color(0xFFD32F2F)),
-                                shape = RoundedCornerShape(12.dp),
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            // Red Warning Card is only displayed when an update explicitly requires uninstalling first
+                            if (updateInfo.requiresUninstall) {
+                                Card(
+                                    colors = CardDefaults.cardColors(
+                                        containerColor = Color(0xFFD32F2F).copy(alpha = 0.12f)
+                                    ),
+                                    border = BorderStroke(1.5.dp, Color(0xFFD32F2F)),
+                                    shape = RoundedCornerShape(12.dp),
+                                    modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    Icon(
-                                        imageVector = androidx.compose.material.icons.Icons.Default.Warning,
-                                        contentDescription = null,
-                                        tint = Color(0xFFD32F2F),
-                                        modifier = Modifier.size(28.dp)
-                                    )
-                                    Column {
-                                        Text(
-                                            text = if (isAr) "⚠️ تنبيه عاجل وهام جداً:" else "⚠️ Urgent & Important:",
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                            fontSize = 13.sp,
-                                            color = Color(0xFFD32F2F)
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = androidx.compose.material.icons.Icons.Default.Warning,
+                                            contentDescription = null,
+                                            tint = Color(0xFFD32F2F),
+                                            modifier = Modifier.size(28.dp)
                                         )
-                                        Text(
-                                            text = if (isAr)
-                                                "يرجى إلغاء تثبيت (Uninstall) هذا الإصدار الحالي أولاً من هاتفك، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل لتجنب تعارض الحزم والشهادات."
-                                            else
-                                                "Please uninstall the current version first from your phone, then install this new version after download completes to prevent package conflicts.",
-                                            fontSize = 12.sp,
-                                            fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
-                                            color = Color(0xFFB71C1C)
-                                        )
+                                        Column {
+                                            Text(
+                                                text = if (isAr) "⚠️ تنبيه عاجل وهام جداً:" else "⚠️ Urgent & Important:",
+                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                                fontSize = 13.sp,
+                                                color = Color(0xFFD32F2F)
+                                            )
+                                            Text(
+                                                text = if (isAr)
+                                                    "يرجى إلغاء تثبيت (Uninstall) هذا الإصدار الحالي أولاً من هاتفك، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل لتجنب تعارض الحزم والشهادات."
+                                                else
+                                                    "Please uninstall the current version first from your phone, then install this new version after download completes to prevent package conflicts.",
+                                                fontSize = 12.sp,
+                                                fontWeight = androidx.compose.ui.text.font.FontWeight.Medium,
+                                                color = Color(0xFFB71C1C)
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -367,7 +369,17 @@ fun HolyQuranApp(
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
-                                text = if (isAr) "اضغط على زر 'تحديث الآن' لبدء تنزيل ملف التحديث مباشرة." else "Click 'Update Now' to download the update package directly.",
+                                text = if (isAr) {
+                                    if (updateInfo.requiresUninstall)
+                                        "اضغط على زر 'تحديث الآن' لبدء تنزيل ملف التحديث مباشرة."
+                                    else
+                                        "اضغط على زر 'تحديث الآن' لبدء التحديث مباشرة مع الحفاظ الكامل على كافة بياناتك ومحفوظاتك."
+                                } else {
+                                    if (updateInfo.requiresUninstall)
+                                        "Click 'Update Now' to download the update package directly."
+                                    else
+                                        "Click 'Update Now' to download and update directly, preserving all your progress and settings."
+                                },
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -376,7 +388,12 @@ fun HolyQuranApp(
                     confirmButton = {
                         Button(
                             onClick = {
-                                com.example.data.provider.AppUpdateManager.startApkDownload(context, updateInfo.apkDownloadUrl, updateInfo.latestVersionName)
+                                com.example.data.provider.AppUpdateManager.startApkDownload(
+                                    context,
+                                    updateInfo.apkDownloadUrl,
+                                    updateInfo.latestVersionName,
+                                    updateInfo.requiresUninstall
+                                )
                                 if (!updateInfo.forceUpdate) {
                                     pendingUpdateInfo = null
                                 }

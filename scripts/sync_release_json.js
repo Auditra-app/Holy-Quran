@@ -5,8 +5,9 @@ const rootDir = path.resolve(__dirname, '..');
 
 const versionCode = parseInt(process.argv[2] || '23', 10);
 const versionName = process.argv[3] || '1.3.9';
-const notesAr = process.argv[4] || `تحديث v${versionName}: دعم تصدير واستعادة كافة إعدادات التطبيق بالكامل وتحديث قائمة الخيارات.`;
-const notesEn = process.argv[5] || `Update v${versionName}: Full app backup and restore for all settings, and direct file picker support.`;
+const notesAr = process.argv[4] || `تحديث v${versionName}: تحسينات جديدة في الأداء والاستقرار وسرعة استجابة التطبيق.`;
+const notesEn = process.argv[5] || `Update v${versionName}: Performance and stability improvements.`;
+const requiresUninstall = process.argv[6] === 'true' || process.argv[6] === '1';
 
 const cloudflareUrl = `https://holyquran-download.aelsheikh1987.workers.dev/HolyQuran_v${versionName}.apk`;
 const firebaseUrl = `https://holyquranapp.web.app/HolyQuran_v${versionName}.data`;
@@ -42,6 +43,7 @@ const versionData = {
     file_size_mb: fileMb,
     file_size_formatted: fileFormatted,
     force_update: false,
+    requires_uninstall: requiresUninstall,
     update_notes: notesAr,
     update_notes_ar: notesAr,
     update_notes_en: notesEn
@@ -71,6 +73,10 @@ const remoteConfigData = {
         force_update: {
             defaultValue: { value: 'false' },
             description: 'Whether update is mandatory'
+        },
+        requires_uninstall: {
+            defaultValue: { value: String(requiresUninstall) },
+            description: 'Whether update requires uninstalling current version first'
         },
         update_notes: {
             defaultValue: { value: notesAr },

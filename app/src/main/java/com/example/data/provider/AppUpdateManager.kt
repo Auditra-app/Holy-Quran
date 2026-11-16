@@ -30,7 +30,8 @@ data class AppUpdateInfo(
     val updateNotes: String,
     val updateNotesAr: String = updateNotes,
     val updateNotesEn: String = updateNotes,
-    val isUpdateAvailable: Boolean
+    val isUpdateAvailable: Boolean,
+    val requiresUninstall: Boolean = false
 ) {
     fun getLocalizedNotes(isArabic: Boolean): String {
         return if (isArabic) {
@@ -52,6 +53,7 @@ object AppUpdateManager {
     private const val KEY_UPDATE_NOTES = "update_notes"
     private const val KEY_UPDATE_NOTES_AR = "update_notes_ar"
     private const val KEY_UPDATE_NOTES_EN = "update_notes_en"
+    private const val KEY_REQUIRES_UNINSTALL = "requires_uninstall"
 
     private const val STATIC_VERSION_JSON_URL = "https://holyquranapp.web.app/version.json"
     private const val FALLBACK_STATIC_VERSION_JSON_URL = "https://holy-quran-app-live.web.app/version.json"
@@ -60,6 +62,7 @@ object AppUpdateManager {
 
     private var pendingDownloadId: Long = -1L
     private var pendingDownloadFileName: String? = null
+    private var pendingRequiresUninstall: Boolean = false
     private var isReceiverRegistered = false
 
     private val downloadReceiver = object : BroadcastReceiver() {
@@ -151,10 +154,18 @@ object AppUpdateManager {
                     setDataAndType(resolvedUri, "application/vnd.android.package-archive")
                 }
                 context.startActivity(installIntent)
-                Toast.makeText(context, "اكتمل التنزيل! ⚠️ تذكير: يرجى إلغاء تثبيت الإصدار القديم أولاً ثم تثبيت هذا التحديث لتجنب تعارض الحزم 🚀", Toast.LENGTH_LONG).show()
+                if (pendingRequiresUninstall) {
+                    Toast.makeText(context, "اكتمل التنزيل! ⚠️ تذكير: يرجى إلغاء تثبيت الإصدار القديم أولاً ثم تثبيت هذا التحديث لتجنب تعارض الحزم 🚀", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "اكتمل التنزيل بنجاح! جاري فتح معالج التثبيت لتحديث التطبيق مع الحفاظ على كافة بياناتك ومحفوظاتك 🚀", Toast.LENGTH_LONG).show()
+                }
             } else {
                 val targetName = pendingDownloadFileName ?: "ملف التحديث"
-                Toast.makeText(context, "اكتمل التنزيل! ⚠️ احذف الإصدار القديم وافتح $targetName من التنزيلات 📥", Toast.LENGTH_LONG).show()
+                if (pendingRequiresUninstall) {
+                    Toast.makeText(context, "اكتمل التنزيل! ⚠️ احذف الإصدار القديم وافتح $targetName من التنزيلات 📥", Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(context, "اكتمل التنزيل بنجاح! افتح $targetName من مجلد التنزيلات لتثبيت التحديث مباشرة 📥", Toast.LENGTH_LONG).show()
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error prompting APK installation", e)
@@ -201,6 +212,7 @@ object AppUpdateManager {
                         val notes = json.optString("update_notes", DEFAULT_UPDATE_NOTES)
                         val notesAr = json.optString("update_notes_ar", "").ifBlank { notes }
                         val notesEn = json.optString("update_notes_en", "").ifBlank { notes }
+                        val reqUninstall = json.optBoolean("requires_uninstall", false) || json.optBoolean("require_uninstall", false)
 
                         val currentCode = BuildConfig.VERSION_CODE.toLong()
                         val isAvailable = remoteCode > currentCode
@@ -213,7 +225,8 @@ object AppUpdateManager {
                             updateNotes = notes,
                             updateNotesAr = notesAr,
                             updateNotesEn = notesEn,
-                            isUpdateAvailable = isAvailable
+                            isUpdateAvailable = isAvailable,
+                            requiresUninstall = reqUninstall
                         )
                         break
                     }
@@ -267,6 +280,7 @@ object AppUpdateManager {
                         val notes = config.getString(KEY_UPDATE_NOTES).ifBlank { config.getString("updateNotes") }
                         val notesAr = config.getString(KEY_UPDATE_NOTES_AR).ifBlank { notes }
                         val notesEn = config.getString(KEY_UPDATE_NOTES_EN).ifBlank { notes }
+                        val reqUninstall = config.getBoolean(KEY_REQUIRES_UNINSTALL) || config.getBoolean("requiresUninstall")
 
                         val isAvailable = remoteCode > currentVersionCode
                         val info = AppUpdateInfo(
@@ -277,7 +291,8 @@ object AppUpdateManager {
                             updateNotes = notes.ifBlank { DEFAULT_UPDATE_NOTES },
                             updateNotesAr = notesAr.ifBlank { DEFAULT_UPDATE_NOTES },
                             updateNotesEn = notesEn.ifBlank { DEFAULT_UPDATE_NOTES },
-                            isUpdateAvailable = isAvailable
+                            isUpdateAvailable = isAvailable,
+                            requiresUninstall = reqUninstall
                         )
                         respondOnce(info)
                     }
@@ -291,8 +306,14 @@ object AppUpdateManager {
         }
     }
 
-    fun startApkDownload(context: Context, downloadUrl: String, targetVersionName: String = "") {
+    fun startApkDownload(
+        context: Context,
+        downloadUrl: String,
+        targetVersionName: String = "",
+        requiresUninstall: Boolean = false
+    ) {
         val url = downloadUrl.ifBlank { DEFAULT_APK_URL }
+        pendingRequiresUninstall = requiresUninstall
         registerDownloadReceiver(context)
 
         // Derive version-specific filename from downloadUrl or targetVersionName
@@ -409,10 +430,11 @@ object AppUpdateManager {
                 versionName = updateInfo.latestVersionName,
                 versionCode = updateInfo.latestVersionCode,
                 apkDownloadUrl = updateInfo.apkDownloadUrl,
-                isArabic = isArabic
+                isArabic = isArabic,
+                requiresUninstall = updateInfo.requiresUninstall
             )
             nm.notify(9701, builder.build())
-            Log.d(TAG, "Posted red app update notification for v${updateInfo.latestVersionName}")
+            Log.d(TAG, "Posted app update notification for v${updateInfo.latestVersionName} (requiresUninstall=${updateInfo.requiresUninstall})")
         } catch (e: Exception) {
             Log.e(TAG, "Error posting update notification", e)
         }

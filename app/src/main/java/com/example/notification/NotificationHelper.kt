@@ -636,7 +636,8 @@ object NotificationHelper {
         versionName: String,
         versionCode: Long,
         apkDownloadUrl: String,
-        isArabic: Boolean
+        isArabic: Boolean,
+        requiresUninstall: Boolean = false
     ): NotificationCompat.Builder {
         val mainIntent = Intent(context, MainActivity::class.java).apply {
             action = "com.example.ACTION_SHOW_UPDATE_DIALOG"
@@ -663,28 +664,60 @@ object NotificationHelper {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val title = if (isArabic) {
-            "🚨 تحديث هام متاح (v$versionName) - يرجى قراءة التعليمات"
-        } else {
-            "🚨 Important App Update (v$versionName) - Action Required"
-        }
+        val title: String
+        val shortText: String
+        val fullText: String
+        val subText: String
+        val notifColor: Int
 
-        val shortWarning = if (isArabic) {
-            "⚠️ تنبيه: يرجى إلغاء تثبيت الإصدار الحالي أولاً ثم تثبيت الإصدار الجديد بعد اكتمال التنزيل ليعمل بنجاح!"
+        if (requiresUninstall) {
+            title = if (isArabic) {
+                "🚨 تحديث هام متاح (v$versionName) - يرجى قراءة التعليمات"
+            } else {
+                "🚨 Important App Update (v$versionName) - Action Required"
+            }
+            shortText = if (isArabic) {
+                "⚠️ تنبيه: يرجى إلغاء تثبيت الإصدار الحالي أولاً ثم تثبيت الإصدار الجديد بعد اكتمال التنزيل ليعمل بنجاح!"
+            } else {
+                "⚠️ Note: Please uninstall current version first, then install this new version after download completes!"
+            }
+            fullText = if (isArabic) {
+                "🚨 يتوفر تحديث جديد لتطبيق القرآن الكريم (v$versionName)\n\n" +
+                "⚠️ تنبيه عاجل وهام لجميع المستخدمين:\n" +
+                "نظراً للتحديثات البنيوية الجديدة، يرجى إلغاء تثبيت (Uninstall) هذا الإصدار الحالي من هاتفك أولاً، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل لضمان نجاح التثبيت وتجنب تعارض الحزم.\n\n" +
+                "اضغط على زر التنزيل لبدء تحميل الإصدار الجديد فوراً 📥"
+            } else {
+                "🚨 A new version of Holy Quran app is available (v$versionName)\n\n" +
+                "⚠️ Urgent notice for all users:\n" +
+                "Please uninstall the current version from your device first, then install the new version after downloading to ensure a clean installation and avoid package conflicts.\n\n" +
+                "Tap Download to get the latest version now 📥"
+            }
+            subText = if (isArabic) "تحديث عاجل" else "Urgent Update"
+            notifColor = android.graphics.Color.parseColor("#D32F2F")
         } else {
-            "⚠️ Note: Please uninstall current version first, then install this new version after download completes!"
-        }
-
-        val fullWarning = if (isArabic) {
-            "🚨 يتوفر تحديث جديد لتطبيق القرآن الكريم (v$versionName)\n\n" +
-            "⚠️ تنبيه عاجل وهام لجميع المستخدمين:\n" +
-            "نظراً للتحديثات البنيوية الجديدة، يرجى إلغاء تثبيت (Uninstall) هذا الإصدار الحالي من هاتفك أولاً، ثم تثبيت هذا الإصدار الجديد بعد اكتمال التنزيل لضمان نجاح التثبيت وتجنب تعارض الحزم.\n\n" +
-            "اضغط على زر التنزيل لبدء تحميل الإصدار الجديد فوراً 📥"
-        } else {
-            "🚨 A new version of Holy Quran app is available (v$versionName)\n\n" +
-            "⚠️ Urgent notice for all users:\n" +
-            "Please uninstall the current version from your device first, then install the new version after downloading to ensure a clean installation and avoid package conflicts.\n\n" +
-            "Tap Download to get the latest version now 📥"
+            title = if (isArabic) {
+                "✨ يتوفر تحديث جديد لتطبيق القرآن الكريم (v$versionName)"
+            } else {
+                "✨ New Update Available for Holy Quran (v$versionName)"
+            }
+            shortText = if (isArabic) {
+                "يتوفر إصدار جديد مع الحفاظ الكامل على كافة محفوظاتك وتقدمك 🚀 اضغط للتحديث"
+            } else {
+                "New version available with all your saved progress safely preserved 🚀 Tap to update"
+            }
+            fullText = if (isArabic) {
+                "✨ يتوفر تحديث جديد لتطبيق القرآن الكريم (v$versionName)\n\n" +
+                "يتضمن هذا التحديث تحسينات متقدمة في السرعة والأداء وتجربة القراءة والاستماع.\n\n" +
+                "✅ يتم التثبيت مباشرة وتلقائياً دون الحاجة لإلغاء التثبيت، مع الحفاظ التام على تقدمك وختماتك وإعداداتك المفضلة.\n\n" +
+                "اضغط على زر التنزيل للترقية إلى أحدث إصدار 📥"
+            } else {
+                "✨ A new version of Holy Quran is available (v$versionName)\n\n" +
+                "This update includes speed, performance, and user experience enhancements.\n\n" +
+                "✅ Seamless in-place update: all your saved progress, khatmas, and preferences are fully preserved.\n\n" +
+                "Tap Download to update now 📥"
+            }
+            subText = if (isArabic) "تحديث جديد" else "New Update"
+            notifColor = android.graphics.Color.parseColor("#1B5E20")
         }
 
         val appLogoBitmap = getAppLogoBitmap(context)
@@ -694,10 +727,10 @@ object NotificationHelper {
             .apply {
                 if (appLogoBitmap != null) setLargeIcon(appLogoBitmap)
             }
-            .setColor(android.graphics.Color.parseColor("#D32F2F"))
+            .setColor(notifColor)
             .setContentTitle(title)
-            .setContentText(shortWarning)
-            .setSubText(if (isArabic) "تحديث عاجل" else "Urgent Update")
+            .setContentText(shortText)
+            .setSubText(subText)
             .setPriority(NotificationCompat.PRIORITY_MAX)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
@@ -706,7 +739,7 @@ object NotificationHelper {
             .setStyle(
                 NotificationCompat.BigTextStyle()
                     .setBigContentTitle(title)
-                    .bigText(fullWarning)
+                    .bigText(fullText)
             )
             .addAction(
                 R.drawable.ic_stat_quran,

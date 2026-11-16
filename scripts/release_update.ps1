@@ -9,6 +9,9 @@ param (
     [Parameter(Mandatory=$false)]
     [string]$UpdateNotes = "",
 
+    [Parameter(Mandatory=$false)]
+    [switch]$RequiresUninstall,
+
     [switch]$SkipDeploy,
     [switch]$SkipGitPush
 )
@@ -49,7 +52,8 @@ $buildGradleUpdated = $buildGradleUpdated -replace 'versionName\s*=\s*"[^"]+"', 
 Set-Content -Path "$rootDir\app\build.gradle.kts" -Value $buildGradleUpdated -NoNewline
 
 $notesToUse = if (-not [string]::IsNullOrWhiteSpace($UpdateNotes)) { $UpdateNotes } else { "Update v${VersionName}" }
-node "$rootDir\scripts\sync_release_json.js" $VersionCode "$VersionName" "$notesToUse"
+$reqUninstallFlag = if ($RequiresUninstall.IsPresent) { "true" } else { "false" }
+node "$rootDir\scripts\sync_release_json.js" $VersionCode "$VersionName" "$notesToUse" "" "$reqUninstallFlag"
 Write-Host "[2/6] Synchronized public/version.json and remoteconfig.template.json (UTF-8)" -ForegroundColor Green
 
 # 5. Build APK via Gradle
@@ -86,7 +90,7 @@ if ($copiedItem.Length -ne $apkItem.Length) {
 Write-Host "[5/6] Verified & Copied APK to $destData" -ForegroundColor Green
 
 # Re-sync JSON, HTML, and Firebase headers with exact file size
-node "$rootDir\scripts\sync_release_json.js" $VersionCode "$VersionName" "$notesToUse"
+node "$rootDir\scripts\sync_release_json.js" $VersionCode "$VersionName" "$notesToUse" "" "$reqUninstallFlag"
 
 # 7. Deploy to Firebase & Cloudflare
 if (-not $SkipDeploy) {
